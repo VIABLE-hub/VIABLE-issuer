@@ -80,6 +80,13 @@ def create_app():
         }
     })
     
+    # Initialize simple authentication (if enabled)
+    auth_enabled = os.environ.get('ENABLE_AUTH', 'false').lower() == 'true'
+    if auth_enabled:
+        from .simple_auth import init_auth_routes
+        init_auth_routes(app)
+        logger.info("🔐 Simple authentication enabled")
+    
     # Ensure CSRF token is available for all requests
     @app.before_request
     def ensure_csrf_token():
