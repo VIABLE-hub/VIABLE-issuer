@@ -1,0 +1,32 @@
+<!-- KPI-Boxen für VC Status -->
+<div class="kpi-grid">
+  <!-- Aktive VCs -->
+  <div class="kpi-card active-card">
+    <div class="title">Aktive Credentials</div>
+    <div class="value text-green-600" id="active-count">{{ valid_credentials }}</div>
+    <div class="indicator">
+      <span class="dot bg-green-500"></span>
+      <span>Gültige VCs</span>
+    </div>
+  </div>
+  
+  <!-- Zurückgezogene VCs -->
+  <div class="kpi-card revoked-card">
+    <div class="title">Zurückgezogene Credentials</div>
+    <div class="value text-red-600" id="revoked-count">{{ invalid_credentials }}</div>
+    <div class="indicator">
+      <span class="dot bg-red-500"></span>
+      <span>Widerrufene VCs</span>
+    </div>
+  </div>
+  
+  <!-- Gesamt VCs -->
+  <div class="kpi-card total-card">
+    <div class="title">Gesamtzahl Credentials</div>
+    <div class="value berlin-blue" id="total-count">{{ total_credentials }}</div>
+    <div class="indicator">
+      <span class="dot bg-blue-500"></span>
+      <span>Alle registrierten VCs</span>
+    </div>
+  </div>
+</div>
