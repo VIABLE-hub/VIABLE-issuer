@@ -1,0 +1,17 @@
+{
+  "tenantId": "fub",
+  "displayName": "Freie Universität Berlin",
+  "shortName": "FU Berlin",
+  "primaryColor": "#007a3e",
+  "accentColor": "#00a84f",
+  "textColor": "#007a3e",
+  "backgroundColor": "#FFFFFF",
+  "fontFamily": "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+  "logoPath": "fub-logo.png",
+  "mainLogoPath": "fub-logo.png",
+  "domainPatterns": ["fu-berlin", "fub"],
+  "databasePath": "database.db",
+  "keysPath": "keys/",
+  "staticPath": "static/",
+  "backupPath": "backups/"
+} 

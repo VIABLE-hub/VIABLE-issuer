@@ -1,0 +1,188 @@
+version: '3.8'
+
+services:
+  # TU Berlin (TUB) Tenant Service
+  studentvc-tub:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: studentvc-tub
+    ports:
+      - "8080:8080"
+    environment:
+      - TENANT_ID=tub
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8080
+      - USE_HTTPS=true
+      - NGROK_URL=${TUB_NGROK_URL:-}
+      - DATABASE_PATH=/app/data
+      - STATIC_PATH=/app/static
+      - PYTHONPATH=/app
+    volumes:
+      - tub_data:/app/data
+      - tub_static:/app/static
+      - ../backend/src/tenants/instances/tub:/app/tenants/tub:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - studentvc-network
+    labels:
+      - "tenant=tub"
+      - "university=tu-berlin"
+
+  # Freie Universität Berlin (FUB) Tenant Service  
+  studentvc-fub:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: studentvc-fub
+    ports:
+      - "8081:8080"
+    environment:
+      - TENANT_ID=fub
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8080
+      - USE_HTTPS=true
+      - NGROK_URL=${FUB_NGROK_URL:-}
+      - DATABASE_PATH=/app/data
+      - STATIC_PATH=/app/static
+      - PYTHONPATH=/app
+    volumes:
+      - fub_data:/app/data
+      - fub_static:/app/static
+      - ../backend/src/tenants/instances/fub:/app/tenants/fub:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - studentvc-network
+    labels:
+      - "tenant=fub"
+      - "university=fu-berlin"
+
+  # Root/Default Tenant Service
+  studentvc-root:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: studentvc-root
+    ports:
+      - "8082:8080"
+    environment:
+      - TENANT_ID=root
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8080
+      - USE_HTTPS=true
+      - NGROK_URL=${ROOT_NGROK_URL:-}
+      - DATABASE_PATH=/app/data
+      - STATIC_PATH=/app/static
+      - PYTHONPATH=/app
+    volumes:
+      - root_data:/app/data
+      - root_static:/app/static
+      - ../backend/src/tenants/instances/root:/app/tenants/root:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - studentvc-network
+    labels:
+      - "tenant=root"
+      - "university=default"
+
+  # NGINX Reverse Proxy (Optional - for production)
+  nginx:
+    image: nginx:alpine
+    container_name: studentvc-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - studentvc-tub
+      - studentvc-fub
+      - studentvc-root
+    restart: unless-stopped
+    networks:
+      - studentvc-network
+    labels:
+      - "component=reverse-proxy"
+
+  # Redis for session storage (Optional - for production)
+  redis:
+    image: redis:alpine
+    container_name: studentvc-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - studentvc-network
+    labels:
+      - "component=cache"
+
+volumes:
+  tub_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/tub
+  
+  fub_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/fub
+  
+  root_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/root
+  
+  tub_static:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./static/tub
+  
+  fub_static:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./static/fub
+  
+  root_static:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./static/root
+  
+  redis_data:
+    driver: local
+
+networks:
+  studentvc-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16 
