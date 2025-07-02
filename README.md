@@ -187,13 +187,6 @@ Each tenant configuration in `backend/src/tenants/instances/{tenant}/config.json
 }
 ```
 
-## Documentation
-
-- **[Deployment Guide](./docs/deployment/)** - Detailed deployment instructions
-- **[API Documentation](./docs/api/)** - Complete API reference
-- **[Development Guide](./docs/development/)** - Development setup and guidelines
-- **[Security Documentation](./docs/SECURITY.md)** - Security considerations and best practices
-
 ## Contributing
 
 See [CONTRIBUTING.md](./docs/CONTRIBUTING.md) for development guidelines and contribution process.
