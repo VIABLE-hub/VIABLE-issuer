@@ -1,0 +1,374 @@
+<!-- JavaScript für VC Status -->
+<script>
+  // Globale Variablen für Paginierung und Sortierung
+  let currentPage = 1;
+  const itemsPerPage = 20;
+  let sortField = 'id';
+  let sortDirection = 'asc';
+  let filteredCredentials = [];
+  
+  // Verbesserter Bestätigungsdialog für Löschen
+  function confirmDelete() {
+    return window.confirm("Credential wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden und entfernt das Credential permanent aus dem System.");
+  }
+  
+  // Such- und Filterfunktionalität mit optimierter Performance
+  function filterTable() {
+    const searchInput = document.getElementById('search-input').value.toLowerCase().trim();
+    const statusFilter = document.getElementById('status-filter').value;
+    
+    // Optimierte Filterung durch einmalige Sammlung der Elemente
+    const desktopRows = Array.from(document.querySelectorAll('table tbody tr'));
+    const mobileCards = Array.from(document.querySelectorAll('.table-mobile-card'));
+    
+    // Desktop Filter
+    filteredCredentials = desktopRows.filter(element => {
+      const elementText = element.textContent.toLowerCase();
+      const elementStatus = element.getAttribute('data-status');
+      
+      // Status-Filter
+      const statusMatch = statusFilter === 'all' || elementStatus === statusFilter;
+      
+      // Textsuche
+      const searchMatch = searchInput === '' || elementText.includes(searchInput);
+      
+      // Kombinierte Bedingung
+      return statusMatch && searchMatch;
+    });
+    
+    // Sortieren der Ergebnisse
+    sortTable();
+    
+    // Nach Filter zurück zur ersten Seite
+    currentPage = 1;
+    
+    // Paginierung aktualisieren
+    updatePagination();
+    
+    // Mobile Filter gesondert
+    mobileCards.forEach(element => {
+      const elementText = element.textContent.toLowerCase();
+      const elementStatus = element.getAttribute('data-status');
+      
+      // Status-Filter
+      const statusMatch = statusFilter === 'all' || elementStatus === statusFilter;
+      
+      // Textsuche
+      const searchMatch = searchInput === '' || elementText.includes(searchInput);
+      
+      // Kombinierte Bedingung
+      const shouldShow = statusMatch && searchMatch;
+      
+      // Zeige oder verstecke Element basierend auf Filtern
+      element.style.display = shouldShow ? '' : 'none';
+    });
+    
+    // KPI-Statistiken aktualisieren
+    updateStats();
+  }
+  
+  // Funktion zum Sortieren der Tabelle
+  function sortTable() {
+    const tbody = document.querySelector('table tbody');
+    
+    // Sortieren der gefilterten Elemente
+    filteredCredentials.sort((a, b) => {
+      // Je nach Spalte und Datentyp entsprechend sortieren
+      let valA, valB;
+      
+      switch(sortField) {
+        case 'id':
+          valA = a.querySelector('td:nth-child(1)').textContent.trim();
+          valB = b.querySelector('td:nth-child(1)').textContent.trim();
+          break;
+        case 'studentId':
+          valA = a.querySelector('td:nth-child(2)').textContent.trim();
+          valB = b.querySelector('td:nth-child(2)').textContent.trim();
+          break;
+        case 'firstName':
+          valA = a.querySelector('td:nth-child(3)').textContent.trim();
+          valB = b.querySelector('td:nth-child(3)').textContent.trim();
+          break;
+        case 'lastName':
+          valA = a.querySelector('td:nth-child(4)').textContent.trim();
+          valB = b.querySelector('td:nth-child(4)').textContent.trim();
+          break;
+        case 'status':
+          valA = a.getAttribute('data-status');
+          valB = b.getAttribute('data-status');
+          break;
+        case 'lastAction':
+          valA = a.querySelector('td:nth-child(6)').textContent.trim();
+          valB = b.querySelector('td:nth-child(6)').textContent.trim();
+          // Datum-Vergleich, falls Datum-String
+          const dateA = new Date(valA);
+          const dateB = new Date(valB);
+          if (!isNaN(dateA) && !isNaN(dateB)) {
+            return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+          }
+          break;
+        default:
+          valA = a.textContent.trim();
+          valB = b.textContent.trim();
+      }
+      
+      // Standardsortierung (String-Vergleich)
+      if (sortDirection === 'asc') {
+        return valA.localeCompare(valB);
+      } else {
+        return valB.localeCompare(valA);
+      }
+    });
+  }
+  
+  // Sortierheader-Event-Listener einrichten
+  function setupSortableHeaders() {
+    const headers = document.querySelectorAll('.sortable');
+    headers.forEach(header => {
+      header.addEventListener('click', () => {
+        const field = header.getAttribute('data-sort');
+        
+        // Wenn auf gleiche Spalte geklickt, Richtung umkehren
+        if (field === sortField) {
+          sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+          // Sonst neue Spalte mit aufsteigender Sortierung
+          sortField = field;
+          sortDirection = 'asc';
+        }
+        
+        // Visuelle Anpassung der Sortierheader
+        updateSortHeadersUI();
+        
+        // Tabelle neu sortieren und anzeigen
+        filterTable();
+      });
+    });
+  }
+  
+  // Aktualisiere die visuelle Darstellung der Sortierheader
+  function updateSortHeadersUI() {
+    const headers = document.querySelectorAll('.sortable');
+    
+    headers.forEach(header => {
+      header.classList.remove('sorted-asc', 'sorted-desc');
+      
+      if (header.getAttribute('data-sort') === sortField) {
+        header.classList.add(sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc');
+      }
+    });
+  }
+  
+  // Paginierung aktualisieren
+  function updatePagination() {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, filteredCredentials.length);
+    
+    // Tabelle aktualisieren - nur sichtbare Elemente anzeigen
+    const allRows = document.querySelectorAll('table tbody tr');
+    allRows.forEach(row => row.style.display = 'none');
+    
+    // Zeige nur die Elemente für die aktuelle Seite
+    for (let i = startIndex; i < endIndex; i++) {
+      if (filteredCredentials[i]) {
+        filteredCredentials[i].style.display = '';
+      }
+    }
+    
+    // Paginierungs-Info aktualisieren
+    updatePaginationInfo(startIndex, endIndex);
+    
+    // Paginierungs-Buttons aktualisieren
+    updatePaginationButtons();
+  }
+  
+  // Paginierungs-Info aktualisieren
+  function updatePaginationInfo(startIndex, endIndex) {
+    document.getElementById('pagination-info').style.display = 
+      filteredCredentials.length > 0 ? '' : 'none';
+    
+    if (filteredCredentials.length > 0) {
+      document.getElementById('page-start').textContent = startIndex + 1;
+      document.getElementById('page-end').textContent = endIndex;
+      document.getElementById('total-items').textContent = filteredCredentials.length;
+    }
+  }
+  
+  // Paginierungs-Buttons aktualisieren
+  function updatePaginationButtons() {
+    const pageCount = Math.ceil(filteredCredentials.length / itemsPerPage);
+    const pageNumbersContainer = document.getElementById('page-numbers');
+    const prevButton = document.getElementById('prev-page');
+    const nextButton = document.getElementById('next-page');
+    
+    // Container erst leeren
+    pageNumbersContainer.innerHTML = '';
+    
+    // Seitenzahl-Buttons generieren (max. 5 Seiten sichtbar)
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(pageCount, startPage + maxVisiblePages - 1);
+    
+    // Anpassung, wenn am Ende
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    // "..." für viele Seiten
+    if (startPage > 1) {
+      const firstPageBtn = document.createElement('button');
+      firstPageBtn.className = 'pagination-button';
+      firstPageBtn.textContent = '1';
+      firstPageBtn.addEventListener('click', () => {
+        currentPage = 1;
+        updatePagination();
+      });
+      pageNumbersContainer.appendChild(firstPageBtn);
+      
+      if (startPage > 2) {
+        const ellipsis = document.createElement('span');
+        ellipsis.className = 'px-2 text-gray-500';
+        ellipsis.textContent = '...';
+        pageNumbersContainer.appendChild(ellipsis);
+      }
+    }
+    
+    // Normale Seitenzahlen
+    for (let i = startPage; i <= endPage; i++) {
+      const pageBtn = document.createElement('button');
+      pageBtn.className = 'pagination-button' + (i === currentPage ? ' active' : '');
+      pageBtn.textContent = i;
+      pageBtn.addEventListener('click', () => {
+        currentPage = i;
+        updatePagination();
+      });
+      pageNumbersContainer.appendChild(pageBtn);
+    }
+    
+    // "..." am Ende für viele Seiten
+    if (endPage < pageCount) {
+      if (endPage < pageCount - 1) {
+        const ellipsis = document.createElement('span');
+        ellipsis.className = 'px-2 text-gray-500';
+        ellipsis.textContent = '...';
+        pageNumbersContainer.appendChild(ellipsis);
+      }
+      
+      const lastPageBtn = document.createElement('button');
+      lastPageBtn.className = 'pagination-button';
+      lastPageBtn.textContent = pageCount;
+      lastPageBtn.addEventListener('click', () => {
+        currentPage = pageCount;
+        updatePagination();
+      });
+      pageNumbersContainer.appendChild(lastPageBtn);
+    }
+    
+    // Vorherige/Nächste Buttons aktivieren/deaktivieren
+    prevButton.disabled = currentPage === 1;
+    nextButton.disabled = currentPage === pageCount || pageCount === 0;
+    
+    // Event-Listener für Prev/Next
+    prevButton.onclick = function() {
+      if (currentPage > 1) {
+        currentPage--;
+        updatePagination();
+      }
+    };
+    
+    nextButton.onclick = function() {
+      if (currentPage < pageCount) {
+        currentPage++;
+        updatePagination();
+      }
+    };
+    
+    // Pagination-Container nur anzeigen, wenn mehr als eine Seite
+    document.getElementById('pagination-container').style.display = 
+      pageCount > 1 ? '' : 'none';
+  }
+  
+  // Hilfsfunktion zum Aktualisieren der KPI-Boxen
+  function updateStats() {
+    let activeCount = 0;
+    let revokedCount = 0;
+    
+    // Zähle die gefilterten Elemente
+    filteredCredentials.forEach(element => {
+      const elementStatus = element.getAttribute('data-status');
+      if (elementStatus === 'active') {
+        activeCount++;
+      } else {
+        revokedCount++;
+      }
+    });
+    
+    const totalCount = activeCount + revokedCount;
+    
+    // Aktualisiere die Anzeige
+    document.getElementById('active-count').textContent = activeCount;
+    document.getElementById('revoked-count').textContent = revokedCount;
+    document.getElementById('total-count').textContent = totalCount;
+    
+    // Visuelle Hervorhebung der KPI-Karten
+    const activeCard = document.querySelector('.kpi-card.active-card');
+    const revokedCard = document.querySelector('.kpi-card.revoked-card');
+    
+    if (totalCount > 0) {
+      const activeRatio = activeCount / totalCount;
+      const revokedRatio = revokedCount / totalCount;
+      
+      activeCard.style.opacity = 0.3 + (activeRatio * 0.7); 
+      revokedCard.style.opacity = 0.3 + (revokedRatio * 0.7);
+    } else {
+      activeCard.style.opacity = 1;
+      revokedCard.style.opacity = 1;
+    }
+  }
+
+  // Tooltip-Funktion für bessere Benutzerführung
+  function setupTooltips() {
+    const tooltips = document.querySelectorAll('.tooltip');
+    tooltips.forEach(tooltip => {
+      const tooltipText = tooltip.querySelector('.tooltip-text');
+      if (!tooltipText) return;
+      
+      tooltip.addEventListener('mouseover', () => {
+        tooltipText.classList.add('opacity-100');
+        tooltipText.classList.remove('opacity-0');
+        tooltipText.classList.remove('invisible');
+      });
+      
+      tooltip.addEventListener('mouseout', () => {
+        tooltipText.classList.add('opacity-0');
+        tooltipText.classList.add('invisible');
+        tooltipText.classList.remove('opacity-100');
+      });
+    });
+  }
+
+  // Initialisiere die Seite beim Laden
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initial alle sichtbaren Reihen sammeln
+    filteredCredentials = Array.from(document.querySelectorAll('table tbody tr'));
+    
+    // Event-Listener für Suchfeld und Filter
+    document.getElementById('search-input').addEventListener('input', filterTable);
+    document.getElementById('status-filter').addEventListener('change', filterTable);
+    
+    // Sortierbare Header einrichten
+    setupSortableHeaders();
+    
+    // Paginierung initialisieren
+    updatePagination();
+    
+    // Tooltips einrichten
+    setupTooltips();
+    
+    // Initialen Fokus auf das Suchfeld setzen
+    setTimeout(() => {
+      const searchInput = document.getElementById('search-input');
+      if (searchInput) searchInput.focus();
+    }, 500);
+  });
+</script>

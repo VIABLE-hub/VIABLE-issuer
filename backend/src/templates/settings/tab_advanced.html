@@ -1,0 +1,198 @@
+<!-- Advanced Tab Content -->
+<div class="settings-fade-in">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+    <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Erweiterte Einstellungen</h3>
+    
+    <!-- API Configuration -->
+    <div class="mb-6">
+      <h4 class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold mb-3">API-Konfiguration</h4>
+      
+      <div class="mb-4">
+        <label class="block text-xs text-gray-700 dark:text-gray-300 mb-2">API-Schlüssel Rotation</label>
+        <div class="flex items-center space-x-2">
+          <input type="number" min="1" value="30" class="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-1 focus:ring-berlin-blue">
+          <span class="text-sm text-gray-700 dark:text-gray-300">Tage</span>
+        </div>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Intervall für die automatische Rotation von API-Schlüsseln</p>
+      </div>
+      
+      <div class="mb-4">
+        <label class="block text-xs text-gray-700 dark:text-gray-300 mb-2">Rate Limiting</label>
+        <div class="flex items-center space-x-2">
+          <input type="number" min="10" value="1000" class="w-28 px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-1 focus:ring-berlin-blue">
+          <span class="text-sm text-gray-700 dark:text-gray-300">Anfragen pro Minute</span>
+        </div>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Maximale API-Anfragen pro Minute</p>
+      </div>
+      
+      <div class="mb-4">
+        <label class="block text-xs text-gray-700 dark:text-gray-300 mb-2">API-Dokumentation</label>
+        <div class="flex items-center mt-2">
+          <label class="inline-flex items-center cursor-pointer">
+            <input type="checkbox" class="sr-only peer" checked>
+            <div class="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:bg-berlin-blue peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+            <span class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300">API-Dokumentation aktivieren</span>
+          </label>
+        </div>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Swagger/OpenAPI-Dokumentation öffentlich zugänglich machen</p>
+      </div>
+      
+      <div class="flex space-x-4 mt-4">
+        <button class="flex items-center px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+          <i class="fas fa-key mr-1.5"></i>API-Schlüssel generieren
+        </button>
+        <button class="flex items-center px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+          <i class="fas fa-book mr-1.5"></i>API-Dokumentation anzeigen
+        </button>
+      </div>
+    </div>
+    
+    <!-- Debug Settings -->
+    <div class="mb-6">
+      <h4 class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold mb-3">Debug-Einstellungen</h4>
+      
+      <div class="mb-4">
+        <label class="block text-xs text-gray-700 dark:text-gray-300 mb-2">Log-Level</label>
+        <select class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-1 focus:ring-berlin-blue">
+          <option value="error">Error</option>
+          <option value="warn">Warning</option>
+          <option value="info" selected>Info</option>
+          <option value="debug">Debug</option>
+          <option value="trace">Trace</option>
+        </select>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Detaillierungsgrad der Protokollierung</p>
+      </div>
+      
+      <div class="mb-4">
+        <label class="block text-xs text-gray-700 dark:text-gray-300 mb-2">Debug-Modus</label>
+        <div class="flex items-center mt-2">
+          <label class="inline-flex items-center cursor-pointer">
+            <input type="checkbox" class="sr-only peer">
+            <div class="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:bg-amber-500 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+            <span class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300">Debug-Modus aktivieren</span>
+          </label>
+        </div>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Aktiviert zusätzliche Debugging-Funktionen und detaillierte Fehlerausgaben</p>
+      </div>
+      
+      <div class="mb-4">
+        <label class="block text-xs text-gray-700 dark:text-gray-300 mb-2">Performance-Profiling</label>
+        <div class="flex items-center mt-2">
+          <label class="inline-flex items-center cursor-pointer">
+            <input type="checkbox" class="sr-only peer">
+            <div class="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:bg-amber-500 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+            <span class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300">Profiling aktivieren</span>
+          </label>
+        </div>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Sammelt detaillierte Performance-Metriken (kann die Systemleistung beeinträchtigen)</p>
+      </div>
+    </div>
+    
+    <!-- Backend Settings -->
+    <div class="mb-6">
+      <h4 class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold mb-3">
+        <span>Systemkonfiguration</span>
+        <span class="text-yellow-400 ml-1">🛠️</span>
+      </h4>
+      
+      <div class="mb-4">
+        <label class="block text-xs text-gray-700 dark:text-gray-300 mb-2">Worker-Prozesse</label>
+        <div class="flex items-center space-x-2">
+          <input type="number" min="1" value="4" class="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-1 focus:ring-berlin-blue">
+          <span class="text-sm text-gray-700 dark:text-gray-300">Prozesse</span>
+        </div>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Anzahl der Worker-Prozesse für die Anwendung</p>
+      </div>
+      
+      <div class="mb-4">
+        <label class="block text-xs text-gray-700 dark:text-gray-300 mb-2">Cache-TTL</label>
+        <div class="flex items-center space-x-2">
+          <input type="number" min="1" value="3600" class="w-28 px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-1 focus:ring-berlin-blue">
+          <span class="text-sm text-gray-700 dark:text-gray-300">Sekunden</span>
+        </div>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Time-to-live für Cache-Einträge</p>
+      </div>
+      
+      <div class="mb-4">
+        <label class="block text-xs text-gray-700 dark:text-gray-300 mb-2">Temporäre Dateien</label>
+        <input type="text" value="/tmp/stvc" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-1 focus:ring-berlin-blue">
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Verzeichnis für temporäre Dateien</p>
+      </div>
+    </div>
+    
+    <!-- Maintenance -->
+    <div>
+      <h4 class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold mb-3">Wartung</h4>
+      
+      <div class="flex flex-wrap gap-3">
+        <button class="flex items-center px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+          <i class="fas fa-redo-alt mr-1.5"></i>Cache leeren
+        </button>
+        <button class="flex items-center px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+          <i class="fas fa-database mr-1.5"></i>Datenbank optimieren
+        </button>
+        <button class="flex items-center px-4 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition-colors">
+          <i class="fas fa-tools mr-1.5"></i>Wartungsmodus
+        </button>
+        <button class="flex items-center px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors">
+          <i class="fas fa-power-off mr-1.5"></i>Neustart
+        </button>
+      </div>
+    </div>
+    
+    <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+      <div class="flex justify-end space-x-3">
+        <button class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">Zurücksetzen</button>
+        <button class="px-4 py-2 bg-berlin-blue text-white rounded-md hover:bg-blue-700 transition-colors">Änderungen speichern</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+    <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">System-Logs</h3>
+    
+    <div class="mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex space-x-2">
+          <select class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-1 focus:ring-berlin-blue">
+            <option value="all">Alle Logs</option>
+            <option value="error">Fehler</option>
+            <option value="warning">Warnungen</option>
+            <option value="info">Info</option>
+          </select>
+          <input type="text" placeholder="Suche in Logs..." class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-1 focus:ring-berlin-blue">
+        </div>
+        <button class="flex items-center text-xs px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+          <i class="fas fa-download mr-1.5"></i>Logs herunterladen
+        </button>
+      </div>
+      
+      <div class="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3">
+        <pre class="text-xs font-mono text-gray-800 dark:text-gray-200 whitespace-pre-wrap max-h-64 overflow-y-auto p-2">
+[2025-06-15 08:34:12] [INFO] Server gestartet auf Port 8080
+[2025-06-15 08:35:27] [INFO] Neue Verbindung: 192.168.1.105
+[2025-06-15 08:36:45] [INFO] Credential ausgestellt: VC-12345
+[2025-06-15 08:40:12] [WARNING] Hohe CPU-Auslastung: 85%
+[2025-06-15 08:42:37] [ERROR] Datenbankverbindung unterbrochen - Neuverbindung wird versucht
+[2025-06-15 08:42:42] [INFO] Datenbankverbindung wiederhergestellt
+[2025-06-15 08:45:21] [INFO] API-Anfrage: /api/v1/credentials (GET)
+[2025-06-15 08:47:18] [INFO] Systemupdate verfügbar: v2.5.3
+[2025-06-15 08:52:36] [WARNING] Langsame Abfrage: SELECT * FROM credentials WHERE issuer_id = ? (2.5s)
+[2025-06-15 09:01:22] [INFO] Cache aktualisiert
+        </pre>
+      </div>
+      
+      <div class="flex justify-between items-center mt-3">
+        <div class="flex space-x-2">
+          <button class="flex items-center text-xs px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+            <i class="fas fa-chevron-left mr-1.5"></i>Vorherige
+          </button>
+          <button class="flex items-center text-xs px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+            Nächste<i class="fas fa-chevron-right ml-1.5"></i>
+          </button>
+        </div>
+        <span class="text-xs text-gray-500 dark:text-gray-400">Seite 1 von 5</span>
+      </div>
+    </div>
+  </div>
+</div>

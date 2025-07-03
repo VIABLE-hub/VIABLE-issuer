@@ -1,0 +1,265 @@
+{% extends "verifier_base.html" %}
+
+{% block usecase_title %}Gesundheitswesen | StudentVC{% endblock %}
+
+{% block style_overrides %}
+<!-- Gesundheits-Theme -->
+:root {
+  --theme-primary: #1e88e5;
+  --theme-primary-dark: #1565c0;
+  --theme-primary-light: #42a5f5;
+  --theme-secondary: #26a69a;
+  --theme-accent: #29b6f6;
+  --theme-info-bg: rgba(30, 136, 229, 0.1);
+  --theme-info-border: rgba(30, 136, 229, 0.5);
+  --theme-info-text: #1565c0;
+}
+
+/* Dark mode theme overrides */
+.dark {
+  --theme-primary: #42a5f5;
+  --theme-primary-dark: #1e88e5;
+  --theme-primary-light: #90caf9;
+  --theme-secondary: #4db6ac;
+  --theme-accent: #4fc3f7;
+  --theme-info-bg: rgba(66, 165, 245, 0.2);
+  --theme-info-border: rgba(66, 165, 245, 0.5);
+  --theme-info-text: #90caf9;
+}
+
+.verification-step.health-verified {
+  background-color: rgba(30, 136, 229, 0.1);
+  border-left: 3px solid var(--theme-primary);
+}
+
+.dark .verification-step.health-verified {
+  background-color: rgba(66, 165, 245, 0.2);
+  border-left: 3px solid var(--theme-primary);
+}
+
+/* Feature boxes - health specific */
+.health-feature-box {
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.dark .health-feature-box {
+  background-color: #1f2937;
+  border: 1px solid #374151;
+}
+
+.health-feature-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.dark .health-feature-box:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Wissenschaftliches Diagramm */
+.scientific-diagram {
+  background: rgba(30, 136, 229, 0.05);
+  border: 1px dashed rgba(30, 136, 229, 0.3);
+  padding: 1rem;
+  position: relative;
+}
+
+.dark .scientific-diagram {
+  background: rgba(66, 165, 245, 0.1);
+  border: 1px dashed rgba(66, 165, 245, 0.4);
+}
+
+.diagram-step {
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.diagram-step:before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 1px;
+  background-color: rgba(30, 136, 229, 0.4);
+}
+
+.diagram-step:last-child:before {
+  height: 50%;
+}
+
+.diagram-step:after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.75rem;
+  height: 8px;
+  width: 8px;
+  margin-left: -4px;
+  border-radius: 50%;
+  background-color: var(--theme-primary);
+}
+
+.diagram-step-label {
+  font-weight: 600;
+  color: var(--theme-primary);
+  margin-bottom: 0.25rem;
+}
+{% endblock %}
+
+{% block usecase_icon %}
+<div class="bg-blue-100 dark:bg-blue-800/40 w-12 h-12 rounded-full flex items-center justify-center mb-3">
+  <i class="fas fa-heartbeat text-blue-700 dark:text-blue-300 text-xl"></i>
+</div>
+{% endblock %}
+
+{% block usecase_heading %}Gesundheitswesen{% endblock %}
+
+{% block usecase_description %}
+Datenschutzkonforme Zertifikate für medizinische Nachweise mit Zero-Knowledge Verifikation
+{% endblock %}
+
+{% block usecase_top %}
+<div class="bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden mb-6">
+  <div class="p-6">
+    <div class="mb-8">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Kryptographisch sichere Gesundheitsnachweise</h2>
+      <p class="text-gray-700 dark:text-gray-300">
+        Im Gesundheitswesen können Verifiable Credentials für die datenschutzkonforme Verifizierung medizinischer Zertifikate, Arztbesuche und 
+        Versicherungsnachweise eingesetzt werden. Mit BBS+ Signaturen lassen sich selektive Enthüllungen umsetzen.
+      </p>
+      
+      <div class="info-block bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 dark:border-blue-400 p-4 rounded mt-4 mb-6">
+        <h4 class="font-semibold text-blue-800 dark:text-blue-300 mb-2">Anwendungsfälle mit kryptographischen Nachweisen:</h4>
+        <ul class="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">
+          <li>Minimale Datenweitergabe: Patient kann nur Impfstatus nachweisen, ohne weitere Gesundheitsdaten offenzulegen</li>
+          <li>Prüfbare Herkunft: Verifizierung der ausstellenden medizinischen Einrichtung (z.B. Krankenhaus, Praxis)</li>
+          <li>Beweisbare Eigenschaften: Nachweis ohne Identitätspreisgabe (z.B. "älter als 18" für klinische Studien)</li>
+          <li>Fachauthentifizierung: Medizinisches Personal kann Qualifikationen belegen ohne sensible Personendaten preiszugeben</li>
+          <li>Versicherungsnachweise: Kostenträger können verifiziert werden ohne Offenlegung aller Versicherungsdetails</li>
+        </ul>
+      </div>
+      
+      <!-- Wissenschaftliches Diagramm -->
+      <div class="scientific-diagram rounded-lg mt-8 mb-6">
+        <h4 class="text-blue-800 dark:text-blue-300 font-medium text-sm mb-4">Zero-Knowledge Verifikationsprozess (BBSVC+)</h4>
+        
+        <div class="space-y-6">
+          <div class="diagram-step">
+            <div class="diagram-step-label text-sm">1. Schlüsselgenerierung (Aussteller)</div>
+            <p class="text-xs text-gray-600 dark:text-gray-400">
+              Generator g ∈ G₁, secret key sk ∈ ℤₚ*, public key pk = g^sk ∈ G₁
+            </p>
+          </div>
+          
+          <div class="diagram-step">
+            <div class="diagram-step-label text-sm">2. Credential-Signatur</div>
+            <p class="text-xs text-gray-600 dark:text-gray-400">
+              Für Nachrichten m₁,...,mₙ: σ = H(g, pk, m₁,...,mₙ)^sk ∈ G₁
+            </p>
+          </div>
+          
+          <div class="diagram-step">
+            <div class="diagram-step-label text-sm">3. Selektive Offenlegung</div>
+            <p class="text-xs text-gray-600 dark:text-gray-400">
+              Holder wählt Index-Menge D ⊂ {1,...,n} für offengelegte Nachrichten
+            </p>
+          </div>
+          
+          <div class="diagram-step">
+            <div class="diagram-step-label text-sm">4. Zero-Knowledge Beweis</div>
+            <p class="text-xs text-gray-600 dark:text-gray-400">
+              π = ZKP(pk, {mᵢ}ᵢ∈ᴅ, knowledge of: {mⱼ}ⱼ∉ᴅ, σ valid)
+            </p>
+          </div>
+          
+          <div class="diagram-step">
+            <div class="diagram-step-label text-sm">5. Verifikation</div>
+            <p class="text-xs text-gray-600 dark:text-gray-400">
+              Verify(pk, {mᵢ}ᵢ∈ᴅ, π) → {true, false}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-4 mb-6">
+        <div class="health-feature-box flex items-center px-3 py-2 rounded-lg shadow-sm">
+          <i class="fas fa-lock text-blue-600 dark:text-blue-400 mr-2"></i>
+          <span class="text-gray-700 dark:text-gray-300">DSGVO-konform</span>
+        </div>
+        <div class="health-feature-box flex items-center px-3 py-2 rounded-lg shadow-sm">
+          <i class="fas fa-shield-alt text-blue-600 dark:text-blue-400 mr-2"></i>
+          <span class="text-gray-700 dark:text-gray-300">End-to-End Verschlüsselung</span>
+        </div>
+        <div class="health-feature-box flex items-center px-3 py-2 rounded-lg shadow-sm">
+          <i class="fas fa-user-shield text-blue-600 dark:text-blue-400 mr-2"></i>
+          <span class="text-gray-700 dark:text-gray-300">Self-Sovereign</span>
+        </div>
+        <div class="health-feature-box flex items-center px-3 py-2 rounded-lg shadow-sm">
+          <i class="fas fa-certificate text-blue-600 dark:text-blue-400 mr-2"></i>
+          <span class="text-gray-700 dark:text-gray-300">HL7 FHIR-kompatibel</span>
+        </div>
+      </div>
+
+      <!-- Kompatibilität mit wissenschaftlichen Standards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8 mb-4">
+        <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+          <h5 class="text-sm font-medium text-blue-800 dark:text-blue-300 mb-2">Technische Standards</h5>
+          <ul class="space-y-2 text-sm">
+            <li class="flex items-center text-gray-700 dark:text-gray-300">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+              </svg>
+              HL7 FHIR R4 (Fast Healthcare Interoperability Resources)
+            </li>
+            <li class="flex items-center text-gray-700 dark:text-gray-300">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+              </svg>
+              IHE XDS.b (Cross-Enterprise Document Sharing)
+            </li>
+            <li class="flex items-center text-gray-700 dark:text-gray-300">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+              </svg>
+              DICOM (Digital Imaging and Communications in Medicine)
+            </li>
+          </ul>
+        </div>
+        <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+          <h5 class="text-sm font-medium text-blue-800 dark:text-blue-300 mb-2">Kryptographische Eigenschaften</h5>
+          <ul class="space-y-2 text-sm">
+            <li class="flex items-center text-gray-700 dark:text-gray-300">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+              </svg>
+              Post-Quantum-sichere DID-Methode
+            </li>
+            <li class="flex items-center text-gray-700 dark:text-gray-300">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+              </svg>
+              Blinding-Resistente Signaturen
+            </li>
+            <li class="flex items-center text-gray-700 dark:text-gray-300">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+              </svg>
+              Kompakte Nicht-Interaktive Beweise
+            </li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="text-sm text-gray-600 dark:text-gray-400">
+        <p class="mb-4">
+          Scannen Sie den QR-Code, um ein Beispiel-Credential für medizinische Nachweise zu verifizieren oder um eigene Gesundheitsnachweise 
+          mit kryptographischen Zero-Knowledge-Beweisen zu validieren.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
