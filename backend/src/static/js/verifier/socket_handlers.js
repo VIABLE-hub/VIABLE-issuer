@@ -120,8 +120,8 @@ document.addEventListener('DOMContentLoaded', function() {
         updateProgressBar();
         
         // Enhanced success notification with issuer information
-        // TODO ADD: Make issuer dynamic based on tenant (root, TU Berlin, FU Berlin, etc.)
-        const issuerInfo = 'root'; // Default issuer - should be fetched from tenant settings
+        // Use dynamic issuer from backend response, fallback to 'root' if not provided
+        const issuerInfo = msg.issuer || 'root'; // Get issuer from backend response
         addStatusFeedEntry(`🎉 Verifikation erfolgreich abgeschlossen!<br/>✅ Gültiger Studierendenausweis ausgestellt von <strong>${issuerInfo}</strong>`, 'success');
         
         // Display transmitted field values
@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateProgressBar();
         
         // Enhanced success notification with issuer information (legacy support)
-        const issuerInfo = 'root'; // Default issuer - should be fetched from tenant settings
+        const issuerInfo = msg.issuer || 'root'; // Get issuer from backend response, fallback to 'root'
         addStatusFeedEntry(`🎉 Verifikation erfolgreich abgeschlossen!<br/>✅ Gültiger Studierendenausweis ausgestellt von <strong>${issuerInfo}</strong>`, 'success');
         
         if (msg.credential_data && msg.credential_data.disclosure_summary) {

@@ -152,7 +152,18 @@ document.addEventListener('alpine:init', () => {
       this.networkData = {};
       this.networkConfigUpdating = false;
       this.testingConnection = false;
-      this.connectionTestResults = null;
+      this.connectionTestResults = {
+        components: {
+          issuer: { success: false, message: 'Not tested', ip: '-', latency: null },
+          verifier: { success: false, message: 'Not tested', ip: '-', latency: null },
+          api: { success: false, message: 'Not tested', ip: '-', latency: null },
+          network: { success: false, message: 'Not tested', ip: '-', latency: null }
+        },
+        message: 'Click test button to run connection diagnostics',
+        success: false,
+        tests_passed: 0,
+        tests_total: 4
+      };
       this.ngrokDomain = '';
       this.useNgrok = false;
       this.useHttps = true;
@@ -387,10 +398,10 @@ document.addEventListener('alpine:init', () => {
             this.loadDatabaseData();
         this.loadBackupList();
             break;
-          case 'network':
-            // Use the simplified endpoint for better reliability
-            this.loadSimplifiedNetworkData();
-            break;
+                  case 'network':
+          // Use the debug endpoint for correct network information
+          this.loadNetworkSettings();
+          break;
           case 'api':
             this.loadApiKeys();
             break;
@@ -1783,7 +1794,18 @@ document.addEventListener('alpine:init', () => {
       }
       
       this.testingConnection = true;
-      this.connectionTestResults = null;
+      this.connectionTestResults = {
+        components: {
+          issuer: { success: false, message: 'Testing...', ip: '-', latency: null },
+          verifier: { success: false, message: 'Testing...', ip: '-', latency: null },
+          api: { success: false, message: 'Testing...', ip: '-', latency: null },
+          network: { success: false, message: 'Testing...', ip: '-', latency: null }
+        },
+        message: 'Testing NGROK connection...',
+        success: false,
+        tests_passed: 0,
+        tests_total: 4
+      };
       
       fetch('/api/system/network/test-ngrok', {
         method: 'GET',
@@ -1876,7 +1898,18 @@ document.addEventListener('alpine:init', () => {
     
     testConnection() {
       this.testingConnection = true;
-      this.connectionTestResults = null;
+      this.connectionTestResults = {
+        components: {
+          issuer: { success: false, message: 'Testing...', ip: '-', latency: null },
+          verifier: { success: false, message: 'Testing...', ip: '-', latency: null },
+          api: { success: false, message: 'Testing...', ip: '-', latency: null },
+          network: { success: false, message: 'Testing...', ip: '-', latency: null }
+        },
+        message: 'Testing connections...',
+        success: false,
+        tests_passed: 0,
+        tests_total: 4
+      };
       
       fetch('/api/system/network/test', {
         method: 'POST',
@@ -1951,7 +1984,18 @@ document.addEventListener('alpine:init', () => {
     // Fallback function for testing network connections
     testConnectionFallback() {
       this.testingConnection = true;
-      this.connectionTestResults = null;
+      this.connectionTestResults = {
+        components: {
+          issuer: { success: false, message: 'Testing...', ip: '-', latency: null },
+          verifier: { success: false, message: 'Testing...', ip: '-', latency: null },
+          api: { success: false, message: 'Testing...', ip: '-', latency: null },
+          network: { success: false, message: 'Testing...', ip: '-', latency: null }
+        },
+        message: 'Testing connections (fallback method)...',
+        success: false,
+        tests_passed: 0,
+        tests_total: 4
+      };
       
       console.log('🌐 Using fallback network test method');
       
@@ -2391,6 +2435,7 @@ document.addEventListener('alpine:init', () => {
           return response.json();
         })
         .then(data => {
+          console.log('🌐 Connection test response:', data);
           if (data.success) {
             // Count successful tests
             const results = data.results || {};
@@ -2401,11 +2446,19 @@ document.addEventListener('alpine:init', () => {
             
             this.showNotification(`Local connection test successful! (${successCount}/${totalCount} components working)`, 'success');
             
-            // Store results for display if needed
-            this.connectionTestResults = data;
+            // Transform backend response format to match template expectations
+            this.connectionTestResults = {
+              message: data.message || `Connection test completed: ${successCount}/${totalCount} services accessible`,
+              success: data.success,
+              components: this.transformTestResults(results)
+            };
           } else {
             this.showNotification('Local connection test failed: ' + data.message, 'error');
-            this.connectionTestResults = data;
+            this.connectionTestResults = {
+              message: data.message || 'Connection test failed',
+              success: false,
+              components: this.transformTestResults(data.results || {})
+            };
           }
         })
         .catch(error => {
@@ -2415,6 +2468,39 @@ document.addEventListener('alpine:init', () => {
         .finally(() => {
           this.testingConnection = false;
         });
+    },
+
+    transformTestResults(results) {
+      // Transform backend test results format to match template expectations
+      const transformed = {};
+      
+      for (const [componentName, result] of Object.entries(results)) {
+        transformed[componentName] = {
+          success: result.status === 'success',
+          latency: result.latency_ms || result.latency || null,
+          ip: this.extractIpFromUrl(result.url) || this.networkData?.local_ip || '192.168.178.122',
+          message: result.message || (result.status === 'success' ? 'OK' : 'Failed')
+        };
+      }
+      
+      console.log('🔧 Transformed test results:', transformed);
+      return transformed;
+    },
+
+    extractIpFromUrl(url) {
+      if (!url) return null;
+      try {
+        const urlObj = new URL(url);
+        const hostname = urlObj.hostname;
+        // Return IP if it's an IP address, otherwise return null
+        if (/^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+          return hostname;
+        }
+        // For localhost/domain names, return the current network IP
+        return this.networkData?.local_ip || null;
+      } catch (e) {
+        return null;
+      }
     },
 
     testNgrokConnection() {
@@ -2441,11 +2527,12 @@ document.addEventListener('alpine:init', () => {
           return response.json();
         })
         .then(data => {
-          if (data.success) {
-            const responseTime = data.data?.latency_ms || 'N/A';
+          console.log('🚇 NGROK test response:', data);
+          if (data.status === 'success') {
+            const responseTime = data.test_result?.latency_ms || data.data?.latency_ms || 'N/A';
             this.showNotification(`NGROK connection test successful! (${responseTime}ms)`, 'success');
           } else {
-            this.showNotification('NGROK connection test failed: ' + data.message, 'error');
+            this.showNotification('NGROK connection test failed: ' + (data.message || 'Unknown error'), 'error');
           }
         })
         .catch(error => {

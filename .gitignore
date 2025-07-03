@@ -282,10 +282,6 @@ backend/instance_backup_*/
 *.crt
 *.p12
 *.pfx
-bbs_private.pem
-bbs_public.pem
-private.pem
-public.pem
 
 # Environment variables and secrets
 .env
@@ -309,7 +305,6 @@ settings_default.json
 *.dylib
 *.dll
 *.so
-libbbs_core.dylib
 
 # ============================================================================
 # LOG FILES - IGNORE ALL
@@ -440,8 +435,7 @@ Thumbs.db
 # ============================================================================
 # CURSOR AI & VS CODE
 # ============================================================================
-.cursor/
-.lh/
+
 .lhignore
 
 # ============================================================================
@@ -552,6 +546,7 @@ ehthumbs.db
 
 # Ensure these directories are included (structure only)
 !backend/
+!backend/bbs-core/
 !frontend/
 mobile/
 !docs/

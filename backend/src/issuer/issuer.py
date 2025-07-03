@@ -125,6 +125,13 @@ def index():
     logger.info(f"🩺 Received form data: {credential_data}")
     logger.info(f"🩺 Received files: {request.files}")
     
+    # 🔧 DEBUG: Log the color values specifically
+    logger.info(f"🎨 COLOR DEBUG - Form colors received:")
+    logger.info(f"🎨   bgColorCard: {credential_data.get('theme[bgColorCard]')}")
+    logger.info(f"🎨   bgColorSectionTop: {credential_data.get('theme[bgColorSectionTop]')}")
+    logger.info(f"🎨   bgColorSectionBot: {credential_data.get('theme[bgColorSectionBot]')}")
+    logger.info(f"🎨   fgColorTitle: {credential_data.get('theme[fgColorTitle]')}")
+    
     # Get tenant-specific VC branding configuration
     try:
         from ..tenants.registry import get_current_tenant_config
@@ -281,6 +288,13 @@ def index():
     logger.info(f"🩺 Sending form data back to template: {list(form_data.keys())}")
     logger.info(f"🩺 QR code generated, credential link: {link}")
     logger.info(f"🩺 HERZCHIRURG DEBUG - COMPLETE FORM_DATA: {form_data}")
+    
+    # 🔧 DEBUG: Log the final color values being sent to template
+    logger.info(f"🎨 COLOR DEBUG - Final colors in form_data:")
+    logger.info(f"🎨   theme_bgColorCard: {form_data.get('theme_bgColorCard')}")
+    logger.info(f"🎨   theme_bgColorSectionTop: {form_data.get('theme_bgColorSectionTop')}")
+    logger.info(f"🎨   theme_bgColorSectionBot: {form_data.get('theme_bgColorSectionBot')}")
+    logger.info(f"🎨   theme_fgColorTitle: {form_data.get('theme_fgColorTitle')}")
     
     # 🩺 HERZCHIRURG FIX: Gib sowohl den QR-Code als auch die Formulardaten zurück
     return render_template("issuer.html", img_data=img, form_data=form_data, credential_link=link)

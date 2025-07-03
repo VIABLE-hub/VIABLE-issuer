@@ -4,7 +4,7 @@ services:
   # TU Berlin (TUB) Tenant Service
   studentvc-tub:
     build:
-      context: ../backend
+      context: ../../backend
       dockerfile: Dockerfile
     container_name: studentvc-tub
     ports:
@@ -21,7 +21,7 @@ services:
     volumes:
       - tub_data:/app/data
       - tub_static:/app/static
-      - ../backend/src/tenants/instances/tub:/app/tenants/tub:ro
+      - ../../backend/src/tenants/instances/tub:/app/tenants/tub:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
@@ -37,7 +37,7 @@ services:
   # Freie Universität Berlin (FUB) Tenant Service  
   studentvc-fub:
     build:
-      context: ../backend
+      context: ../../backend
       dockerfile: Dockerfile
     container_name: studentvc-fub
     ports:
@@ -54,7 +54,7 @@ services:
     volumes:
       - fub_data:/app/data
       - fub_static:/app/static
-      - ../backend/src/tenants/instances/fub:/app/tenants/fub:ro
+      - ../../backend/src/tenants/instances/fub:/app/tenants/fub:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
@@ -70,7 +70,7 @@ services:
   # Root/Default Tenant Service
   studentvc-root:
     build:
-      context: ../backend
+      context: ../../backend
       dockerfile: Dockerfile
     container_name: studentvc-root
     ports:
@@ -87,7 +87,7 @@ services:
     volumes:
       - root_data:/app/data
       - root_static:/app/static
-      - ../backend/src/tenants/instances/root:/app/tenants/root:ro
+      - ../../backend/src/tenants/instances/root:/app/tenants/root:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]

@@ -375,8 +375,18 @@ def direct_post():
             logger.warning("This may indicate a field categorization problem")
         
         # Send the final success SocketIO event with enhanced issuer information
-        # TODO: Make issuer dynamic based on tenant (root, TU Berlin, FU Berlin, etc.)
-        issuer_info = 'root'  # Default issuer - should be fetched from tenant settings
+        # Get dynamic issuer info based on current tenant
+        from ..tenants.detection import get_current_tenant_id
+        from ..tenants.config_manager import get_tenant_config
+        
+        current_tenant = get_current_tenant_id()
+        tenant_config = get_tenant_config(current_tenant)
+        issuer_info = tenant_config.get('displayName', current_tenant) if tenant_config else current_tenant
+        
+        # 🔧 DEBUG: Log tenant detection details
+        logger.info(f"🔧 VERIFICATION DEBUG: Detected tenant = '{current_tenant}'")
+        logger.info(f"🔧 VERIFICATION DEBUG: Tenant config = {tenant_config}")
+        logger.info(f"🔧 VERIFICATION DEBUG: Final issuer_info = '{issuer_info}'")
         
         socketio.emit('verification_result', {
             'status': 'success',

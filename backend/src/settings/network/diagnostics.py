@@ -99,26 +99,60 @@ def api_test_connection():
             return jsonify({"test_urls": test_urls}), 200
             
         elif request.method == "POST":
-            # Get URLs to test from request
-            if not request.is_json:
-                return jsonify({"status": "error", "message": "Invalid request format, expected JSON"}), 400
-                
-            data = request.get_json()
-            urls = data.get("urls", {})
-            timeout = data.get("timeout", 5)
+            # Get URLs to test from request - handle empty/malformed JSON gracefully
+            try:
+                if request.is_json and request.get_json():
+                    data = request.get_json()
+                    urls = data.get("urls", {})
+                    timeout = data.get("timeout", 5)
+                else:
+                    # Use default URLs if no JSON data provided
+                    logger.info("No JSON data provided, using default connection test URLs")
+                    data = {}
+                    urls = {}
+                    timeout = 5
+            except Exception as json_error:
+                logger.warning(f"Failed to parse JSON request, using defaults: {json_error}")
+                data = {}
+                urls = {}
+                timeout = 5
+            
+            # If no URLs provided, use default test URLs
+            if not urls:
+                tenant_id = get_current_tenant()
+                server_url = current_app.config.get('SERVER_URL', 'https://localhost:8080')
+                urls = {
+                    "issuer": f"{server_url}/issuer",
+                    "verifier": f"{server_url}/verifier", 
+                    "api": f"{server_url}/api/health",
+                    "network": f"{server_url}/api/system/network/debug"
+                }
             
             # Test each URL
             results = {}
             for name, url in urls.items():
                 results[name] = test_http_connection(url, timeout)
             
+            # Count successful tests
+            successful_tests = sum(1 for result in results.values() if result["status"] == "success")
+            total_tests = len(results)
+            
             return jsonify({
-                "status": "success",
-                "results": results
+                "success": True,
+                "results": results,
+                "tests_passed": successful_tests,
+                "tests_total": total_tests,
+                "message": f"Connection test completed: {successful_tests}/{total_tests} services accessible"
             }), 200
     except Exception as e:
         logger.error(f"Error testing connection: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({
+            "success": False,
+            "message": f"Connection test failed: {str(e)}",
+            "results": {},
+            "tests_passed": 0,
+            "tests_total": 0
+        }), 200  # Return 200 to avoid triggering frontend HTTP error handling
 
 def api_local_ip():
     """
