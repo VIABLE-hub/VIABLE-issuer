@@ -1,7 +1,7 @@
-# Production-Ready Python Flask Application Dockerfile with Rust for BBS+ Core
-FROM python:3.11.4-slim
+# StudentVC Docker with REAL BBS+ Core Compilation
+FROM python:3.11-slim AS base
 
-# Install system dependencies for Rust, BBS+ core, and general app requirements
+# Install system dependencies for Rust, BBS+ core compilation, and application
 RUN apt-get update && apt-get install -y \
     gcc \
     python3-dev \
@@ -9,59 +9,82 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     pkg-config \
     libssl-dev \
+    libclang-dev \
+    openssl \
+    git \
     && rm -rf /var/lib/apt/lists/*
-
-# Install Rust (required for BBS+ core compilation)
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Set working directory
 WORKDIR /app
 
 # Copy requirements and install Python dependencies
-COPY requirements.txt /app/
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy BBS+ core source code first (for compilation)
+# BBS+ core build stage - this builds the Linux-compatible bindings
+FROM base AS bbs-builder
+
+# Install Rust (required for BBS+ core compilation)
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Install maturin (better interface for Python-Rust builds)
+RUN pip install --no-cache-dir maturin
+
+# Copy BBS+ core source code
 COPY bbs-core/ /app/bbs-core/
 
-# Compile BBS+ core library with proper cleanup
+# Build the BBS+ core
 WORKDIR /app/bbs-core
-RUN cargo clean && \
-    cargo build --release && \
-    rm -rf python/*.py python/*.so python/*.dylib 2>/dev/null || true && \
-    cargo run --bin uniffi-bindgen --features="uniffi/cli" generate --library target/release/libbbs_core.so --language python --out-dir python/
+RUN mkdir -p python
+RUN rm -f python/bbs_core.py python/uniffi_bbs_core.dll python/libuniffi_bbs_core.so python/libuniffi_bbs_core.dylib
+RUN cargo build --lib --release
+RUN cargo run --features=uniffi/cli --bin uniffi-bindgen generate src/lib.udl --language python --out-dir target/python
+RUN cp target/release/libbbs_core.so python/libuniffi_bbs_core.so
+RUN cp target/python/bbs_core.py python/bbs_core.py
 
-# Copy the compiled library to the expected location
-RUN cp target/release/libbbs_core.so /app/libbbs_core.so
+# Test the BBS+ core (optional but recommended)
+WORKDIR /app/bbs-core/python
+RUN python -c "import bbs_core; print('✅ BBS+ core built and loaded successfully'); key_pair = bbs_core.GenerateKeyPair().generate_key_pair(); print(f'✅ Key pair generated: Public key: {len(key_pair.dpub_key_bytes)} bytes, Private key: {len(key_pair.priv_key_bytes)} bytes')"
 
-# Return to app directory
-WORKDIR /app
+# Main application stage
+FROM base AS app
 
-# Copy application files
-COPY main.py /app/
-COPY gunicorn.conf.py /app/
-COPY src/ /app/src/
-COPY bbs_core_simple.py /app/
-COPY bbs_core.py /app/
+# Copy application code
+COPY . .
 
-# Create necessary directories and set permissions
-RUN mkdir -p /app/data /app/static /app/logs \
-    && chmod +x /app/libbbs_core.so \
-    && chmod +x /app/bbs-core/target/release/libbbs_core.so 2>/dev/null || true \
-    && chmod +x /app/bbs-core/python/libbbs_core.dylib 2>/dev/null || true
+# Copy the BBS+ core files from the bbs-builder stage
+COPY --from=bbs-builder /app/bbs-core/python/libuniffi_bbs_core.so /app/
+COPY --from=bbs-builder /app/bbs-core/python/bbs_core.py /app/
 
-# Set Python path to include BBS+ core
-ENV PYTHONPATH=/app:/app/bbs-core/python:/app/src
-ENV BBS_CORE_PATH=/app/bbs-core/python
-ENV LD_LIBRARY_PATH=/app:/app/bbs-core/target/release:${LD_LIBRARY_PATH}
+# Create required directories
+RUN mkdir -p /app/instance
+RUN mkdir -p /app/data
+RUN mkdir -p /app/static
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
+# Make sure scripts are executable
+RUN chmod +x /app/src/static/js/*.js
 
-# Expose port
+# Set Python path to include the app directory
+ENV PYTHONPATH=/app
+
+# Environment settings
+ENV SERVER_HOST=0.0.0.0
+ENV SERVER_PORT=8080
+ENV DATABASE_PATH=/app/data
+
+# Expose port for web interface
 EXPOSE 8080
 
-# Run the Python service
-ENTRYPOINT ["python", "main.py"]
+# Run the application
+CMD ["python", "main.py"]
+
+# BBS test target - use this for isolated BBS testing
+FROM bbs-builder AS bbs-test
+
+# Create a test script
+WORKDIR /app/bbs-core/python
+RUN echo 'import bbs_core\nprint("✅ BBS+ core loaded successfully on Linux")\n\nkey_gen = bbs_core.GenerateKeyPair()\nkey_pair = key_gen.generate_key_pair()\n\npublic_key = key_pair.dpub_key_bytes\nprivate_key = key_pair.priv_key_bytes\n\nprint(f"✅ Public key (dpub_key_bytes): {len(public_key)} bytes")\nprint(f"✅ Private key (priv_key_bytes): {len(private_key)} bytes")\n\nprint("\\n✅ BBS+ TEST SUCCESSFUL! The library works correctly on Linux.")' > test.py
+
+# Run the test on container start
+CMD ["python", "test.py"]

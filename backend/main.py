@@ -19,6 +19,56 @@ def get_local_ip():
         pass
     return "127.0.0.1"
 
+def get_ssl_context():
+    """Get SSL context based on environment (Docker vs development)"""
+    # 🚀 DOCKER NETWORK FIX: Use Docker-specific SSL certificates if available
+    if os.environ.get('DOCKER_MODE') == 'true':
+        ssl_cert_path = os.environ.get('SSL_CERT_PATH', '/app/docker-cert.pem')
+        ssl_key_path = os.environ.get('SSL_KEY_PATH', '/app/docker-key.pem')
+        
+        # Check if Docker SSL certificates exist
+        if os.path.exists(ssl_cert_path) and os.path.exists(ssl_key_path):
+            print(f"🔒 Using Docker SSL certificates: {ssl_cert_path}")
+            return (ssl_cert_path, ssl_key_path)
+        else:
+            print("⚠️  Docker SSL certificates not found, falling back to adhoc")
+            return "adhoc"
+    else:
+        # Development mode: use adhoc certificates
+        print("🔒 Using adhoc SSL certificates for development")
+        return "adhoc"
+
+def get_server_configuration():
+    """Get server configuration based on environment"""
+    LOCAL_IP = get_local_ip()
+    FLASK_PORT = int(os.environ.get('SERVER_PORT', 8080))
+    
+    # Docker mode configuration
+    if os.environ.get('DOCKER_MODE') == 'true':
+        host = "0.0.0.0"  # Allow external connections in Docker
+        ssl_context = get_ssl_context()
+        print("🐳 Docker mode detected")
+        print(f"🌐 Binding to: {host}:{FLASK_PORT}")
+        print(f"🔒 SSL Context: {ssl_context}")
+        print(f"🌐 Local IP: {LOCAL_IP}")
+        print("📡 Network mode: Docker container with external access")
+    else:
+        # Development mode configuration
+        host = "0.0.0.0"
+        ssl_context = "adhoc"
+        print("🛠️  Development mode detected")
+        print(f"🌐 Binding to: {host}:{FLASK_PORT}")
+        print(f"🔒 SSL Context: {ssl_context}")
+        print(f"🌐 Local IP: {LOCAL_IP}")
+        print("📡 Network mode: Local development with WiFi access")
+    
+    return {
+        'host': host,
+        'port': FLASK_PORT,
+        'ssl_context': ssl_context,
+        'local_ip': LOCAL_IP
+    }
+
 def ensure_tenant_database_isolation():
     """🚨 CRITICAL: Ensure tenant database isolation"""
     tenant_env = os.environ.get('TENANT_ID', '').lower().strip()
@@ -65,7 +115,9 @@ if __name__ == "__main__":
     current_tenant = ensure_tenant_database_isolation()
 
     app = create_app()
-    app.config['DEBUG'] = True
+    
+    # 🚀 DOCKER COMPATIBILITY: Set debug mode based on environment
+    app.config['DEBUG'] = os.environ.get('DOCKER_MODE') != 'true'
 
     # Store current tenant in app config
     app.config['CURRENT_TENANT'] = current_tenant
@@ -79,26 +131,36 @@ if __name__ == "__main__":
     # 🚨 NGROK DETECTION REMOVED: Now handled dynamically in utils.py per-request
     # This prevents Flask app context errors and ensures fresh NGROK URL lookup each time
 
-    LOCAL_IP = get_local_ip()
-    FLASK_PORT = 8080
+    # Get server configuration
+    server_config = get_server_configuration()
     
     print("🚀 Starting StudentVC server...")
-    print(f"🌐 Binding to: 0.0.0.0:{FLASK_PORT}")
-    print("🔒 HTTPS: True (adhoc certificates)")
-    print(f"🌐 Local IP detected: {LOCAL_IP}")
     print()
     print("🚨 NGROK URLS: Server URLs now retrieved dynamically from tenant database")
     print("💡 Set NGROK URLs via tenant config API and they will be used immediately")
+    print()
+    print("📱 MOBILE WALLET ACCESS:")
+    print(f"   • Local network: https://{server_config['local_ip']}:{server_config['port']}")
+    print(f"   • NGROK: Configure via Settings → Network → NGROK Domain")
+    print()
     
     try:
+        # 🚀 ENHANCED SOCKET.IO: Configure for Docker compatibility
         socketio.run(
             app,
-            debug=True,
-            host="0.0.0.0",
-            port=FLASK_PORT,
-            ssl_context="adhoc",
-            allow_unsafe_werkzeug=True
+            debug=app.config['DEBUG'],
+            host=server_config['host'],
+            port=server_config['port'],
+            ssl_context=server_config['ssl_context'],
+            allow_unsafe_werkzeug=True,
+            log_output=False if os.environ.get('DOCKER_MODE') == 'true' else True
         )
     except Exception as e:
         print(f"❌ Server startup error: {e}")
-        print("💡 Try: pkill -f 'python.*main.py' to kill existing processes")
+        if os.environ.get('DOCKER_MODE') == 'true':
+            print("🐳 Docker troubleshooting:")
+            print("   • Check if ports are properly exposed")
+            print("   • Verify SSL certificate generation")
+            print("   • Check Docker network configuration")
+        else:
+            print("💡 Try: pkill -f 'python.*main.py' to kill existing processes")

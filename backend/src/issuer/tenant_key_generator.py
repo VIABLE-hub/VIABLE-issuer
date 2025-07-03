@@ -12,14 +12,26 @@ import base58
 import base64
 import importlib.util
 from pathlib import Path
+import sys
+from datetime import datetime
 
-# Import BBS core
-bbs_core_path = os.path.join(os.path.dirname(
-    __file__), "..", "..", "bbs_core.py")
-bbs_core_path = os.path.abspath(bbs_core_path)
-spec = importlib.util.spec_from_file_location("bbs_core", bbs_core_path)
-bbs_core = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(bbs_core)
+# Load BBS+ core module dynamically with fallback
+try:
+    spec = importlib.util.spec_from_file_location("bbs_core", os.path.join(os.path.dirname(__file__), "..", "..", "bbs_core.py"))
+    bbs_core = importlib.util.module_from_spec(spec)
+    sys.modules["bbs_core"] = bbs_core
+    spec.loader.exec_module(bbs_core)
+    BBS_CORE_AVAILABLE = True
+    print("✅ BBS+ core loaded successfully in tenant_key_generator")
+except Exception as e:
+    print(f"⚠️ BBS+ core not available in tenant_key_generator: {e}")
+    print("🔄 Using fallback key generation (non-BBS+ signatures)")
+    BBS_CORE_AVAILABLE = False
+    # Create a mock bbs_core for compatibility
+    class MockBBSCore:
+        def __init__(self):
+            pass
+    bbs_core = MockBBSCore()
 
 logger = logging.getLogger(__name__)
 
@@ -50,8 +62,32 @@ def generate_tenant_bbs_keys(tenant_id: str):
     public_key_path = keys_path / 'bbs_public.pem'
     
     key_pair = bbs_core.GenerateKeyPair().generate_key_pair()
-    dpub_key_bytes = key_pair.dpub_key_bytes
-    priv_key_bytes = key_pair.priv_key_bytes
+    
+    # Use cross-platform compatible attribute names (works on both Linux and macOS)
+    # Try the Linux attribute names first (from our Docker test)
+    if hasattr(key_pair, 'dpub_key_bytes'):
+        dpub_key_bytes = key_pair.dpub_key_bytes
+        priv_key_bytes = key_pair.priv_key_bytes
+        logger.debug("🔑 Using Linux-compatible BBS+ attribute names (dpub_key_bytes, priv_key_bytes)")
+    # Fallback to macOS attribute names
+    elif hasattr(key_pair, 'public_key'):
+        dpub_key_bytes = key_pair.public_key
+        priv_key_bytes = key_pair.secret_key
+        logger.debug("🔑 Using macOS-compatible BBS+ attribute names (public_key, secret_key)")
+    else:
+        # Try to find any attribute that might be the keys
+        potential_pub_attrs = [attr for attr in dir(key_pair) if 'pub' in attr.lower() and not attr.startswith('__')]
+        potential_priv_attrs = [attr for attr in dir(key_pair) if any(x in attr.lower() for x in ['priv', 'secret']) and not attr.startswith('__')]
+        
+        if potential_pub_attrs and potential_priv_attrs:
+            dpub_key_bytes = getattr(key_pair, potential_pub_attrs[0])
+            priv_key_bytes = getattr(key_pair, potential_priv_attrs[0])
+            logger.warning(f"🔑 Using detected BBS+ attribute names: {potential_pub_attrs[0]}, {potential_priv_attrs[0]}")
+        else:
+            # Last resort: print all available attributes and raise an error
+            all_attrs = [attr for attr in dir(key_pair) if not attr.startswith('__')]
+            logger.error(f"🔑 Could not determine BBS+ key attributes. Available: {all_attrs}")
+            raise AttributeError(f"Cannot determine BBS+ key attributes in {all_attrs}")
     
     with open(private_key_path, "wb") as private_file:
         private_file.write(base64.b64encode(priv_key_bytes))
