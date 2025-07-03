@@ -30,17 +30,36 @@ def authenticate_token(f):
         if not token:
             return jsonify({"error": "Token not provided"}), 401
 
-        # Verify the token with the local verification endpoint
+        # Verify the token with the current server endpoint
         try:
-            # Use localhost HTTPS for internal verification
-            server_url = "https://localhost:8080"
+            # Use dynamic server URL from tenant configuration
+            from ..utils import get_current_server_url
+            server_url = get_current_server_url()
             logger.info(f"Verifying token with server URL: {server_url}")
+            
+            # Production-ready SSL verification - disable for local/development URLs
+            def is_local_development_url(url):
+                """Check if URL is for local development (disable SSL verification)"""
+                import re
+                # Localhost variants
+                if 'localhost' in url or '127.0.0.1' in url:
+                    return True
+                # NGROK tunnels
+                if 'ngrok' in url.lower():
+                    return True
+                # Private IP ranges (RFC 1918)
+                private_ip_pattern = r'https://(?:192\.168\.|10\.|172\.(?:1[6-9]|2[0-9]|3[01])\.)[\d.]+:'
+                if re.match(private_ip_pattern, url):
+                    return True
+                return False
+            
+            verify_ssl = not is_local_development_url(server_url)
             
             response = requests.post(
                 f"{server_url}/verifyAccessToken",
                 json={"token": token},
                 headers={"Content-Type": "application/json"},
-                verify=False  # Disable SSL verification for localhost
+                verify=verify_ssl  # Enable SSL verification for production
             )
             
             logger.info(f"Token verification response status: {response.status_code}")

@@ -26,9 +26,12 @@ verifier_bp.register_blueprint(verification_bp)
 
 @verifier_bp.route('/', methods=['GET', 'POST'])
 def index():
-    # 🚀 SOCKET.IO FIX: Use separate URLs for QR code and Socket.IO
-    external_server_url = get_current_server_url()  # ngrok URL for QR code
-    local_server_url = "https://localhost:8080"     # localhost for Socket.IO
+    # 🚀 PRODUCTION-READY: Use configurable URLs for QR code and Socket.IO
+    external_server_url = get_current_server_url()  # External URL for QR code
+    
+    # Socket.IO URL: Use environment variable or same as external for production
+    import os
+    socket_server_url = os.environ.get('SOCKET_IO_URL', external_server_url)
     
     img = generate_qr_code(
         f"openid4vp://?request_uri={external_server_url}/verifier/presentation-request")
@@ -40,7 +43,7 @@ def index():
         return render_template("verifier.html", 
                              img_data=img, 
                              server_url=external_server_url,      # For QR code generation
-                             socket_url=local_server_url,         # For Socket.IO connection
+                             socket_url=socket_server_url,        # For Socket.IO connection
                              mandatory_fields=current_mandatory_fields, 
                              demo_credential=get_demo_credential(), 
                              year=datetime.now().year)
@@ -61,7 +64,7 @@ def index():
     return render_template("verifier.html", 
                          img_data=img, 
                          server_url=external_server_url,      # For QR code generation
-                         socket_url=local_server_url,         # For Socket.IO connection
+                         socket_url=socket_server_url,        # For Socket.IO connection
                          mandatory_fields=updated_mandatory_fields, 
                          demo_credential=get_demo_credential(), 
                          year=datetime.now().year)
