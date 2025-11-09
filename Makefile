@@ -2,7 +2,7 @@
 # Uses test_env in root directory and starts app on port 8080 with HTTPS
 
 BACKEND_DIR = backend
-VENV_DIR = test_env
+VENV_DIR = .venv
 PYTHON = python3
 PIP = pip3
 PORT = 8080

@@ -1,6 +1,6 @@
 Flask==2.3.2
 czifile==2019.7.2
-numpy==1.23.5
+numpy==1.26
 scikit-image==0.23.2
 Flask-Login==0.6.3
 flask-paginate==2022.1.8
