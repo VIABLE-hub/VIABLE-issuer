@@ -89,10 +89,15 @@ def create_presentation_request():
         # Get structured presentation definition with field categories
         presentation_def = get_presentation_definition()
         
-        # DEBUG: Log what we got from get_presentation_definition
-        logger.info(f"DEBUG: presentation_def technical_fields: {presentation_def.get('technical_fields', [])}")
-        logger.info(f"DEBUG: presentation_def user_mandatory_fields: {presentation_def.get('user_mandatory_fields', [])}")
-        logger.info(f"DEBUG: presentation_def mandatory_fields: {presentation_def.get('mandatory_fields', [])}")
+        # ✅ ENHANCED DEBUG: Log what we got from get_presentation_definition
+        logger.info("="*80)
+        logger.info("🔍 SELECTIVE DISCLOSURE DEBUG - PRESENTATION DEFINITION")
+        logger.info("="*80)
+        logger.info(f"📋 Technical fields (always required): {presentation_def.get('technical_fields', [])}")
+        logger.info(f"👤 User mandatory fields (selected by admin): {presentation_def.get('user_mandatory_fields', [])}")
+        logger.info(f"📊 ALL mandatory fields (combined): {presentation_def.get('mandatory_fields', [])}")
+        logger.info(f"🗂️  Field mappings available: {list(presentation_def.get('field_mappings', {}).keys())}")
+        logger.info("="*80)
         
         # Create minimal iOS-compatible field list
         ios_compatible_fields = []
@@ -104,27 +109,47 @@ def create_presentation_request():
             if ios_field not in ios_compatible_fields:
                 ios_compatible_fields.append(ios_field)
                 
-        # Add user mandatory fields, but skip complex fields and map nested fields to iOS format
+        # ✅ Add user mandatory fields, but skip complex fields and map nested fields to iOS format
         complex_fields = ['image', 'theme', 'vc.credentialSubject.image', 'vc.credentialSubject.theme']
+        logger.info(f"🔍 Processing {len(presentation_def['user_mandatory_fields'])} user mandatory fields...")
+        
         for field in presentation_def['user_mandatory_fields']:
-            if field not in complex_fields:
-                # Map nested field names to iOS-compatible format
-                if field.startswith('vc.credentialSubject.'):
-                    ios_field = field.replace('vc.credentialSubject.', '')
-                    
-                    # Fix case sensitivity issues for iOS wallet compatibility
-                    ios_field_mapping = {
-                        'studentId': 'studentID',           # iOS uses uppercase ID
-                        'studentIdPrefix': 'studentIDPrefix' # iOS uses uppercase ID
-                    }
-                    
-                    # Use the iOS-compatible field name if available
-                    ios_field = ios_field_mapping.get(ios_field, ios_field)
-                    
-                    if ios_field not in ios_compatible_fields:
-                        ios_compatible_fields.append(ios_field)
-                elif field not in ios_compatible_fields:
-                    ios_compatible_fields.append(field)
+            logger.info(f"  ➤ Processing user field: '{field}'")
+            
+            if field in complex_fields:
+                logger.info(f"    ⚠️  Skipping complex field: '{field}'")
+                continue
+                
+            # Map nested field names to iOS-compatible format
+            if field.startswith('vc.credentialSubject.'):
+                ios_field = field.replace('vc.credentialSubject.', '')
+                logger.info(f"    🔄 Converted path '{field}' → '{ios_field}'")
+                
+                # Fix case sensitivity issues for iOS wallet compatibility
+                ios_field_mapping = {
+                    'studentId': 'studentID',           # iOS uses uppercase ID
+                    'studentIdPrefix': 'studentIDPrefix' # iOS uses uppercase ID
+                }
+                
+                # Use the iOS-compatible field name if available
+                original_ios_field = ios_field
+                ios_field = ios_field_mapping.get(ios_field, ios_field)
+                if ios_field != original_ios_field:
+                    logger.info(f"    🔄 Mapped case '{original_ios_field}' → '{ios_field}' for iOS")
+                
+                if ios_field not in ios_compatible_fields:
+                    ios_compatible_fields.append(ios_field)
+                    logger.info(f"    ✅ Added field: '{ios_field}'")
+                else:
+                    logger.info(f"    ⏭️  Field '{ios_field}' already in list")
+            elif field not in ios_compatible_fields:
+                ios_compatible_fields.append(field)
+                logger.info(f"    ✅ Added field: '{field}'")
+            else:
+                logger.info(f"    ⏭️  Field '{field}' already in list")
+        
+        logger.info(f"✅ Total iOS-compatible fields after adding user fields: {len(ios_compatible_fields)}")
+        logger.info(f"📋 Final iOS-compatible fields list: {ios_compatible_fields}")
         
         # Create explanations for the fields (iOS app requires this)
         presentation_explanation = {
@@ -145,6 +170,20 @@ def create_presentation_request():
             "studentIDPrefix": "Prefix of the student ID for organization identification"  # iOS uses uppercase ID
         }
         
+        # ✅ FINAL VERIFICATION: Log the complete field list before sending to wallet
+        logger.info("="*80)
+        logger.info("📤 FINAL PRESENTATION REQUEST TO WALLET")
+        logger.info("="*80)
+        logger.info(f"📋 Total mandatory fields: {len(ios_compatible_fields)}")
+        logger.info(f"📋 Field list: {ios_compatible_fields}")
+        
+        # Count technical vs user fields
+        from .constants import TECHNICAL_FIELDS
+        tech_count = sum(1 for f in ios_compatible_fields if f in TECHNICAL_FIELDS or f in ['iss', 'sub', 'exp', 'nbf', 'jti', 'nonce', 'signedNonce', 'bbsDPK', 'totalMessages', 'validityIdentifier'])
+        user_count = len(ios_compatible_fields) - tech_count
+        logger.info(f"📊 Technical fields: {tech_count}, User fields: {user_count}")
+        logger.info("="*80)
+        
         # iOS app expects BOTH mandatory_fields AND explanation
         presentation_def_with_explanation = {
             "mandatory_fields": ios_compatible_fields,
@@ -153,6 +192,7 @@ def create_presentation_request():
         
         # Compact JSON encoding
         presentation_def_json = json.dumps(presentation_def_with_explanation, separators=(',', ':'))
+        logger.info(f"📦 JSON payload length: {len(presentation_def_json)} characters")
         params["presentation_definition"] = presentation_def_json
                 
         # Construct the complete URL for the wallet

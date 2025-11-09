@@ -1,14 +1,20 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, session
-from .models import User
+"""
+Traditional Username/Password Authentication
+
+This module handles traditional authentication with username and password.
+Part of the modular StudentVC authentication system.
+"""
+
+from flask import render_template, request, flash, redirect, url_for, current_app, session
+from ..models import User
 from logging import getLogger
 from datetime import timedelta
 from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
 import secrets
-from . import db
+from .. import db
+from . import auth
 
-
-auth = Blueprint('auth', __name__)
 logger = getLogger("LOGGER")
 
 
@@ -30,7 +36,8 @@ def login():
     # handle first page request
     if request.method == 'GET':
         logger.info(f"GET request for login page")
-        return render_template("login.html")
+        # Use new VC-enabled login page
+        return render_template("login_vc.html")
 
     # handle form submission
     # get form data
@@ -77,8 +84,8 @@ def login_error_handler(log_error):
     # Preserve the next parameter if present
     next_page = request.args.get('next')
     if next_page:
-        return render_template("login.html", next=next_page)
-    return render_template("login.html")
+        return render_template("login_vc.html", next=next_page)
+    return render_template("login_vc.html")
 
 
 @auth.route('/logout')

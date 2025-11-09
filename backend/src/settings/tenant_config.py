@@ -34,7 +34,7 @@ def register_routes(settings_bp):
         """Get current tenant configuration for settings page"""
         try:
             # 🚀 PERFECTION: Use new unified tenant system
-            from ..tenants import get_tenant_config, get_current_tenant_id
+            from ..tenants import get_tenant_config, get_current_tenant as get_current_tenant_id
             
             tenant_id = get_current_tenant_id()
             tenant_config = get_tenant_config(tenant_id)

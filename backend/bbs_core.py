@@ -446,14 +446,14 @@ def _uniffi_load_indirect():
         # Anything else must be an ELF platform - Linux, *BSD, Solaris/illumos
         libname = "lib{}.so"
 
-    libname = libname.format("bbs_core")
+    libname = libname.format("uniffi_bbs_core")
     path = os.path.join(os.path.dirname(__file__), libname)
     lib = ctypes.cdll.LoadLibrary(path)
     return lib
 
 def _uniffi_check_contract_api_version(lib):
     # Get the bindings contract version from our ComponentInterface
-    bindings_contract_version = 29
+    bindings_contract_version = 26
     # Get the scaffolding contract version by calling the into the dylib
     scaffolding_contract_version = lib.ffi_bbs_core_uniffi_contract_version()
     if bindings_contract_version != scaffolding_contract_version:
@@ -468,13 +468,13 @@ def _uniffi_check_api_checksums(lib):
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     if lib.uniffi_bbs_core_checksum_method_verifyrequest_is_valid() != 44170:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_bbs_core_checksum_constructor_generatekeypair_new() != 62698:
+    if lib.uniffi_bbs_core_checksum_constructor_generatekeypair_new() != 21810:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_bbs_core_checksum_constructor_generateproofrequest_new() != 31132:
+    if lib.uniffi_bbs_core_checksum_constructor_generateproofrequest_new() != 18432:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_bbs_core_checksum_constructor_signrequest_new() != 39013:
+    if lib.uniffi_bbs_core_checksum_constructor_signrequest_new() != 2132:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    if lib.uniffi_bbs_core_checksum_constructor_verifyrequest_new() != 50797:
+    if lib.uniffi_bbs_core_checksum_constructor_verifyrequest_new() != 22124:
         raise InternalError("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
 
 # A ctypes library to expose the extern-C FFI definitions.
@@ -1040,11 +1040,318 @@ class _UniffiConverterBytes(_UniffiConverterRustBuffer):
 
 
 
+class GenerateKeyPairProtocol(typing.Protocol):
+    def generate_key_pair(self, ):
+        raise NotImplementedError
+
+
+class GenerateKeyPair:
+    _pointer: ctypes.c_void_p
+    def __init__(self, ):
+        self._pointer = _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_constructor_generatekeypair_new,)
+
+    def __del__(self):
+        # In case of partial initialization of instances.
+        pointer = getattr(self, "_pointer", None)
+        if pointer is not None:
+            _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_free_generatekeypair, pointer)
+
+    def _uniffi_clone_pointer(self):
+        return _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_clone_generatekeypair, self._pointer)
+
+    # Used by alternative constructors or any methods which return this type.
+    @classmethod
+    def _make_instance_(cls, pointer):
+        # Lightly yucky way to bypass the usual __init__ logic
+        # and just create a new instance with the required pointer.
+        inst = cls.__new__(cls)
+        inst._pointer = pointer
+        return inst
+
+
+    def generate_key_pair(self, ) -> "KeyPair":
+        return _UniffiConverterTypeKeyPair.lift(
+            _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_method_generatekeypair_generate_key_pair,self._uniffi_clone_pointer(),)
+        )
 
 
 
 
 
+
+class _UniffiConverterTypeGenerateKeyPair:
+
+    @staticmethod
+    def lift(value: int):
+        return GenerateKeyPair._make_instance_(value)
+
+    @staticmethod
+    def check_lower(value: GenerateKeyPair):
+        if not isinstance(value, GenerateKeyPair):
+            raise TypeError("Expected GenerateKeyPair instance, {} found".format(type(value).__name__))
+
+    @staticmethod
+    def lower(value: GenerateKeyPairProtocol):
+        if not isinstance(value, GenerateKeyPair):
+            raise TypeError("Expected GenerateKeyPair instance, {} found".format(type(value).__name__))
+        return value._uniffi_clone_pointer()
+
+    @classmethod
+    def read(cls, buf: _UniffiRustBuffer):
+        ptr = buf.read_u64()
+        if ptr == 0:
+            raise InternalError("Raw pointer value was null")
+        return cls.lift(ptr)
+
+    @classmethod
+    def write(cls, value: GenerateKeyPairProtocol, buf: _UniffiRustBuffer):
+        buf.write_u64(cls.lower(value))
+
+
+
+class GenerateProofRequestProtocol(typing.Protocol):
+    def generate_proof(self, ):
+        raise NotImplementedError
+
+
+class GenerateProofRequest:
+    _pointer: ctypes.c_void_p
+    def __init__(self, pub_key_bytes: "bytes",signature_bytes: "bytes",revealed_indices: "typing.List[int]",messages: "typing.List[str]"):
+        _UniffiConverterBytes.check_lower(pub_key_bytes)
+        
+        _UniffiConverterBytes.check_lower(signature_bytes)
+        
+        _UniffiConverterSequenceUInt64.check_lower(revealed_indices)
+        
+        _UniffiConverterSequenceString.check_lower(messages)
+        
+        self._pointer = _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_constructor_generateproofrequest_new,
+        _UniffiConverterBytes.lower(pub_key_bytes),
+        _UniffiConverterBytes.lower(signature_bytes),
+        _UniffiConverterSequenceUInt64.lower(revealed_indices),
+        _UniffiConverterSequenceString.lower(messages))
+
+    def __del__(self):
+        # In case of partial initialization of instances.
+        pointer = getattr(self, "_pointer", None)
+        if pointer is not None:
+            _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_free_generateproofrequest, pointer)
+
+    def _uniffi_clone_pointer(self):
+        return _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_clone_generateproofrequest, self._pointer)
+
+    # Used by alternative constructors or any methods which return this type.
+    @classmethod
+    def _make_instance_(cls, pointer):
+        # Lightly yucky way to bypass the usual __init__ logic
+        # and just create a new instance with the required pointer.
+        inst = cls.__new__(cls)
+        inst._pointer = pointer
+        return inst
+
+
+    def generate_proof(self, ) -> "ProofResult":
+        return _UniffiConverterTypeProofResult.lift(
+            _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_method_generateproofrequest_generate_proof,self._uniffi_clone_pointer(),)
+        )
+
+
+
+
+
+
+class _UniffiConverterTypeGenerateProofRequest:
+
+    @staticmethod
+    def lift(value: int):
+        return GenerateProofRequest._make_instance_(value)
+
+    @staticmethod
+    def check_lower(value: GenerateProofRequest):
+        if not isinstance(value, GenerateProofRequest):
+            raise TypeError("Expected GenerateProofRequest instance, {} found".format(type(value).__name__))
+
+    @staticmethod
+    def lower(value: GenerateProofRequestProtocol):
+        if not isinstance(value, GenerateProofRequest):
+            raise TypeError("Expected GenerateProofRequest instance, {} found".format(type(value).__name__))
+        return value._uniffi_clone_pointer()
+
+    @classmethod
+    def read(cls, buf: _UniffiRustBuffer):
+        ptr = buf.read_u64()
+        if ptr == 0:
+            raise InternalError("Raw pointer value was null")
+        return cls.lift(ptr)
+
+    @classmethod
+    def write(cls, value: GenerateProofRequestProtocol, buf: _UniffiRustBuffer):
+        buf.write_u64(cls.lower(value))
+
+
+
+class SignRequestProtocol(typing.Protocol):
+    def sign_messages(self, ):
+        raise NotImplementedError
+
+
+class SignRequest:
+    _pointer: ctypes.c_void_p
+    def __init__(self, messages: "typing.List[str]",dpub_key_bytes: "bytes",priv_key_bytes: "bytes"):
+        _UniffiConverterSequenceString.check_lower(messages)
+        
+        _UniffiConverterBytes.check_lower(dpub_key_bytes)
+        
+        _UniffiConverterBytes.check_lower(priv_key_bytes)
+        
+        self._pointer = _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_constructor_signrequest_new,
+        _UniffiConverterSequenceString.lower(messages),
+        _UniffiConverterBytes.lower(dpub_key_bytes),
+        _UniffiConverterBytes.lower(priv_key_bytes))
+
+    def __del__(self):
+        # In case of partial initialization of instances.
+        pointer = getattr(self, "_pointer", None)
+        if pointer is not None:
+            _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_free_signrequest, pointer)
+
+    def _uniffi_clone_pointer(self):
+        return _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_clone_signrequest, self._pointer)
+
+    # Used by alternative constructors or any methods which return this type.
+    @classmethod
+    def _make_instance_(cls, pointer):
+        # Lightly yucky way to bypass the usual __init__ logic
+        # and just create a new instance with the required pointer.
+        inst = cls.__new__(cls)
+        inst._pointer = pointer
+        return inst
+
+
+    def sign_messages(self, ) -> "SignResult":
+        return _UniffiConverterTypeSignResult.lift(
+            _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_method_signrequest_sign_messages,self._uniffi_clone_pointer(),)
+        )
+
+
+
+
+
+
+class _UniffiConverterTypeSignRequest:
+
+    @staticmethod
+    def lift(value: int):
+        return SignRequest._make_instance_(value)
+
+    @staticmethod
+    def check_lower(value: SignRequest):
+        if not isinstance(value, SignRequest):
+            raise TypeError("Expected SignRequest instance, {} found".format(type(value).__name__))
+
+    @staticmethod
+    def lower(value: SignRequestProtocol):
+        if not isinstance(value, SignRequest):
+            raise TypeError("Expected SignRequest instance, {} found".format(type(value).__name__))
+        return value._uniffi_clone_pointer()
+
+    @classmethod
+    def read(cls, buf: _UniffiRustBuffer):
+        ptr = buf.read_u64()
+        if ptr == 0:
+            raise InternalError("Raw pointer value was null")
+        return cls.lift(ptr)
+
+    @classmethod
+    def write(cls, value: SignRequestProtocol, buf: _UniffiRustBuffer):
+        buf.write_u64(cls.lower(value))
+
+
+
+class VerifyRequestProtocol(typing.Protocol):
+    def is_valid(self, ):
+        raise NotImplementedError
+
+
+class VerifyRequest:
+    _pointer: ctypes.c_void_p
+    def __init__(self, nonce_bytes: "bytes",proof_request_bytes: "bytes",proof_bytes: "bytes",disclosed_messages: "typing.List[str]",dpub_key_bytes: "bytes",total_message_count: "int"):
+        _UniffiConverterBytes.check_lower(nonce_bytes)
+        
+        _UniffiConverterBytes.check_lower(proof_request_bytes)
+        
+        _UniffiConverterBytes.check_lower(proof_bytes)
+        
+        _UniffiConverterSequenceString.check_lower(disclosed_messages)
+        
+        _UniffiConverterBytes.check_lower(dpub_key_bytes)
+        
+        _UniffiConverterUInt64.check_lower(total_message_count)
+        
+        self._pointer = _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_constructor_verifyrequest_new,
+        _UniffiConverterBytes.lower(nonce_bytes),
+        _UniffiConverterBytes.lower(proof_request_bytes),
+        _UniffiConverterBytes.lower(proof_bytes),
+        _UniffiConverterSequenceString.lower(disclosed_messages),
+        _UniffiConverterBytes.lower(dpub_key_bytes),
+        _UniffiConverterUInt64.lower(total_message_count))
+
+    def __del__(self):
+        # In case of partial initialization of instances.
+        pointer = getattr(self, "_pointer", None)
+        if pointer is not None:
+            _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_free_verifyrequest, pointer)
+
+    def _uniffi_clone_pointer(self):
+        return _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_clone_verifyrequest, self._pointer)
+
+    # Used by alternative constructors or any methods which return this type.
+    @classmethod
+    def _make_instance_(cls, pointer):
+        # Lightly yucky way to bypass the usual __init__ logic
+        # and just create a new instance with the required pointer.
+        inst = cls.__new__(cls)
+        inst._pointer = pointer
+        return inst
+
+
+    def is_valid(self, ) -> "str":
+        return _UniffiConverterString.lift(
+            _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_method_verifyrequest_is_valid,self._uniffi_clone_pointer(),)
+        )
+
+
+
+
+
+
+class _UniffiConverterTypeVerifyRequest:
+
+    @staticmethod
+    def lift(value: int):
+        return VerifyRequest._make_instance_(value)
+
+    @staticmethod
+    def check_lower(value: VerifyRequest):
+        if not isinstance(value, VerifyRequest):
+            raise TypeError("Expected VerifyRequest instance, {} found".format(type(value).__name__))
+
+    @staticmethod
+    def lower(value: VerifyRequestProtocol):
+        if not isinstance(value, VerifyRequest):
+            raise TypeError("Expected VerifyRequest instance, {} found".format(type(value).__name__))
+        return value._uniffi_clone_pointer()
+
+    @classmethod
+    def read(cls, buf: _UniffiRustBuffer):
+        ptr = buf.read_u64()
+        if ptr == 0:
+            raise InternalError("Raw pointer value was null")
+        return cls.lift(ptr)
+
+    @classmethod
+    def write(cls, value: VerifyRequestProtocol, buf: _UniffiRustBuffer):
+        buf.write_u64(cls.lower(value))
 
 
 class KeyPair:
@@ -1210,307 +1517,6 @@ class _UniffiConverterSequenceString(_UniffiConverterRustBuffer):
         return [
             _UniffiConverterString.read(buf) for i in range(count)
         ]
-
-# objects.
-class GenerateKeyPairProtocol(typing.Protocol):
-    def generate_key_pair(self, ):
-        raise NotImplementedError
-# GenerateKeyPair is a Rust-only trait - it's a wrapper around a Rust implementation.
-class GenerateKeyPair():
-    _pointer: ctypes.c_void_p
-    def __init__(self, ):
-        self._pointer = _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_constructor_generatekeypair_new,)
-
-    def __del__(self):
-        # In case of partial initialization of instances.
-        pointer = getattr(self, "_pointer", None)
-        if pointer is not None:
-            _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_free_generatekeypair, pointer)
-
-    def _uniffi_clone_pointer(self):
-        return _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_clone_generatekeypair, self._pointer)
-
-    # Used by alternative constructors or any methods which return this type.
-    @classmethod
-    def _make_instance_(cls, pointer):
-        # Lightly yucky way to bypass the usual __init__ logic
-        # and just create a new instance with the required pointer.
-        inst = cls.__new__(cls)
-        inst._pointer = pointer
-        return inst
-
-
-    def generate_key_pair(self, ) -> "KeyPair":
-        return _UniffiConverterTypeKeyPair.lift(
-            _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_method_generatekeypair_generate_key_pair,self._uniffi_clone_pointer(),)
-        )
-
-
-
-
-
-
-class _UniffiConverterTypeGenerateKeyPair:
-
-    @staticmethod
-    def lift(value: int):
-        return GenerateKeyPair._make_instance_(value)
-
-    @staticmethod
-    def check_lower(value: GenerateKeyPair):
-        if not isinstance(value, GenerateKeyPair):
-            raise TypeError("Expected GenerateKeyPair instance, {} found".format(type(value).__name__))
-
-    @staticmethod
-    def lower(value: GenerateKeyPairProtocol):
-        if not isinstance(value, GenerateKeyPair):
-            raise TypeError("Expected GenerateKeyPair instance, {} found".format(type(value).__name__))
-        return value._uniffi_clone_pointer()
-
-    @classmethod
-    def read(cls, buf: _UniffiRustBuffer):
-        ptr = buf.read_u64()
-        if ptr == 0:
-            raise InternalError("Raw pointer value was null")
-        return cls.lift(ptr)
-
-    @classmethod
-    def write(cls, value: GenerateKeyPairProtocol, buf: _UniffiRustBuffer):
-        buf.write_u64(cls.lower(value))
-class GenerateProofRequestProtocol(typing.Protocol):
-    def generate_proof(self, ):
-        raise NotImplementedError
-# GenerateProofRequest is a Rust-only trait - it's a wrapper around a Rust implementation.
-class GenerateProofRequest():
-    _pointer: ctypes.c_void_p
-    def __init__(self, pub_key_bytes: "bytes",signature_bytes: "bytes",revealed_indices: "typing.List[int]",messages: "typing.List[str]"):
-        _UniffiConverterBytes.check_lower(pub_key_bytes)
-        
-        _UniffiConverterBytes.check_lower(signature_bytes)
-        
-        _UniffiConverterSequenceUInt64.check_lower(revealed_indices)
-        
-        _UniffiConverterSequenceString.check_lower(messages)
-        
-        self._pointer = _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_constructor_generateproofrequest_new,
-        _UniffiConverterBytes.lower(pub_key_bytes),
-        _UniffiConverterBytes.lower(signature_bytes),
-        _UniffiConverterSequenceUInt64.lower(revealed_indices),
-        _UniffiConverterSequenceString.lower(messages))
-
-    def __del__(self):
-        # In case of partial initialization of instances.
-        pointer = getattr(self, "_pointer", None)
-        if pointer is not None:
-            _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_free_generateproofrequest, pointer)
-
-    def _uniffi_clone_pointer(self):
-        return _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_clone_generateproofrequest, self._pointer)
-
-    # Used by alternative constructors or any methods which return this type.
-    @classmethod
-    def _make_instance_(cls, pointer):
-        # Lightly yucky way to bypass the usual __init__ logic
-        # and just create a new instance with the required pointer.
-        inst = cls.__new__(cls)
-        inst._pointer = pointer
-        return inst
-
-
-    def generate_proof(self, ) -> "ProofResult":
-        return _UniffiConverterTypeProofResult.lift(
-            _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_method_generateproofrequest_generate_proof,self._uniffi_clone_pointer(),)
-        )
-
-
-
-
-
-
-class _UniffiConverterTypeGenerateProofRequest:
-
-    @staticmethod
-    def lift(value: int):
-        return GenerateProofRequest._make_instance_(value)
-
-    @staticmethod
-    def check_lower(value: GenerateProofRequest):
-        if not isinstance(value, GenerateProofRequest):
-            raise TypeError("Expected GenerateProofRequest instance, {} found".format(type(value).__name__))
-
-    @staticmethod
-    def lower(value: GenerateProofRequestProtocol):
-        if not isinstance(value, GenerateProofRequest):
-            raise TypeError("Expected GenerateProofRequest instance, {} found".format(type(value).__name__))
-        return value._uniffi_clone_pointer()
-
-    @classmethod
-    def read(cls, buf: _UniffiRustBuffer):
-        ptr = buf.read_u64()
-        if ptr == 0:
-            raise InternalError("Raw pointer value was null")
-        return cls.lift(ptr)
-
-    @classmethod
-    def write(cls, value: GenerateProofRequestProtocol, buf: _UniffiRustBuffer):
-        buf.write_u64(cls.lower(value))
-class SignRequestProtocol(typing.Protocol):
-    def sign_messages(self, ):
-        raise NotImplementedError
-# SignRequest is a Rust-only trait - it's a wrapper around a Rust implementation.
-class SignRequest():
-    _pointer: ctypes.c_void_p
-    def __init__(self, messages: "typing.List[str]",dpub_key_bytes: "bytes",priv_key_bytes: "bytes"):
-        _UniffiConverterSequenceString.check_lower(messages)
-        
-        _UniffiConverterBytes.check_lower(dpub_key_bytes)
-        
-        _UniffiConverterBytes.check_lower(priv_key_bytes)
-        
-        self._pointer = _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_constructor_signrequest_new,
-        _UniffiConverterSequenceString.lower(messages),
-        _UniffiConverterBytes.lower(dpub_key_bytes),
-        _UniffiConverterBytes.lower(priv_key_bytes))
-
-    def __del__(self):
-        # In case of partial initialization of instances.
-        pointer = getattr(self, "_pointer", None)
-        if pointer is not None:
-            _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_free_signrequest, pointer)
-
-    def _uniffi_clone_pointer(self):
-        return _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_clone_signrequest, self._pointer)
-
-    # Used by alternative constructors or any methods which return this type.
-    @classmethod
-    def _make_instance_(cls, pointer):
-        # Lightly yucky way to bypass the usual __init__ logic
-        # and just create a new instance with the required pointer.
-        inst = cls.__new__(cls)
-        inst._pointer = pointer
-        return inst
-
-
-    def sign_messages(self, ) -> "SignResult":
-        return _UniffiConverterTypeSignResult.lift(
-            _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_method_signrequest_sign_messages,self._uniffi_clone_pointer(),)
-        )
-
-
-
-
-
-
-class _UniffiConverterTypeSignRequest:
-
-    @staticmethod
-    def lift(value: int):
-        return SignRequest._make_instance_(value)
-
-    @staticmethod
-    def check_lower(value: SignRequest):
-        if not isinstance(value, SignRequest):
-            raise TypeError("Expected SignRequest instance, {} found".format(type(value).__name__))
-
-    @staticmethod
-    def lower(value: SignRequestProtocol):
-        if not isinstance(value, SignRequest):
-            raise TypeError("Expected SignRequest instance, {} found".format(type(value).__name__))
-        return value._uniffi_clone_pointer()
-
-    @classmethod
-    def read(cls, buf: _UniffiRustBuffer):
-        ptr = buf.read_u64()
-        if ptr == 0:
-            raise InternalError("Raw pointer value was null")
-        return cls.lift(ptr)
-
-    @classmethod
-    def write(cls, value: SignRequestProtocol, buf: _UniffiRustBuffer):
-        buf.write_u64(cls.lower(value))
-class VerifyRequestProtocol(typing.Protocol):
-    def is_valid(self, ):
-        raise NotImplementedError
-# VerifyRequest is a Rust-only trait - it's a wrapper around a Rust implementation.
-class VerifyRequest():
-    _pointer: ctypes.c_void_p
-    def __init__(self, nonce_bytes: "bytes",proof_request_bytes: "bytes",proof_bytes: "bytes",disclosed_messages: "typing.List[str]",dpub_key_bytes: "bytes",total_message_count: "int"):
-        _UniffiConverterBytes.check_lower(nonce_bytes)
-        
-        _UniffiConverterBytes.check_lower(proof_request_bytes)
-        
-        _UniffiConverterBytes.check_lower(proof_bytes)
-        
-        _UniffiConverterSequenceString.check_lower(disclosed_messages)
-        
-        _UniffiConverterBytes.check_lower(dpub_key_bytes)
-        
-        _UniffiConverterUInt64.check_lower(total_message_count)
-        
-        self._pointer = _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_constructor_verifyrequest_new,
-        _UniffiConverterBytes.lower(nonce_bytes),
-        _UniffiConverterBytes.lower(proof_request_bytes),
-        _UniffiConverterBytes.lower(proof_bytes),
-        _UniffiConverterSequenceString.lower(disclosed_messages),
-        _UniffiConverterBytes.lower(dpub_key_bytes),
-        _UniffiConverterUInt64.lower(total_message_count))
-
-    def __del__(self):
-        # In case of partial initialization of instances.
-        pointer = getattr(self, "_pointer", None)
-        if pointer is not None:
-            _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_free_verifyrequest, pointer)
-
-    def _uniffi_clone_pointer(self):
-        return _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_clone_verifyrequest, self._pointer)
-
-    # Used by alternative constructors or any methods which return this type.
-    @classmethod
-    def _make_instance_(cls, pointer):
-        # Lightly yucky way to bypass the usual __init__ logic
-        # and just create a new instance with the required pointer.
-        inst = cls.__new__(cls)
-        inst._pointer = pointer
-        return inst
-
-
-    def is_valid(self, ) -> "str":
-        return _UniffiConverterString.lift(
-            _uniffi_rust_call(_UniffiLib.uniffi_bbs_core_fn_method_verifyrequest_is_valid,self._uniffi_clone_pointer(),)
-        )
-
-
-
-
-
-
-class _UniffiConverterTypeVerifyRequest:
-
-    @staticmethod
-    def lift(value: int):
-        return VerifyRequest._make_instance_(value)
-
-    @staticmethod
-    def check_lower(value: VerifyRequest):
-        if not isinstance(value, VerifyRequest):
-            raise TypeError("Expected VerifyRequest instance, {} found".format(type(value).__name__))
-
-    @staticmethod
-    def lower(value: VerifyRequestProtocol):
-        if not isinstance(value, VerifyRequest):
-            raise TypeError("Expected VerifyRequest instance, {} found".format(type(value).__name__))
-        return value._uniffi_clone_pointer()
-
-    @classmethod
-    def read(cls, buf: _UniffiRustBuffer):
-        ptr = buf.read_u64()
-        if ptr == 0:
-            raise InternalError("Raw pointer value was null")
-        return cls.lift(ptr)
-
-    @classmethod
-    def write(cls, value: VerifyRequestProtocol, buf: _UniffiRustBuffer):
-        buf.write_u64(cls.lower(value))
 
 # Async support
 

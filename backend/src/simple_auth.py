@@ -38,7 +38,7 @@ class SimpleAuth:
             if not self.is_authenticated():
                 # Save the original URL to redirect back after login
                 session['next_url'] = request.url
-                return redirect(url_for('auth.login'))
+                return redirect(url_for('session_auth.login'))
             return f(*args, **kwargs)
         return decorated_function
     
@@ -68,8 +68,11 @@ If you didn't request this, please ignore this email.
                 server.send_message(msg)
             
             return True
-        except Exception as e:
+        except (smtplib.SMTPException, OSError) as e:
             logger.error(f"Failed to send email: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Unexpected error sending email: {e}")
             return False
     
     def authenticate_user(self, password, email_code=None):
@@ -118,12 +121,37 @@ def init_auth_routes(app):
     """Initialize authentication routes"""
     from flask import Blueprint
     
-    auth_bp = Blueprint('auth', __name__)
+    # Use unique blueprint name to avoid conflict with auth.py
+    auth_bp = Blueprint('session_auth', __name__, url_prefix='')
     
     @auth_bp.route('/login', methods=['GET', 'POST'])
     def login():
         if request.method == 'GET':
-            return render_template('login.html', require_email=auth.require_email)
+            # Generate verifier QR code for VC login
+            try:
+                from src.utils import get_current_server_url
+                from src.verifier.utils import generate_qr_code
+                from src.tenants import get_current_tenant_id
+                
+                # Get current tenant
+                tenant_id = get_current_tenant_id()
+                
+                # Generate OID4VP presentation request URL for login
+                # This uses the tenant's verifier endpoint
+                server_url = get_current_server_url()
+                presentation_request_url = f"openid4vp://?request_uri={server_url}/verifier/presentation-request"
+                
+                # Generate QR code
+                qr_code_data = generate_qr_code(presentation_request_url)
+                
+                return render_template('login.html', 
+                                    require_email=auth.require_email,
+                                    vc_qr_code=qr_code_data,
+                                    vc_presentation_url=presentation_request_url)
+            except Exception as e:
+                logger.warning(f"Failed to generate VC login QR code: {e}")
+                # Fallback to login without VC QR code
+                return render_template('login.html', require_email=auth.require_email)
         
         # Handle POST
         password = request.form.get('password', '')
@@ -146,7 +174,7 @@ def init_auth_routes(app):
     def logout():
         session.clear()
         flash('Logged out successfully!', 'success')
-        return redirect(url_for('auth.login'))
+        return redirect(url_for('session_auth.login'))
     
     app.register_blueprint(auth_bp)
     
@@ -162,4 +190,4 @@ def init_auth_routes(app):
         
         if not auth.is_authenticated():
             session['next_url'] = request.url
-            return redirect(url_for('auth.login')) 
+            return redirect(url_for('session_auth.login')) 

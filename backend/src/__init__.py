@@ -16,9 +16,22 @@ warnings.filterwarnings("ignore", category=DeprecationWarning, module="urllib3")
 log_file_path = os.path.join("..", "instance", "service.log")
 os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
 
+# Set logging level based on environment for performance
+# DEBUG in development, INFO in production (reduces log noise and improves performance)
+environment = os.environ.get('ENVIRONMENT', 'development')
+log_level_env = os.environ.get('LOG_LEVEL', '').upper()
+
+if log_level_env:
+    # Explicit LOG_LEVEL environment variable takes precedence
+    log_level = getattr(logging, log_level_env, logging.INFO)
+elif environment == 'production':
+    log_level = logging.INFO  # Production: INFO level (less verbose, better performance)
+else:
+    log_level = logging.DEBUG  # Development: DEBUG level (more verbose for debugging)
+
 # Set up the root logger
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=log_level,
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
     handlers=[
         logging.FileHandler(log_file_path),
@@ -40,11 +53,107 @@ SQLALCHEMY_DATABASE_URI = f"sqlite:///{DB_NAME}"
 # Create socketio
 socketio = SocketIO()
 
-# random cookie key
-SECRET_KEY = ''.join(random.choice(
-    'abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)') for i in range(50))
-
 INSTANCE_PATH = os.path.join(os.path.dirname(__file__), '..', 'instance')
+
+
+def register_blueprints(app):
+    """
+    Register all blueprints in one centralized location.
+    
+    This function provides a single source of truth for all blueprint registration,
+    making it easy to see what blueprints are registered and in what order.
+    
+    Blueprint Categories:
+    - Core: Home, Auth, Issuer, Verifier
+    - Validation: VCStatus, Validate (legacy)
+    - Settings: Settings UI, Settings API
+    - Features: API Integration, Debug, Use Cases, Monitoring
+    - Network: Network API (dynamic registration)
+    
+    Args:
+        app: Flask application instance
+    """
+    # Core blueprints - Essential application functionality
+    from .home import home
+    from .issuer.issuer import issuer
+    from .verifier.main_routes import verifier_bp as verifier
+    
+    app.register_blueprint(home, url_prefix='/')
+    app.register_blueprint(issuer, url_prefix='/')
+    app.register_blueprint(verifier, url_prefix='/verifier')
+    
+    # Authentication blueprints - User authentication
+    from .auth import auth, vc_auth_bp
+    app.register_blueprint(auth, url_prefix='/')
+    app.register_blueprint(vc_auth_bp)  # VC-based authentication
+    
+    # Conditional authentication (simple session auth if enabled)
+    auth_enabled = os.environ.get('ENABLE_AUTH', 'false').lower() == 'true'
+    if auth_enabled:
+        from .simple_auth import init_auth_routes
+        init_auth_routes(app)
+        logger.info("🔐 Session auth enabled")
+    
+    # Validation blueprints - Credential validation and status
+    from .validate.vcstatus import vcstatus
+    from .validate.validate import validate_legacy
+    
+    app.register_blueprint(vcstatus, url_prefix='/vcstatus')
+    app.register_blueprint(validate_legacy, url_prefix='/validate')  # Legacy route
+    
+    # Settings blueprints - Application configuration
+    from .settings import settings, api_settings
+    app.register_blueprint(settings, url_prefix='/')
+    app.register_blueprint(api_settings, url_prefix='/')
+    
+    # Feature blueprints - Additional functionality
+    from .api_integration import api_integration
+    from .issuer.debug import debug as debug_bp
+    from .usecases.usecases import usecases
+    from .monitoring import monitoring
+    
+    app.register_blueprint(api_integration, url_prefix='/')
+    app.register_blueprint(debug_bp, url_prefix='/debug')
+    app.register_blueprint(usecases, url_prefix='/usecases')
+    app.register_blueprint(monitoring)
+    
+    # Network API - Dynamic registration (kept separate for backward compatibility)
+    from .settings.network_api import register_network_api
+    register_network_api(app)
+    
+    logger.info(f"Registered {len(app.blueprints)} blueprints")
+
+
+# Persistent SECRET_KEY from environment or file
+SECRET_KEY = os.environ.get('SECRET_KEY')
+
+if not SECRET_KEY:
+    import secrets
+    secret_key_file = os.path.join(INSTANCE_PATH, '.secret_key')
+    
+    if os.path.exists(secret_key_file):
+        # Load existing key
+        try:
+            with open(secret_key_file, 'r') as f:
+                SECRET_KEY = f.read().strip()
+            logger.info("🔐 Loaded persistent SECRET_KEY from file")
+        except Exception as e:
+            logger.error(f"Failed to load SECRET_KEY: {e}")
+            SECRET_KEY = secrets.token_hex(32)
+    else:
+        # Generate new key and save
+        SECRET_KEY = secrets.token_hex(32)  # 64 character hex string
+        try:
+            os.makedirs(INSTANCE_PATH, exist_ok=True)
+            with open(secret_key_file, 'w') as f:
+                f.write(SECRET_KEY)
+            # Set restrictive permissions (owner read/write only)
+            os.chmod(secret_key_file, 0o600)
+            logger.info("🔐 Generated new persistent SECRET_KEY and saved to file")
+        except Exception as e:
+            logger.warning(f"Could not save SECRET_KEY to file: {e}")
+else:
+    logger.info("🔐 Using SECRET_KEY from environment variable")
 
 
 def create_app():
@@ -52,31 +161,55 @@ def create_app():
 
     app.config['SECRET_KEY'] = SECRET_KEY
     
+    # Initialize tenant middleware EARLY (before database config for optimal performance)
+    # This ensures tenant context is available for all subsequent operations
+    try:
+        from .tenants.middleware import TenantMiddleware
+        tenant_middleware = TenantMiddleware(app)
+        logger.debug("Tenant middleware initialized early")
+    except Exception as e:
+        logger.warning(f"Tenant middleware initialization failed: {e}")
+    
     # 🚨 CRITICAL: Configure tenant-specific database BEFORE setting default URI
     try:
         from .tenants.database import configure_tenant_database, get_current_tenant_from_environment
         current_tenant = get_current_tenant_from_environment()
         if current_tenant:
             tenant_db_uri = configure_tenant_database(app, current_tenant)
-            logger.info(f"✅ Tenant database configured: {tenant_db_uri}")
+            logger.info(f"Tenant database configured: {tenant_db_uri}")
         else:
             app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
-            logger.info(f"⚠️  Using default database URI: {SQLALCHEMY_DATABASE_URI}")
+            logger.info(f"Using default database URI: {SQLALCHEMY_DATABASE_URI}")
     except Exception as e:
-        logger.error(f"❌ Failed to configure tenant database: {e}")
+        logger.error(f"Failed to configure tenant database: {e}")
         app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
-        logger.info(f"⚠️  Falling back to default database URI: {SQLALCHEMY_DATABASE_URI}")
+        logger.info(f"Falling back to default database URI: {SQLALCHEMY_DATABASE_URI}")
     
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1000 * 1000
     app.config['INSTANCE_FOLDER_PATH'] = INSTANCE_PATH
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
-    # Initialize CORS for iOS compatibility
+    # Initialize CORS - environment-based configuration for security
+    cors_origins = os.environ.get('CORS_ORIGINS', 'https://localhost:8080')
+    environment = os.environ.get('ENVIRONMENT', 'development')
+    
+    if environment == 'production':
+        # Production: Strict CORS with explicit origins
+        allowed_origins = [origin.strip() for origin in cors_origins.split(',')]
+        cors_credentials = True
+        logger.info(f"CORS configured for production: {allowed_origins}")
+    else:
+        # Development: Allow all origins for easier testing
+        allowed_origins = '*'
+        cors_credentials = False
+        logger.info("CORS configured for development (allow all origins)")
+    
     CORS(app, resources={
         r"/*": {
-            "origins": "*",
+            "origins": allowed_origins,
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"]
+            "allow_headers": ["Content-Type", "Authorization"],
+            "supports_credentials": cors_credentials
         }
     })
     
@@ -85,7 +218,7 @@ def create_app():
     if auth_enabled:
         from .simple_auth import init_auth_routes
         init_auth_routes(app)
-        logger.info("🔐 Simple authentication enabled")
+        logger.info("Simple authentication enabled")
     
     # Ensure CSRF token is available for all requests
     @app.before_request
@@ -159,49 +292,47 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
     
+    # Initialize rate limiting
+    try:
+        from flask_limiter import Limiter
+        from flask_limiter.util import get_remote_address
+        
+        limiter = Limiter(
+            app=app,
+            key_func=get_remote_address,
+            default_limits=["200 per hour", "50 per minute"],
+            storage_uri="memory://",  # Use Redis in production: "redis://localhost:6379"
+            strategy="fixed-window",
+            headers_enabled=True
+        )
+        app.config['RATE_LIMITER'] = limiter
+        # Define rate limit decorators
+        write_rate_limit = limiter.limit("10 per minute")
+        read_rate_limit = limiter.limit("100 per minute")
+        logger.info("✅ Rate limiting initialized")
+    except Exception as e:
+        logger.warning(f"⚠️ Rate limiting initialization failed: {e}")
+        app.config['RATE_LIMITER'] = None
+        # Define dummy decorators when rate limiting is not available
+        def dummy_decorator(f):
+            return f
+        write_rate_limit = dummy_decorator
+        read_rate_limit = dummy_decorator
+    
     # Initialize multi-tenant system (database already configured above)
     try:
         from .tenants.setup import initialize_tenant_system
         
         # Initialize tenant system (registry, config loading)
         initialize_tenant_system()
-        logger.info("✅ Multi-tenant system registry initialized successfully")
+        logger.info("Multi-tenant system registry initialized successfully")
         
     except Exception as e:
-        logger.warning(f"⚠️  Multi-tenant system initialization failed: {e}")
-        logger.info("🔄 Falling back to legacy tenant system")
+        logger.warning(f"Multi-tenant system initialization failed: {e}")
+        logger.info("Falling back to legacy tenant system")
 
-    from .home import home
-    from .auth import auth
-    from .issuer.issuer import issuer
-    from .verifier.main_routes import verifier_bp as verifier  # 🔧 MODULAR: Using split verifier architecture
-    from .validate.vcstatus import vcstatus  # Aktualisiert: Verwendet jetzt die vcstatus.py Datei
-    from .validate.validate import validate_legacy  # 🩺 CHIRURGISCHE REPARATUR: Import legacy blueprint
-    from .settings import settings, api_settings  # Import settings from the package instead of directly from settings.py
-    from .api_integration import api_integration  # Import the API integration blueprint
-
-    from .issuer.debug import debug as debug_bp  # Import the debug blueprint
-    from .usecases.usecases import usecases  # Import the usecases blueprint
-    from .monitoring import monitoring  # Import the monitoring blueprint
-    # Note: tenant_test module removed - tenant config endpoints moved to settings
-
-    app.register_blueprint(home, url_prefix='/')
-    app.register_blueprint(auth, url_prefix='/')
-    app.register_blueprint(issuer, url_prefix='/')
-    app.register_blueprint(verifier, url_prefix='/verifier')
-    app.register_blueprint(vcstatus, url_prefix='/vcstatus')
-    app.register_blueprint(validate_legacy, url_prefix='/validate')  # 🩺 CHIRURGISCHE REPARATUR: Legacy route
-    app.register_blueprint(settings, url_prefix='/')
-    app.register_blueprint(api_settings, url_prefix='/')
-    app.register_blueprint(api_integration, url_prefix='/')  # Register API integration blueprint
-    app.register_blueprint(debug_bp, url_prefix='/debug')  # Register debug blueprint at root level
-    app.register_blueprint(usecases, url_prefix='/usecases')  # Register usecases blueprint
-    app.register_blueprint(monitoring)  # Register monitoring blueprint
-    # Note: tenant config endpoints now handled by settings module
-    
-    # 🚀 PERFECTION: Register new modernized network API
-    from .settings.network_api import register_network_api
-    register_network_api(app)
+    # Register all blueprints using centralized function
+    register_blueprints(app)
     
     from .models import User
 
@@ -219,15 +350,41 @@ def create_app():
         return User.query.get(int(id))
 
     # CRITICAL FIX: Enhanced Socket.IO configuration for ngrok compatibility
-    socketio.init_app(app, 
-                     cors_allowed_origins="*", 
-                     async_mode='threading',
-                     ping_timeout=30,           # Increased for ngrok
-                     ping_interval=25,
-                     allow_upgrades=True,       # Allow transport upgrades
-                     transports=['polling', 'websocket'],  # Enable both transports
-                     engineio_logger=False,     # Disable for production
-                     logger=False)              # Disable for production
+    # Match CORS configuration for security consistency
+    if environment == 'production':
+        socketio_cors_origins = [origin.strip() for origin in cors_origins.split(',')]
+        socketio_credentials = True
+        logger.info(f"Socket.IO CORS configured for production: {socketio_cors_origins}")
+    else:
+        socketio_cors_origins = "*"
+        socketio_credentials = False
+        logger.info("Socket.IO CORS configured for development (allow all)")
+    
+    socketio_config = {
+        'cors_allowed_origins': socketio_cors_origins,
+        'cors_credentials': socketio_credentials,
+        'async_mode': 'threading',
+        'ping_timeout': 60,           # Increased for Docker/ngrok stability
+        'ping_interval': 25,
+        'allow_upgrades': True,       # Allow transport upgrades
+        'transports': ['polling', 'websocket'],  # Prioritize polling for Docker
+        'engineio_logger': False,     # Disable for production
+        'logger': False               # Disable for production
+    }
+    
+    # DOCKER SOCKET.IO FIX: Enhanced configuration for Docker environments
+    if os.environ.get('DOCKER_MODE') == 'true':
+        socketio_config.update({
+            'ping_timeout': 120,        # Longer timeout for container networking
+            'ping_interval': 30,
+            'transports': ['polling'],  # Polling-only for Docker reliability
+            'upgrade': False            # Disable WebSocket upgrade in Docker
+        })
+        logger.info("Socket.IO configured for Docker mode")
+    else:
+        logger.info("Socket.IO configured for development mode")
+    
+    socketio.init_app(app, **socketio_config)
 
     # Create alias for /api/credentials endpoint to ensure backward compatibility
     @app.route('/api/credentials', methods=['GET'])
@@ -253,30 +410,44 @@ def create_app():
         from .models import VC_validity, db
         
         try:
-            credential = VC_validity.query.filter_by(identifier=identifier).first()
-            if not credential:
-                return jsonify({'error': 'Credential not found'}), 404
+            # Validate request body
+            @validate_schema(CredentialRevokeSchema)
+            def validated_revoke():
+                credential = VC_validity.query.filter_by(identifier=identifier).first()
+                if not credential:
+                    return jsonify({'error': 'Credential not found'}), 404
                 
-            data = request.get_json() or {}
-            reason = data.get('reason', 'Revoked via API')
-            revoked_by = data.get('revoked_by', 'api')
+                data = request.validated_data
+                reason = data.get('reason', 'Revoked via API')
+                revoked_by = data.get('revoked_by', 'api')
             
-            credential.revoke(reason=reason, revoked_by=revoked_by)
-            db.session.commit()
+                credential.revoke(reason=reason, revoked_by=revoked_by)
+                db.session.commit()
+                
+                return jsonify({
+                    'success': True,
+                    'message': 'Credential revoked successfully',
+                    'identifier': identifier,
+                    'status': 'revoked',
+                    'revoked_at': credential.revoked_at.isoformat() if credential.revoked_at else None
+                })
             
-            return jsonify({
-                'success': True,
-                'message': 'Credential revoked successfully',
-                'identifier': identifier,
-                'status': 'revoked',
-                'revoked_at': credential.revoked_at.isoformat() if credential.revoked_at else None
-            })
+            return validated_revoke()
+        except ValidationError as e:
+            return jsonify({'error': 'Validation failed', 'details': e.messages}), 400
         except Exception as e:
             return jsonify({'error': str(e)}), 500
     
     # Add specific endpoint for restoring (unrevoking) a credential by ID
     @app.route('/api/credential/<string:identifier>/restore', methods=['POST'])
+    @write_rate_limit
     def api_restore_credential(identifier):
+        # Validate identifier
+        from .validators import IdentifierField, ValidationError
+        try:
+            IdentifierField()._deserialize(identifier, 'identifier', {})
+        except ValidationError as e:
+            return jsonify({'error': 'Invalid identifier format', 'details': str(e)}), 400
         from .models import VC_validity, db
         
         try:
@@ -298,7 +469,14 @@ def create_app():
     
     # Add specific endpoint for deleting a credential by ID
     @app.route('/api/credential/<string:identifier>/delete', methods=['POST'])
+    @write_rate_limit
     def api_delete_credential(identifier):
+        # Validate identifier
+        from .validators import IdentifierField, ValidationError
+        try:
+            IdentifierField()._deserialize(identifier, 'identifier', {})
+        except ValidationError as e:
+            return jsonify({'error': 'Invalid identifier format', 'details': str(e)}), 400
         from .models import VC_validity, db
         
         try:

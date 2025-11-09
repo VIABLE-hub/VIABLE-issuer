@@ -25,41 +25,69 @@ def get_current_selective_disclosure_settings():
         
         # Get current tenant ID using the proper tenant detection system
         tenant_id = get_current_tenant_id()
+        logger.info("="*80)
+        logger.info("🔍 STEP 1: get_current_selective_disclosure_settings() CALLED")
+        logger.info("="*80)
+        logger.info(f"🏢 Current tenant_id: {tenant_id}")
+        logger.info(f"📋 Starting with technical fields: {TECHNICAL_FIELDS}")
+        
         if not tenant_id:
-            logger.warning("No tenant ID detected, using technical fields only")
+            logger.warning("⚠️  No tenant ID detected, using technical fields only")
             return mandatory_fields
             
         # Get tenant settings for the detected tenant
         tenant_settings = TenantSettings.get_or_create_default(tenant_id)
+        logger.info(f"📂 Tenant settings loaded for: {tenant_id}")
+        logger.info(f"📂 Disclosure settings structure: {tenant_settings.disclosure_settings}")
         
         if (tenant_settings.disclosure_settings and 
             'selective_disclosure' in tenant_settings.disclosure_settings and
             'mandatory_fields' in tenant_settings.disclosure_settings['selective_disclosure']):
             
             stored_fields = tenant_settings.disclosure_settings['selective_disclosure']['mandatory_fields']
-            logger.debug(f"Got user-selected fields from database: {stored_fields}")
+            logger.info(f"✅ Found user-selected fields in database: {stored_fields}")
+            logger.info(f"✅ Number of user-selected fields: {len(stored_fields)}")
             
             # Add user-selected fields to the mandatory technical fields
             from .constants import ALL_SELECTABLE_FIELDS
             
             for field in stored_fields:
+                logger.info(f"  🔍 Examining stored field: '{field}'")
+                
                 # Skip technical fields (already included)
-                if field not in TECHNICAL_FIELDS:
-                    # Only add the simple field name - no duplicates
-                    if field in ALL_SELECTABLE_FIELDS:
+                if field in TECHNICAL_FIELDS:
+                    logger.info(f"    ⏭️  Skipping technical field (already included): '{field}'")
+                    continue
+                    
+                # Only add the simple field name - no duplicates
+                if field in ALL_SELECTABLE_FIELDS:
+                    if field not in mandatory_fields:
                         mandatory_fields.append(field)  # Simple name like "lastName"
-                        logger.debug(f"✅ Added user field: '{field}'")
-                    elif field.startswith('vc.credentialSubject.'):
-                        # Convert full path to simple name
-                        simple_field = field.replace('vc.credentialSubject.', '')
-                        if simple_field in ALL_SELECTABLE_FIELDS and simple_field not in mandatory_fields:
-                            mandatory_fields.append(simple_field)  # Add simple name only
-                            logger.debug(f"✅ Added user field: '{simple_field}' (converted from {field})")
+                        logger.info(f"    ✅ Added user field: '{field}'")
+                    else:
+                        logger.info(f"    ⏭️  Field already in list: '{field}'")
+                elif field.startswith('vc.credentialSubject.'):
+                    # Convert full path to simple name
+                    simple_field = field.replace('vc.credentialSubject.', '')
+                    logger.info(f"    🔄 Converting path to simple name: '{field}' → '{simple_field}'")
+                    if simple_field in ALL_SELECTABLE_FIELDS and simple_field not in mandatory_fields:
+                        mandatory_fields.append(simple_field)  # Add simple name only
+                        logger.info(f"    ✅ Added converted user field: '{simple_field}'")
+                    elif simple_field in mandatory_fields:
+                        logger.info(f"    ⏭️  Field already in list: '{simple_field}'")
+                    else:
+                        logger.info(f"    ⚠️  Field not in selectable fields: '{simple_field}'")
+                else:
+                    logger.info(f"    ⚠️  Unknown field format: '{field}'")
             
-            logger.debug(f"Combined mandatory fields (technical + user selected): {mandatory_fields}")
+            logger.info(f"✅ Final combined mandatory fields (technical + user): {mandatory_fields}")
+            logger.info(f"✅ Total fields: {len(mandatory_fields)} ({len(TECHNICAL_FIELDS)} technical + {len(mandatory_fields) - len(TECHNICAL_FIELDS)} user)")
+            logger.info("="*80)
             return mandatory_fields
         
-        logger.debug(f"No user-selected fields found, using technical fields only: {mandatory_fields}")
+        logger.info(f"⚠️  No user-selected fields found in database, using technical fields only")
+        logger.info(f"📋 Technical fields: {mandatory_fields}")
+        logger.info("="*80)
         return mandatory_fields
         
     except Exception as e:
@@ -82,6 +110,12 @@ def update_selective_disclosure_settings(mandatory_fields):
         mandatory_fields: List of mandatory fields to store
     """
     try:
+        logger.info("="*80)
+        logger.info("💾 SELECTIVE DISCLOSURE - UPDATING SETTINGS")
+        logger.info("="*80)
+        logger.info(f"📥 Input fields received: {mandatory_fields}")
+        logger.info(f"📥 Number of fields received: {len(mandatory_fields)}")
+        
         # Import inside function to avoid circular imports
         from src.models import TenantSettings
         from src.tenants import get_current_tenant_id
@@ -92,46 +126,64 @@ def update_selective_disclosure_settings(mandatory_fields):
         filtered_fields = []
         
         for field in mandatory_fields:
+            logger.info(f"  🔍 Processing field: '{field}'")
+            
             # Check if field is directly in selectable fields (simple name)
             if field in ALL_SELECTABLE_FIELDS:
                 filtered_fields.append(field)
+                logger.info(f"    ✅ Added selectable field: '{field}'")
             # Check if field is a full path that maps to a selectable field
             elif field.startswith('vc.credentialSubject.'):
                 simple_field = field.replace('vc.credentialSubject.', '')
                 if simple_field in ALL_SELECTABLE_FIELDS:
                     filtered_fields.append(field)  # Keep the full path
+                    logger.info(f"    ✅ Added full path field: '{field}' (maps to '{simple_field}')")
+                else:
+                    logger.warning(f"    ⚠️  Path field '{field}' doesn't map to selectable field, skipping")
             # Don't include technical fields
-            elif field not in TECHNICAL_FIELDS:
-                logger.warning(f"Unknown field '{field}' not in selectable fields, skipping")
+            elif field in TECHNICAL_FIELDS:
+                logger.info(f"    ⏭️  Skipping technical field: '{field}'")
+            else:
+                logger.warning(f"    ❌ Unknown field '{field}' not in selectable fields, skipping")
         
-        logger.info(f"Updating selective disclosure: input={mandatory_fields}, filtered={filtered_fields}")
+        logger.info(f"📤 Filtered fields to save: {filtered_fields}")
+        logger.info(f"📤 Number of filtered fields: {len(filtered_fields)}")
         
         # Get current tenant ID using the proper tenant detection system
         tenant_id = get_current_tenant_id()
+        logger.info(f"🏢 Target tenant: {tenant_id}")
+        
         if not tenant_id:
-            logger.error("No tenant ID detected, cannot update settings")
+            logger.error("❌ No tenant ID detected, cannot update settings")
             return False
             
         # Get tenant settings for the detected tenant
         tenant_settings = TenantSettings.get_or_create_default(tenant_id)
+        logger.info(f"📂 Loaded tenant settings for: {tenant_id}")
         
         # Initialize disclosure_settings if not exists
         if not tenant_settings.disclosure_settings:
             tenant_settings.disclosure_settings = {}
+            logger.info("📝 Initialized empty disclosure_settings")
         
         if 'selective_disclosure' not in tenant_settings.disclosure_settings:
             tenant_settings.disclosure_settings['selective_disclosure'] = {}
+            logger.info("📝 Initialized empty selective_disclosure section")
         
         # Update the mandatory fields (only user-selectable fields)
         tenant_settings.disclosure_settings['selective_disclosure']['mandatory_fields'] = filtered_fields
+        logger.info(f"💾 Set mandatory_fields to: {filtered_fields}")
         
         # Mark as modified for SQLAlchemy
         tenant_settings.disclosure_settings = tenant_settings.disclosure_settings.copy()
+        logger.info("🔄 Marked disclosure_settings as modified for SQLAlchemy")
         
         # Save to database
         db.session.commit()
+        logger.info("💾 Committed changes to database")
         
-        logger.info(f"Updated selective disclosure settings with {len(filtered_fields)} mandatory user fields")
+        logger.info(f"✅ Successfully updated selective disclosure settings with {len(filtered_fields)} mandatory user fields")
+        logger.info("="*80)
         return True
         
     except Exception as e:
@@ -184,7 +236,18 @@ def get_presentation_definition():
             "mandatory_fields": current_mandatory_fields  # For backward compatibility
         }
         
-        logger.debug(f"Generated presentation definition with {len(technical_fields)} technical and {len(user_mandatory_fields)} user fields")
+        # ✅ CRITICAL: Log what we're returning
+        logger.info("="*80)
+        logger.info("📦 STEP 2: get_presentation_definition() RETURN VALUE")
+        logger.info("="*80)
+        logger.info(f"🔍 current_mandatory_fields from get_current_selective_disclosure_settings(): {current_mandatory_fields}")
+        logger.info(f"📋 Separated technical_fields: {technical_fields}")
+        logger.info(f"👤 Separated user_mandatory_fields: {user_mandatory_fields}")
+        logger.info(f"📊 Total technical: {len(technical_fields)}, Total user: {len(user_mandatory_fields)}")
+        if len(user_mandatory_fields) == 0:
+            logger.error("❌ WARNING: user_mandatory_fields is EMPTY! Personal fields will NOT be requested!")
+        logger.info("="*80)
+        
         return presentation_def
         
     except Exception as e:

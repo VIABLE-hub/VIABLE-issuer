@@ -10,12 +10,13 @@ from cryptography.hazmat.primitives import serialization
 from .. import db
 from ..models import TenantSettings, KeyRegistry, AuditLog
 from .core import get_current_tenant, get_current_user_email, create_settings_backup
+from ..path_utils import get_instance_path
 
 logger = logging.getLogger(__name__)
 
 def get_key_storage_path():
     """Get the path where keys are stored"""
-    return Path("backend/instance/keys")
+    return get_instance_path('keys')
 
 def ensure_key_directory():
     """Ensure the key storage directory exists"""
@@ -33,7 +34,7 @@ def get_existing_keys():
         
         # Get current tenant for context
         try:
-            from ..tenants import get_current_tenant_id
+            from ..tenants import get_current_tenant as get_current_tenant_id
             current_tenant = get_current_tenant_id()
         except:
             current_tenant = "root"
@@ -561,7 +562,7 @@ def register_routes(blueprint):
                         logger.info(f"✅ Selected fields from verifier format: {selected_fields}")
                     else:
                         # Fallback: try to read from file
-                        settings_file = Path("backend/instance/selective_disclosure_settings.json")
+                        settings_file = get_instance_path('selective_disclosure_settings.json')
                         if settings_file.exists():
                             settings = json.loads(settings_file.read_text())
                             logger.info(f"✅ Loaded settings from file: {settings}")
@@ -640,14 +641,14 @@ def register_routes(blueprint):
                         logger.info(f"✅ Saved in verifier format: {verifier_format}")
                     else:
                         # Fallback: save to a simple JSON file if no tenant system
-                        settings_file = Path("backend/instance/selective_disclosure_settings.json")
+                        settings_file = get_instance_path('selective_disclosure_settings.json')
                         settings_file.parent.mkdir(parents=True, exist_ok=True)
                         settings_file.write_text(json.dumps(frontend_settings, indent=2))
                         logger.info(f"✅ Selective disclosure settings saved to file: {settings_file}")
                 except Exception as storage_error:
                     logger.warning(f"⚠️ Database storage failed, using file fallback: {storage_error}")
                     # Fallback to file storage
-                    settings_file = Path("backend/instance/selective_disclosure_settings.json")
+                    settings_file = get_instance_path('selective_disclosure_settings.json')
                     settings_file.parent.mkdir(parents=True, exist_ok=True)
                     settings_file.write_text(json.dumps(frontend_settings, indent=2))
                     logger.info(f"✅ Selective disclosure settings saved to fallback file: {settings_file}")

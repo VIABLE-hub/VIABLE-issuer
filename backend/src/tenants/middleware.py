@@ -1,13 +1,15 @@
 """
 Tenant Middleware
 Automatically sets tenant context for every request
+
+Uses UnifiedTenantDetector as single source of truth for tenant detection.
 """
 
 import logging
 from flask import request, g, current_app
 from functools import wraps
 
-from .detection import get_current_tenant_id, set_current_tenant
+from .unified_detector import get_current_tenant, set_current_tenant
 
 logger = logging.getLogger(__name__)
 
@@ -32,21 +34,28 @@ class TenantMiddleware:
         logger.info("🔧 Tenant middleware initialized")
     
     def _set_tenant_context(self):
-        """Set tenant context before each request"""
+        """
+        Set tenant context before each request.
+        Uses UnifiedTenantDetector for consistent detection.
+        """
         try:
-            # Get current tenant ID
-            tenant_id = get_current_tenant_id()
+            # Get current tenant ID using unified detector
+            # This will use cached g.tenant_id if available, or detect fresh
+            tenant_id = get_current_tenant()
             
-            # Store in request context
+            # Store in request context (unified detector already did this, but ensure it's set)
             g.tenant_id = tenant_id
             g.tenant_middleware_active = True
             
-            # Log tenant detection for debugging
-            logger.debug(f"🎯 Request tenant: {tenant_id} | Path: {request.path}")
+            # Log tenant detection for debugging (only in debug mode to reduce noise)
+            # Performance: Only log if DEBUG level is enabled to avoid overhead
+            if logger.isEnabledFor(logging.DEBUG):
+                method = getattr(g, 'tenant_detection_method', 'unknown')
+                logger.debug(f"Request tenant: {tenant_id} (method: {method}) | Path: {request.path}")
             
         except Exception as e:
             logger.error(f"❌ Failed to set tenant context: {e}")
-            # Set fallback
+            # Set fallback (unified detector guarantees valid tenant, but safety first)
             g.tenant_id = 'root'
             g.tenant_middleware_active = False
     
@@ -82,43 +91,40 @@ def tenant_required(tenant_id=None):
 
 def get_request_tenant_id():
     """
-    Get tenant ID for current request
+    Get tenant ID for current request.
+    Uses unified detector for consistency.
     
     Returns:
-        str: Current request tenant ID
+        str: Current request tenant ID (always valid)
     """
-    if hasattr(g, 'tenant_id'):
-        return g.tenant_id
-    
-    # Fallback to detection
-    return get_current_tenant_id()
+    # Use unified detector (it will check g.tenant_id first, then detect)
+    return get_current_tenant()
 
-def switch_tenant_context(tenant_id: str):
+def switch_tenant_context(tenant_id: str, persist: bool = False):
     """
-    Switch tenant context for current request
+    Switch tenant context for current request.
+    Uses unified detector for consistency.
     
     Args:
         tenant_id: New tenant ID
+        persist: Store in session for future requests
         
     Returns:
         bool: Success status
     """
-    try:
-        if set_current_tenant(tenant_id):
-            g.tenant_id = tenant_id
-            logger.info(f"🔄 Switched request tenant to: {tenant_id}")
-            return True
-        return False
-    except Exception as e:
-        logger.error(f"❌ Failed to switch tenant context: {e}")
-        return False
+    return set_current_tenant(tenant_id, persist)
 
 # Utility functions for backward compatibility
 def ensure_tenant_context():
-    """Ensure tenant context is set for current request"""
-    if not hasattr(g, 'tenant_id'):
-        g.tenant_id = get_current_tenant_id()
-        logger.debug(f"🔧 Ensured tenant context: {g.tenant_id}")
+    """
+    Ensure tenant context is set for current request.
+    Uses unified detector for consistency.
+    """
+    # Unified detector always returns valid tenant, so just call it
+    tenant_id = get_current_tenant()
+    if not hasattr(g, 'tenant_id') or g.tenant_id != tenant_id:
+        g.tenant_id = tenant_id
+        logger.debug(f"🔧 Ensured tenant context: {tenant_id}")
 
 def clear_tenant_context():
     """Clear tenant context for current request"""

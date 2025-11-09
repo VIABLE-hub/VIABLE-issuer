@@ -8,11 +8,13 @@ from flask import Blueprint, render_template, request, redirect
 from src.utils import get_current_server_url
 from logging import getLogger
 from datetime import datetime
+from flask_login import login_required
 
 from .utils import generate_qr_code, get_demo_credential
 from .settings_integration import get_current_selective_disclosure_settings, update_selective_disclosure_settings
 from .presentation_routes import presentation_bp
 from .verification_routes import verification_bp
+from .debug_routes import debug_bp
 
 logger = getLogger("LOGGER")
 
@@ -22,9 +24,11 @@ verifier_bp = Blueprint('verifier', __name__)
 # Register sub-blueprints
 verifier_bp.register_blueprint(presentation_bp)
 verifier_bp.register_blueprint(verification_bp)
+verifier_bp.register_blueprint(debug_bp)
 
 
 @verifier_bp.route('/', methods=['GET', 'POST'])
+@login_required
 def index():
     # 🚀 PRODUCTION-READY: Use configurable URLs for QR code and Socket.IO
     external_server_url = get_current_server_url()  # External URL for QR code
@@ -33,8 +37,9 @@ def index():
     import os
     socket_server_url = os.environ.get('SOCKET_IO_URL', external_server_url)
     
-    img = generate_qr_code(
-        f"openid4vp://?request_uri={external_server_url}/verifier/presentation-request")
+    # Construct OID4VP URL
+    presentation_request_url = f"openid4vp://?request_uri={external_server_url}/verifier/presentation-request"
+    img = generate_qr_code(presentation_request_url)
 
     # Get current settings dynamically
     current_mandatory_fields = get_current_selective_disclosure_settings()
@@ -42,6 +47,7 @@ def index():
     if request.method == "GET":
         return render_template("verifier.html", 
                              img_data=img, 
+                             presentation_request_url=presentation_request_url,  # For display below QR
                              server_url=external_server_url,      # For QR code generation
                              socket_url=socket_server_url,        # For Socket.IO connection
                              mandatory_fields=current_mandatory_fields, 
@@ -63,6 +69,7 @@ def index():
 
     return render_template("verifier.html", 
                          img_data=img, 
+                         presentation_request_url=presentation_request_url,  # For display below QR
                          server_url=external_server_url,      # For QR code generation
                          socket_url=socket_server_url,        # For Socket.IO connection
                          mandatory_fields=updated_mandatory_fields, 

@@ -1,15 +1,28 @@
 """
-Unified Tenant Detection System
-Provides single source of truth for tenant identification across the entire system
+Legacy Tenant Detection System
+
+DEPRECATED: This module is deprecated in favor of unified_detector.py
+Use unified_detector.get_current_tenant() instead.
+
+This module is kept for backward compatibility only.
+All new code should use unified_detector.py
 """
 
 import os
 import logging
+import warnings
 from typing import Optional
 from flask import request, has_request_context, g, session, current_app
 from functools import lru_cache
 
 logger = logging.getLogger(__name__)
+
+# Deprecation warning
+warnings.warn(
+    "tenants.detection is deprecated. Use tenants.unified_detector.get_current_tenant() instead.",
+    DeprecationWarning,
+    stacklevel=2
+)
 
 class TenantDetector:
     """
@@ -118,6 +131,7 @@ class TenantDetector:
             domain_patterns = {
                 'tub': ['tu-berlin', 'tub', 'tuberlin'],
                 'fub': ['fu-berlin', 'fub', 'fuberlin'],
+                'veritas': ['veritas', 'veritas-university'],
                 'root': ['localhost', 'studentvc', '127.0.0.1', '192.168.']
             }
             
@@ -140,7 +154,7 @@ class TenantDetector:
     
     def _is_valid_tenant(self, tenant_id: str) -> bool:
         """Validate that tenant ID is supported"""
-        VALID_TENANTS = ['root', 'tub', 'fub']
+        VALID_TENANTS = ['root', 'tub', 'fub', 'veritas']
         return tenant_id in VALID_TENANTS
     
     def set_tenant_for_request(self, tenant_id: str) -> bool:

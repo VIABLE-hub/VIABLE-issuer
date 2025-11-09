@@ -10,7 +10,7 @@ logger = getLogger("LOGGER")
 @home.route('/index', methods=['GET'])
 @home.route('/home', methods=['GET'])
 @home.route('/', methods=['GET'])
-# @login_required
+@login_required
 def index():
     return render_template("home.html")
 

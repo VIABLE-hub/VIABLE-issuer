@@ -10,6 +10,7 @@ from .registry import get_tenant_registry
 from .instances.root_config import RootConfig
 from .instances.tub.config import TUBerlinConfig
 from .instances.fub.config import FUBerlinConfig
+from .instances.veritas.config import VeritasConfig
 
 logger = logging.getLogger(__name__)
 
@@ -26,55 +27,56 @@ def register_all_tenants():
     registry = get_tenant_registry()
     
     try:
-        logger.info("🚨 NUCLEAR FIX: Starting bulletproof 3-tenant registration...")
+        logger.info("🚀 ENHANCED: Starting robust 4-tenant registration (root, tub, fub, veritas)...")
         
-        # 🚨 NUCLEAR CLEANUP: Clear ALL existing registrations to prevent corruption
+        # Clear ALL existing registrations to prevent corruption
         if hasattr(registry, '_tenants'):
             registry._tenants.clear()
         if hasattr(registry, '_tenant_instances'):
             registry._tenant_instances.clear()
         if hasattr(registry, '_domain_patterns'):
             registry._domain_patterns.clear()
-        logger.info("✅ NUCLEAR - Cleared ALL existing tenant registrations and patterns")
+        logger.info("✅ Cleared ALL existing tenant registrations and patterns")
         
-        # 🚨 BULLETPROOF: Register exactly 3 tenants - NO MORE, NO LESS
+        # 🚀 ENHANCED: Register exactly 4 tenants - root, tub, fub, veritas
         tenants_to_register = [
             ('root', RootConfig, "Root tenant (default)"),
             ('tub', TUBerlinConfig, "TU Berlin tenant"),
-            ('fub', FUBerlinConfig, "FU Berlin tenant")
+            ('fub', FUBerlinConfig, "FU Berlin tenant"),
+            ('veritas', VeritasConfig, "Veritas University tenant")
         ]
         
         # Register each tenant with validation
         registered_count = 0
         for tenant_id, tenant_class, description in tenants_to_register:
             # Double-check tenant ID is allowed
-            if tenant_id not in ['root', 'tub', 'fub']:
-                raise Exception(f"NUCLEAR ERROR: Invalid tenant ID '{tenant_id}' - only root, tub, fub allowed!")
+            if tenant_id not in ['root', 'tub', 'fub', 'veritas']:
+                raise Exception(f"ERROR: Invalid tenant ID '{tenant_id}' - only root, tub, fub, veritas allowed!")
             
             registry.register_tenant(tenant_id, tenant_class)
             registered_count += 1
-            logger.info(f"✅ NUCLEAR - Registered {description}: {tenant_id}")
+            logger.info(f"✅ Registered {description}: {tenant_id}")
         
-        # 🚨 CRITICAL VALIDATION: Ensure exactly 3 tenants, no duplicates
+        # 🚨 CRITICAL VALIDATION: Ensure exactly 4 tenants, no duplicates
         available_tenants = registry.get_available_tenants()
         
-        if len(available_tenants) != 3:
-            raise Exception(f"NUCLEAR ERROR: Expected exactly 3 tenants, got {len(available_tenants)}: {available_tenants}")
+        if len(available_tenants) != 4:
+            raise Exception(f"ERROR: Expected exactly 4 tenants, got {len(available_tenants)}: {available_tenants}")
         
-        expected_tenants = {'root', 'tub', 'fub'}
+        expected_tenants = {'root', 'tub', 'fub', 'veritas'}
         if set(available_tenants) != expected_tenants:
-            raise Exception(f"NUCLEAR ERROR: Wrong tenants registered. Expected {expected_tenants}, got {set(available_tenants)}")
+            raise Exception(f"ERROR: Wrong tenants registered. Expected {expected_tenants}, got {set(available_tenants)}")
             
-        if registered_count != 3:
-            raise Exception(f"NUCLEAR ERROR: Registration count mismatch. Expected 3, registered {registered_count}")
+        if registered_count != 4:
+            raise Exception(f"ERROR: Registration count mismatch. Expected 4, registered {registered_count}")
         
         # 🚨 FINAL VALIDATION: No forbidden tenant IDs
         forbidden_tenants = {'tuberlin', 'fuberlin', 'tu-berlin', 'fu-berlin'}
         if any(tenant in available_tenants for tenant in forbidden_tenants):
-            raise Exception(f"NUCLEAR ERROR: Forbidden tenants detected: {available_tenants}")
+            raise Exception(f"ERROR: Forbidden tenants detected: {available_tenants}")
         
-        logger.info(f"✅ NUCLEAR SUCCESS: Exactly 3 tenants registered: {sorted(available_tenants)}")
-        logger.info(f"✅ NUCLEAR SUCCESS: Total registered tenants: {len(available_tenants)} - ['root', 'tub', 'fub']")
+        logger.info(f"✅ SUCCESS: Exactly 4 tenants registered: {sorted(available_tenants)}")
+        logger.info(f"✅ SUCCESS: Total registered tenants: {len(available_tenants)} - ['root', 'tub', 'fub', 'veritas']")
         return True
         
     except Exception as e:

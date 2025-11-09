@@ -7,7 +7,7 @@ from flask import Blueprint, jsonify, request
 import logging
 
 from ..tenants import (
-    get_current_tenant_id, 
+    get_current_tenant as get_current_tenant_id, 
     get_tenant_config, 
     update_tenant_network_config,
     get_tenant_urls,
@@ -126,68 +126,123 @@ def update_network_settings():
 def test_network_connection():
     """
     🚀 PERFECTION: Test network connection for current tenant
+    Tests actual health check endpoints for issuer and verifier
     """
     try:
         tenant_id = get_current_tenant_id()
-        tenant_urls = get_tenant_urls(tenant_id)
+        tenant_config = get_tenant_config(tenant_id)
         
         logger.info(f"🔧 ✅ Network test - tenant: {tenant_id}")
         
-        # Test the current tenant's URLs
+        # Get the base server URL
+        server_url = tenant_config.get('server_url', 'http://localhost:8080')
+        
+        # Test the current tenant's health endpoints
         import requests
         import time
+        import urllib3
+        
+        # Disable SSL warnings for local testing
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
         
         test_results = {}
         
-        # Test issuer endpoint
+        # Test issuer health endpoint
         try:
+            issuer_health_url = f"{server_url}/issuer/healthcheck"
+            logger.info(f"Testing issuer health: {issuer_health_url}")
+            
             start_time = time.time()
-            response = requests.get(f"{tenant_urls['issuer_url']}/health", timeout=10, verify=False)
+            response = requests.get(issuer_health_url, timeout=10, verify=False)
             latency = (time.time() - start_time) * 1000
+            
             test_results['issuer'] = {
                 'status': 'success' if response.status_code == 200 else 'error',
                 'latency_ms': round(latency, 2),
-                'url_tested': tenant_urls['issuer_url']
+                'url_tested': issuer_health_url,
+                'status_code': response.status_code
+            }
+            
+            if response.status_code != 200:
+                test_results['issuer']['error'] = f"HTTP {response.status_code}"
+                
+        except requests.exceptions.Timeout:
+            test_results['issuer'] = {
+                'status': 'error',
+                'error': 'Connection timeout',
+                'url_tested': f"{server_url}/issuer/healthcheck"
+            }
+        except requests.exceptions.ConnectionError as e:
+            test_results['issuer'] = {
+                'status': 'error',
+                'error': f'Connection failed: {str(e)[:100]}',
+                'url_tested': f"{server_url}/issuer/healthcheck"
             }
         except Exception as e:
             test_results['issuer'] = {
                 'status': 'error',
                 'error': str(e),
-                'url_tested': tenant_urls['issuer_url']
+                'url_tested': f"{server_url}/issuer/healthcheck"
             }
         
-        # Test verifier endpoint
+        # Test verifier health endpoint
         try:
+            verifier_health_url = f"{server_url}/verifier/healthcheck"
+            logger.info(f"Testing verifier health: {verifier_health_url}")
+            
             start_time = time.time()
-            response = requests.get(f"{tenant_urls['verifier_url']}/health", timeout=10, verify=False)
+            response = requests.get(verifier_health_url, timeout=10, verify=False)
             latency = (time.time() - start_time) * 1000
+            
             test_results['verifier'] = {
                 'status': 'success' if response.status_code == 200 else 'error',
                 'latency_ms': round(latency, 2),
-                'url_tested': tenant_urls['verifier_url']
+                'url_tested': verifier_health_url,
+                'status_code': response.status_code
+            }
+            
+            if response.status_code != 200:
+                test_results['verifier']['error'] = f"HTTP {response.status_code}"
+                
+        except requests.exceptions.Timeout:
+            test_results['verifier'] = {
+                'status': 'error',
+                'error': 'Connection timeout',
+                'url_tested': f"{server_url}/verifier/healthcheck"
+            }
+        except requests.exceptions.ConnectionError as e:
+            test_results['verifier'] = {
+                'status': 'error',
+                'error': f'Connection failed: {str(e)[:100]}',
+                'url_tested': f"{server_url}/verifier/healthcheck"
             }
         except Exception as e:
             test_results['verifier'] = {
                 'status': 'error',
                 'error': str(e),
-                'url_tested': tenant_urls['verifier_url']
+                'url_tested': f"{server_url}/verifier/healthcheck"
             }
         
         # Calculate overall status
-        successful_tests = sum(1 for result in test_results.values() if result['status'] == 'success')
+        successful_tests = sum(1 for result in test_results.values() if result.get('status') == 'success')
         total_tests = len(test_results)
+        
+        overall_status = 'healthy' if successful_tests == total_tests else ('partial' if successful_tests > 0 else 'unhealthy')
+        
+        logger.info(f"🔧 ✅ Network test results: {successful_tests}/{total_tests} passed")
         
         return jsonify({
             'status': 'success',
             'tenant_id': tenant_id,
+            'server_url': server_url,
             'test_results': test_results,
-            'overall_status': 'healthy' if successful_tests == total_tests else 'partial',
+            'overall_status': overall_status,
             'tests_passed': successful_tests,
             'tests_total': total_tests
         })
         
     except Exception as e:
-        logger.error(f"❌ Network test error: {e}")
+        logger.error(f"❌ Network test error: {e}", exc_info=True)
         return jsonify({
             'status': 'error',
             'message': str(e)

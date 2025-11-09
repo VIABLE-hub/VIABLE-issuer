@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, jsonify, current_app, make_response
 from logging import getLogger
+from flask_login import login_required
 from ..models import VC_validity
 from .. import db
 import json
@@ -105,6 +106,7 @@ def extract_credential_info(credential_data):
 
 
 @vcstatus.route('/', methods=['GET'])
+@login_required
 def vcstatus_page():
     try:
         # Get all credentials from database

@@ -2421,8 +2421,18 @@ document.addEventListener('alpine:init', () => {
     },
 
     testLocalConnection() {
-      // Use the existing test-connection endpoint which tests all components
-      fetch('/settings/api/test-connection', {
+      // Initialize test results structure
+      this.connectionTestResults = {
+        components: {
+          issuer: { success: false, message: 'Testing...', ip: '-', latency: null },
+          verifier: { success: false, message: 'Testing...', ip: '-', latency: null }
+        },
+        message: 'Testing local connection...',
+        success: false
+      };
+      
+      // Use the new unified network test endpoint for tenant-aware testing
+      fetch('/api/network/test', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2436,33 +2446,66 @@ document.addEventListener('alpine:init', () => {
         })
         .then(data => {
           console.log('🌐 Connection test response:', data);
-          if (data.success) {
+          if (data.status === 'success') {
             // Count successful tests
-            const results = data.results || {};
-            const successCount = Object.keys(results).filter(key => 
-              results[key].status === 'success'
-            ).length;
-            const totalCount = Object.keys(results).length;
+            const testResults = data.test_results || {};
+            const successCount = data.tests_passed || 0;
+            const totalCount = data.tests_total || 0;
+            const overallSuccess = data.overall_status === 'healthy';
             
-            this.showNotification(`Local connection test successful! (${successCount}/${totalCount} components working)`, 'success');
+            this.showNotification(
+              `Local connection test ${overallSuccess ? 'successful' : 'completed'}! (${successCount}/${totalCount} components working)`, 
+              overallSuccess ? 'success' : 'warning'
+            );
             
             // Transform backend response format to match template expectations
             this.connectionTestResults = {
-              message: data.message || `Connection test completed: ${successCount}/${totalCount} services accessible`,
-              success: data.success,
-              components: this.transformTestResults(results)
+              message: `${successCount}/${totalCount} tests passed`,
+              success: overallSuccess,
+              components: {}
             };
+            
+            // Map issuer test results
+            if (testResults.issuer) {
+              this.connectionTestResults.components.issuer = {
+                success: testResults.issuer.status === 'success',
+                ip: this.networkData?.local_ip || '-',
+                latency: testResults.issuer.latency_ms || null,
+                message: testResults.issuer.error || 'Connected'
+              };
+            }
+            
+            // Map verifier test results
+            if (testResults.verifier) {
+              this.connectionTestResults.components.verifier = {
+                success: testResults.verifier.status === 'success',
+                ip: this.networkData?.local_ip || '-',
+                latency: testResults.verifier.latency_ms || null,
+                message: testResults.verifier.error || 'Connected'
+              };
+            }
           } else {
-            this.showNotification('Local connection test failed: ' + data.message, 'error');
+            this.showNotification('Local connection test failed: ' + (data.message || 'Unknown error'), 'error');
             this.connectionTestResults = {
               message: data.message || 'Connection test failed',
               success: false,
-              components: this.transformTestResults(data.results || {})
+              components: {
+                issuer: { success: false, message: data.message || 'Test failed', ip: '-', latency: null },
+                verifier: { success: false, message: data.message || 'Test failed', ip: '-', latency: null }
+              }
             };
           }
         })
         .catch(error => {
           console.error('🌐 Error testing local connection:', error);
+          this.connectionTestResults = {
+            components: {
+              issuer: { success: false, message: error.message, ip: '-', latency: null },
+              verifier: { success: false, message: error.message, ip: '-', latency: null }
+            },
+            message: `Error: ${error.message}`,
+            success: false
+          };
           this.showNotification('Error testing local connection: ' + error.message, 'error');
         })
         .finally(() => {
@@ -2510,7 +2553,17 @@ document.addEventListener('alpine:init', () => {
         return;
       }
       
-      fetch('/settings/api/test-ngrok', {
+      // Initialize test results structure
+      this.connectionTestResults = {
+        components: {
+          issuer: { success: false, message: 'Testing...', ip: '-', latency: null },
+          verifier: { success: false, message: 'Testing...', ip: '-', latency: null }
+        },
+        message: 'Testing NGROK connection...',
+        success: false
+      };
+      
+      fetch('/api/network/test', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2528,15 +2581,71 @@ document.addEventListener('alpine:init', () => {
         })
         .then(data => {
           console.log('🚇 NGROK test response:', data);
+          
           if (data.status === 'success') {
-            const responseTime = data.test_result?.latency_ms || data.data?.latency_ms || 'N/A';
-            this.showNotification(`NGROK connection test successful! (${responseTime}ms)`, 'success');
+            // Transform backend response to match template expectations
+            const testResults = data.test_results || {};
+            const overallSuccess = data.overall_status === 'healthy';
+            const testsPassed = data.tests_passed || 0;
+            const testsTotal = data.tests_total || 0;
+            
+            this.connectionTestResults = {
+              components: {},
+              message: `${testsPassed}/${testsTotal} tests passed`,
+              success: overallSuccess
+            };
+            
+            // Map issuer test results
+            if (testResults.issuer) {
+              this.connectionTestResults.components.issuer = {
+                success: testResults.issuer.status === 'success',
+                ip: this.ngrokDomain,
+                latency: testResults.issuer.latency_ms || null,
+                message: testResults.issuer.error || 'Connected'
+              };
+            }
+            
+            // Map verifier test results
+            if (testResults.verifier) {
+              this.connectionTestResults.components.verifier = {
+                success: testResults.verifier.status === 'success',
+                ip: this.ngrokDomain,
+                latency: testResults.verifier.latency_ms || null,
+                message: testResults.verifier.error || 'Connected'
+              };
+            }
+            
+            const avgLatency = testsTotal > 0 ? 
+              Math.round((testResults.issuer?.latency_ms || 0) + (testResults.verifier?.latency_ms || 0)) / testsTotal : 
+              'N/A';
+            
+            this.showNotification(
+              `NGROK connection test ${overallSuccess ? 'successful' : 'completed with issues'}! (${avgLatency}ms average)`, 
+              overallSuccess ? 'success' : 'warning'
+            );
           } else {
+            // Test failed
+            this.connectionTestResults = {
+              components: {
+                issuer: { success: false, message: data.message || 'Test failed', ip: '-', latency: null },
+                verifier: { success: false, message: data.message || 'Test failed', ip: '-', latency: null }
+              },
+              message: data.message || 'Connection test failed',
+              success: false
+            };
             this.showNotification('NGROK connection test failed: ' + (data.message || 'Unknown error'), 'error');
           }
         })
         .catch(error => {
           console.error('🌐 Error testing NGROK connection:', error);
+          this.connectionTestResults = {
+            components: {
+              issuer: { success: false, message: error.message, ip: '-', latency: null },
+              verifier: { success: false, message: error.message, ip: '-', latency: null }
+            },
+            message: `Error: ${error.message}`,
+            success: false
+          };
           this.showNotification('Error testing NGROK connection: ' + error.message, 'error');
         })
         .finally(() => {

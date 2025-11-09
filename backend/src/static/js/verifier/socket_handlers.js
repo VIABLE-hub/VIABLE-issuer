@@ -1,4 +1,4 @@
-// 🩺 HERZCHIRURG-FIX: Socket.IO Verbindungsaufbau und Event Handling
+// Socket.IO Connection Handler and Event Handling
 document.addEventListener('DOMContentLoaded', function() {
   // Get the server URL from the window object (will be set in the template)
   const serverUrl = window.SERVER_URL || window.location.origin;
@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log('[Socket.IO] Primary server URL:', serverUrl);
   console.log('[Socket.IO] Fallback server URL:', fallbackUrl);
   
-  // 🔧 HERZCHIRURG CRITICAL FIX: Automatic fallback for failed ngrok connections
+  // CRITICAL FIX: Automatic fallback for failed ngrok connections
   let socket = null;
   let connectionAttempts = 0;
   const maxAttempts = 2; // Try primary, then fallback
@@ -15,30 +15,44 @@ document.addEventListener('DOMContentLoaded', function() {
   function createSocketConnection(url, attemptNumber = 1) {
     console.log(`[Socket.IO] Connection attempt ${attemptNumber} to: ${url}`);
     
+    // DOCKER SOCKET.IO FIX: Enhanced configuration for Docker environments
+    const isDockerEnvironment = window.location.hostname === 'localhost' && 
+                                (window.location.port === '8080' || 
+                                 window.location.port === '8081' || 
+                                 window.location.port === '8082');
+    
     const socketConfig = {
-      // CRITICAL FIX: For SSL with self-signed certificates, prioritize polling
-      // WebSocket has issues with self-signed certs, polling works more reliably
-      transports: ['polling', 'websocket'],
+      // DOCKER COMPATIBILITY: Use polling-first for Docker reliability
+      transports: isDockerEnvironment ? ['polling'] : ['polling', 'websocket'],
       secure: window.location.protocol === 'https:',
       rejectUnauthorized: false, // Accept self-signed certificates
       reconnection: false, // Disable auto-reconnection to handle fallback manually
-      timeout: 10000, // Increased timeout for SSL handshake
+      timeout: isDockerEnvironment ? 20000 : 10000, // Longer timeout for Docker
       forceNew: true,
-      // Additional SSL compatibility options
-      upgrade: true,
-      rememberUpgrade: false
+      // DOCKER SOCKET.IO: Enhanced compatibility options
+      upgrade: !isDockerEnvironment, // Disable WebSocket upgrade in Docker
+      rememberUpgrade: false,
+      cors: {
+        origin: "*",
+        credentials: false
+      }
     };
     
     console.log('[Socket.IO] Configuration:', socketConfig);
+    console.log('[Socket.IO] Docker environment detected:', isDockerEnvironment);
     console.log('[Socket.IO] Using transport priority:', socketConfig.transports);
     
     const newSocket = io(url, socketConfig);
     
     // Connection success
     newSocket.on('connect', function() {
-      console.log('[Socket.IO] ✅ Connected successfully to:', url);
+      console.log('[Socket.IO] Connected successfully to:', url);
+      console.log('[Socket.IO] Transport:', newSocket.io.engine.transport.name);
       socket = newSocket; // Set the working socket
       connectionAttempts = maxAttempts; // Stop further attempts
+      
+      // VISUAL FEEDBACK FIX: Add connection success indicator
+      addStatusFeedEntry('Socket.IO connection established', 'success');
     });
     
     // Connection errors
@@ -50,18 +64,22 @@ document.addEventListener('DOMContentLoaded', function() {
         protocol: window.location.protocol,
         pathname: window.location.pathname,
         secure: window.location.protocol === 'https:',
-        attempt: attemptNumber
+        attempt: attemptNumber,
+        dockerMode: isDockerEnvironment
       });
       
       // If this was the primary URL and we haven't tried fallback yet
       if (attemptNumber === 1 && url !== fallbackUrl) {
-        console.log('[Socket.IO] 🔄 Primary connection failed, trying fallback...');
+        console.log('[Socket.IO] Primary connection failed, trying fallback...');
         setTimeout(() => {
           createSocketConnection(fallbackUrl, 2);
         }, 1000);
       } else {
-        console.log('[Socket.IO] ❌ All connection attempts failed');
-        console.log('[Socket.IO] Fehlerbehebung: 1. Backend läuft? (make dev) 2. CORS im Backend konfiguriert? 3. SSL-Zertifikat akzeptiert?');
+        console.log('[Socket.IO] All connection attempts failed');
+        console.log('[Socket.IO] Troubleshooting: 1. Backend running? (make dev) 2. CORS configured? 3. SSL certificate accepted?');
+        
+        // VISUAL FEEDBACK FIX: Show connection error to user
+        addStatusFeedEntry('Socket.IO connection failed - Live updates not available', 'error');
       }
       
       // Clean up failed connection
@@ -71,6 +89,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Other error handlers remain the same
     newSocket.on('disconnect', function(reason) {
       console.log('[Socket.IO] Disconnected:', reason);
+      // VISUAL FEEDBACK FIX: Show disconnection notice
+      if (reason === 'io server disconnect') {
+        addStatusFeedEntry('Socket.IO connection disconnected', 'warning');
+      }
     });
 
     // Verification event handlers
@@ -98,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function() {
       updateVerificationStep('mandatory_fields_verification', msg.status === 'success' ? 'success' : 'error');
       // If error, display the message
       if (msg.status === 'error') {
-        addStatusFeedEntry(`❌ Mandatory fields: ${msg.message}`, 'error');
+        addStatusFeedEntry(`ERROR - Mandatory fields: ${msg.message}`, 'error');
       }
     });
 
@@ -111,18 +133,23 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     newSocket.on('verification_result', function(msg) {
-      console.log('🩺 HERZCHIRURG: Final verification result received:', msg);
+      console.log('FINAL: Verification result received:', msg);
       
-      // Check for success status (backend sends status: 'success' or 'error')
+      // ENHANCED VISUAL FEEDBACK: Better success/error handling
       if (msg.status === 'success') {
         updateVerificationStep('verification_result', 'success');
         // All verification steps completed successfully
         updateProgressBar();
         
-        // Enhanced success notification with issuer information
-        // Use dynamic issuer from backend response, fallback to 'root' if not provided
+        // ENHANCED SUCCESS FEEDBACK: More prominent success message
         const issuerInfo = msg.issuer || 'root'; // Get issuer from backend response
-        addStatusFeedEntry(`🎉 Verifikation erfolgreich abgeschlossen!<br/>✅ Gültiger Studierendenausweis ausgestellt von <strong>${issuerInfo}</strong>`, 'success');
+        const successMessage = `Verification completed successfully!<br/>Valid student ID issued by <strong>${issuerInfo}</strong>`;
+        addStatusFeedEntry(successMessage, 'success');
+        
+        // VISUAL SUCCESS ENHANCEMENT: Add celebratory visual elements
+        setTimeout(() => {
+          addStatusFeedEntry('Credential successfully verified! Mobile wallet can be closed.', 'success');
+        }, 1000);
         
         // Display transmitted field values
         if (msg.transmitted_fields) {
@@ -137,8 +164,8 @@ document.addEventListener('DOMContentLoaded', function() {
         updateVerificationStep('verification_result', 'error');
         // Verification failed 
         updateProgressBar();
-        const errorMessage = msg.message || 'Verifikation fehlgeschlagen';
-        addStatusFeedEntry(`❌ ${errorMessage}`, 'error');
+        const errorMessage = msg.message || 'Verification failed';
+        addStatusFeedEntry(`ERROR: ${errorMessage}`, 'error');
         
         // Process disclosure validation errors if present
         if (msg.disclosure_validation) {
@@ -149,9 +176,15 @@ document.addEventListener('DOMContentLoaded', function() {
         updateVerificationStep('verification_result', 'success');
         updateProgressBar();
         
-        // Enhanced success notification with issuer information (legacy support)
+        // ENHANCED SUCCESS FEEDBACK: Legacy support with enhanced visuals
         const issuerInfo = msg.issuer || 'root'; // Get issuer from backend response, fallback to 'root'
-        addStatusFeedEntry(`🎉 Verifikation erfolgreich abgeschlossen!<br/>✅ Gültiger Studierendenausweis ausgestellt von <strong>${issuerInfo}</strong>`, 'success');
+        const successMessage = `Verification completed successfully!<br/>Valid student ID issued by <strong>${issuerInfo}</strong>`;
+        addStatusFeedEntry(successMessage, 'success');
+        
+        // VISUAL SUCCESS ENHANCEMENT: Add celebratory visual elements (legacy)
+        setTimeout(() => {
+          addStatusFeedEntry('Credential successfully verified! Mobile wallet can be closed.', 'success');
+        }, 1000);
         
         if (msg.credential_data && msg.credential_data.disclosure_summary) {
           displayDisclosureResults(msg.credential_data);
@@ -160,16 +193,16 @@ document.addEventListener('DOMContentLoaded', function() {
         // Legacy format support
         updateVerificationStep('verification_result', 'error');
         updateProgressBar();
-        addStatusFeedEntry('❌ Verifikation fehlgeschlagen', 'error');
+        addStatusFeedEntry('ERROR: Verification failed', 'error');
         
         if (msg.disclosure_validation) {
           displayDisclosureErrors(msg.disclosure_validation);
         }
       } else {
-        console.warn('🩺 HERZCHIRURG: Ambiguous verification result:', msg);
+        console.warn('WARNING: Ambiguous verification result:', msg);
         updateVerificationStep('verification_result', 'error');
         updateProgressBar();
-        addStatusFeedEntry('⚠️ Unklares Verifikationsergebnis', 'error');
+        addStatusFeedEntry('WARNING: Unclear verification result', 'error');
       }
     });
 

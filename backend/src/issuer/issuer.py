@@ -54,6 +54,7 @@ bbs_secret = None
 
 
 @issuer.route('/issuer', methods=['GET', 'POST'])
+@login_required
 def index():
     initialize_keys()
     if request.method == "GET":

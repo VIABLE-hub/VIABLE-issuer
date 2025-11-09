@@ -1,200 +1,212 @@
-# StudentVC - Digital Student Credentials
+# VERITAS - Enterprise-Ready Privacy-Preserving Digital Credentials Platform
 
-Privacy-preserving digital student credentials platform with BBS+ selective disclosure and mobile wallet support.
+**Multi-tenant platform for issuing privacy-preserving digital credentials using BBS+ selective-disclosure cryptography**
 
-[![Demo](https://img.shields.io/badge/Demo-Available-brightgreen)](https://github.com/pherbke/stvc) [![Multi-Tenant](https://img.shields.io/badge/Multi--Tenant-Supported-blue)](https://github.com/pherbke/stvc) [![BBS+](https://img.shields.io/badge/BBS%2B-Selective%20Disclosure-purple)](https://github.com/pherbke/stvc)
-
-## Features
-
-- **Selective Disclosure**: Share only required information using BBS+ zero-knowledge signatures
-- **Mobile Wallet**: iOS app for secure credential storage and presentation
-- **Multi-Tenant**: Support for multiple universities with isolated databases and branding
-- **Real-time Verification**: Instant QR code verification with WebSocket updates
-- **Custom Branding**: University-specific themes, logos, and colors
-- **Production Ready**: Docker and Kubernetes deployment with auto-scaling
-
-## Prerequisites
-
-- **Python 3.9+** with pip
-- **Docker** (for containerized deployment)
-- **kubectl** (for Kubernetes deployment)
-- **NGROK** (optional, for mobile wallet testing)
-
-## Quick Start
-
-```bash
-# Clone and setup
-git clone <repository-url>
-cd stvc
-
-# Setup virtual environment and install dependencies
-make setup
-
-# Start development server (ROOT tenant, port 8080, HTTPS)
-make dev
-```
-
-**What `make dev` does:**
-1. Kills any existing processes on port 8080
-2. Verifies `test_env` virtual environment exists
-3. Starts HTTPS server on `https://localhost:8080`
-4. Loads ROOT tenant (default StudentVC branding)
-5. Uses isolated tenant database and configuration
-
-Access at: **https://localhost:8080**
-
-## Multi-Tenant Development
-
-StudentVC supports multiple university tenants with **isolated databases, keys, and branding**:
-
-```bash
-# ROOT tenant (default StudentVC branding)
-make dev-root    # https://localhost:8080
-
-# TU Berlin tenant (red branding, TUB logo)
-make dev-tub     # https://localhost:8080
-
-# FU Berlin tenant (green branding, FUB logo)  
-make dev-fub     # https://localhost:8080
-```
-
-Each tenant has:
-- **Separate database** (`backend/src/tenants/instances/{tenant}/database.db`)
-- **Unique BBS+ keys** (`backend/src/tenants/instances/{tenant}/keys/`)
-- **Custom branding** (logos, colors, themes)
-- **Isolated configuration** (`backend/src/tenants/instances/{tenant}/config.json`)
-
-## Core Endpoints
-
-| Endpoint | Description |
-|----------|-------------|
-| `/issuer` | Issue digital credentials with BBS+ signatures |
-| `/verifier` | Verify credentials with selective disclosure |
-| `/vcstatus` | Check credential validity and revocation status |
-| `/settings` | Configure tenant settings, network, and keys |
-
-## Deployment
-
-### Local Development
-
-```bash
-# First-time setup
-make setup
-
-# Development server
-make dev        # Default ROOT tenant
-make dev-tub    # TU Berlin tenant  
-make dev-fub    # FU Berlin tenant
-```
-
-### Docker Deployment
-
-#### Multi-Tenant Deployment (All Universities)
-```bash
-# Deploy all tenants with load balancing
-./deploy.sh
-
-# This starts:
-# - TUB tenant: https://localhost:8080
-# - FUB tenant: https://localhost:8081  
-# - ROOT tenant: https://localhost:8082
-```
-
-#### Single-Tenant Deployment
-```bash
-# Deploy specific tenant only
-SINGLE_TENANT=tub ./deploy.sh   # TUB only on port 8080
-SINGLE_TENANT=fub ./deploy.sh   # FUB only on port 8080
-SINGLE_TENANT=root ./deploy.sh  # ROOT only on port 8080
-```
-
-#### Manual Docker Commands
-```bash
-# Using individual deployment scripts
-./deploy/scripts/deploy-docker-all.sh   # All tenants
-./deploy/scripts/deploy-docker-tub.sh   # TUB only
-./deploy/scripts/deploy-docker-fub.sh   # FUB only
-./deploy/scripts/deploy-docker-root.sh  # ROOT only
-```
-
-### Kubernetes Deployment
-
-```bash
-# Prerequisites: kubectl + cluster + NGINX ingress
-docker build -t studentvc:latest ./backend
-./deploy.sh kubernetes
-
-# Access via port-forwarding
-kubectl port-forward -n studentvc svc/studentvc-tub 8080:80
-kubectl port-forward -n studentvc svc/studentvc-fub 8081:80  
-kubectl port-forward -n studentvc svc/studentvc-root 8082:80
-```
-
-## Available Commands
-
-```bash
-# Development
-make dev         # Start development server (ROOT tenant)
-make dev-root    # Start ROOT tenant explicitly
-make dev-tub     # Start TU Berlin tenant
-make dev-fub     # Start FU Berlin tenant
-
-# Setup & Maintenance  
-make setup       # Create virtual environment and install dependencies
-make install     # Install dependencies in existing test_env
-make clean       # Clean cache files and reset database
-make kill-port   # Kill processes on port 8080
-
-# Testing
-make test        # Run all tests in test_env environment
-make setup-test  # Install additional testing packages
-
-# Help
-make help        # Show all available commands
-```
-
-## Mobile Wallet Integration
-
-1. **Start development server** with ngrok for mobile access:
-   ```bash
-   # Configure ngrok URL in Settings
-   make dev
-   # Visit: https://localhost:8080/settings
-   ```
-
-2. **Generate QR code** at `/issuer` endpoint
-
-3. **Scan with iOS StudentVC wallet** app
-
-4. **Verify credentials** at `/verifier` with selective disclosure
-
-## Configuration
-
-### Environment Variables
-- `TENANT_ID`: Set tenant (root, tub, fub)
-- `PORT`: Server port (default: 8080)
-- `HOST`: Server host (default: 0.0.0.0)
-
-### Tenant Configuration
-Each tenant configuration in `backend/src/tenants/instances/{tenant}/config.json`:
-```json
-{
-  "name": "TU Berlin",
-  "issuer_name": "TU Berlin Credential Service",
-  "primary_color": "#c50e1f",
-  "logo_path": "/static/tub_logo.png",
-  "vc_logo_path": "/static/tub-vc-logo.png"
-}
-```
-
-## Contributing
-
-See [CONTRIBUTING.md](./docs/CONTRIBUTING.md) for development guidelines and contribution process.
-
-## License
-
-MIT License - see [LICENSE](./LICENSE) for details.
+**Supervisor:** Patrick Herbke (p.herbke@tu-berlin.de)
 
 ---
 
-**StudentVC** - Empowering universities with privacy-preserving digital credentials using BBS+ selective disclosure and zero-knowledge proofs. 
+## Project Overview
+
+VERITAS is a multi-tenant platform currently in prototype stage, being developed into a university-ready infrastructure. The project aims to scale the platform, enhance reliability, and increase interoperability through backend modernization, real-time monitoring, automated certificate management, and cross-platform mobile wallet support.
+
+**Current Status:** Prototype → Enterprise-Ready Infrastructure
+
+---
+
+## Quick Start
+
+### Setup
+```bash
+make setup              # Install dependencies
+make test-startup       # Verify installation
+```
+
+### Start/Stop Tenants
+
+**Start all tenants:**
+```bash
+make start-all          # Starts all tenants on different ports
+```
+
+**Stop all tenants:**
+```bash
+make stop-all           # Stops all running tenant servers
+```
+
+**Start single tenant:**
+```bash
+make dev-root           # Root tenant (port 8083)
+make dev-tub            # TU Berlin (port 8081)
+make dev-fub            # FU Berlin (port 8082)
+make dev-veritas        # Veritas (port 8080)
+```
+
+**Stop single tenant:**
+```bash
+make kill-port          # Kills process on port 8080
+# Or manually: lsof -ti:8081 | xargs kill -9  # For port 8081, etc.
+```
+
+---
+
+## Project Goals
+
+### 1. Backend Refactoring & Monitoring (2 students)
+- Refactor core backend modules and enhance code quality
+- Add production monitoring with Prometheus and Grafana
+- Improve reliability and scalability
+
+### 2. Crypto Standards & PKI (2 students)
+- Implement automated X.509 certificate management
+- Extend credential support to ECDSA/SD-JWT alongside BBS+
+- Support multiple cryptographic standards (W3C VC, IETF SD-JWT, OpenID4VCI)
+
+### 3. Mobile Wallet Development (1-2 students)
+- Develop Android wallet support
+- Perform cross-platform testing (iOS + Android)
+- Ensure interoperability between platforms
+
+### 4. Documentation & Benchmarks
+- Provide comprehensive documentation
+- Create performance benchmarks
+- Prepare final demo
+
+---
+
+## Project Structure
+
+### Core Backend Modules
+
+```
+backend/src/
+├── issuer/              # Credential Issuance
+│   ├── BBS+ credential signing
+│   ├── OID4VC metadata and QR code generation
+│   └── Multi-tenant credential templates
+│
+├── verifier/            # Credential Verification
+│   ├── BBS+ proof verification
+│   ├── Selective disclosure handling
+│   └── OID4VP presentation requests
+│
+├── auth/                # Authentication System
+│   ├── Traditional username/password
+│   └── VC-based authentication
+│
+├── settings/            # System Configuration
+│   ├── Tenant configuration and branding
+│   ├── Key management (BBS+, JWT, X.509)
+│   ├── Selective disclosure settings
+│   └── Network API configuration
+│
+├── tenants/             # Multi-Tenant Management
+│   ├── Tenant detection and routing
+│   ├── Isolated database per tenant
+│   └── Tenant-specific configuration
+│
+├── validate/            # Credential Validation
+│   ├── Credential status management
+│   └── Revocation and lifecycle tracking
+│
+├── plugin_system/       # Plugin Architecture
+│   ├── Plugin interface and loader
+│   └── Event system for plugins
+│
+└── models.py            # Database Models
+```
+
+### Storage & Crypto Modules
+
+```
+plugins/
+├── blockchain_storage/  # Blockchain storage plugin
+└── ipfs_storage/        # IPFS storage plugin
+
+backend/
+├── bbs-core/            # Rust-based BBS+ core library
+├── issuer/key_generator.py      # BBS+ key generation
+└── issuer/tenant_key_generator.py  # Tenant-specific keys
+```
+
+### Mobile Applications
+
+```
+mobile/
+└── ios/                 # iOS Wallet (existing)
+    └── [Android wallet to be developed]
+```
+
+---
+
+## Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `make setup` | Install dependencies |
+| `make start-all` | Start all tenants simultaneously |
+| `make stop-all` | Stop all tenant servers |
+| `make dev-root` | Start root tenant (port 8083) |
+| `make dev-tub` | Start TU Berlin tenant (port 8081) |
+| `make dev-fub` | Start FU Berlin tenant (port 8082) |
+| `make dev-veritas` | Start Veritas tenant (port 8080) |
+| `make test` | Run all tests |
+| `make clean` | Clean temporary files |
+| `make kill-port` | Kill process on port 8080 |
+
+---
+
+## Technology Stack
+
+### Required Skills
+- **Python 3.9+** (Flask, SQLAlchemy, pytest)
+- **JavaScript/TypeScript** (Alpine.js, Socket.IO)
+- **Git, Docker, REST APIs**
+- **Basic cryptography** (JWT, digital signatures)
+
+### Nice to Have
+- **Rust** (BBS+ library modifications)
+- **Kubernetes** (multi-tenant scaling)
+- **Swift/Kotlin** (mobile wallets)
+- **W3C VC, IETF SD-JWT, OpenID4VCI** standards
+- **PKI concepts** (X.509, OCSP, HSM)
+
+### Standards & Protocols
+- **W3C Verifiable Credentials** (VC)
+- **IETF SD-JWT** (Selective Disclosure JWT)
+- **OpenID4VCI** (OpenID for Verifiable Credential Issuance)
+- **OpenID4VP** (OpenID for Verifiable Presentations)
+- **BBS+ Signatures** (Zero-knowledge proofs)
+
+---
+
+## Development
+
+### Activate Virtual Environment
+```bash
+source test_env/bin/activate
+```
+
+### View Logs
+```bash
+tail -f logs/*.log
+```
+
+### Database Location
+```bash
+backend/src/tenants/instances/{tenant_id}/database.db
+```
+
+---
+
+## Documentation
+
+- **Project Goals:** [IoSL-Goals.md](IoSL-Goals.md)
+- **Deployment:** [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)
+- **Architecture:** [docs/VC_LOGIN_ARCHITECTURE.md](docs/VC_LOGIN_ARCHITECTURE.md)
+- **Module Structure:** [backend/src/README.md](backend/src/README.md)
+- **Blueprint Structure:** [backend/src/BLUEPRINT_STRUCTURE.md](backend/src/BLUEPRINT_STRUCTURE.md)
+
+---
+
+**Focus Label:** Software Development/Engineering

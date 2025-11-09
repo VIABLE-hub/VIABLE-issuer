@@ -552,3 +552,11 @@ mobile/
 !docs/
 !scripts/
 !config/
+
+# ============================================================================
+# ESSENTIAL DEPLOYMENT DOCUMENTATION (Explicit Allows)
+# ============================================================================
+# Student deployment guides (essential for running the system)
+!DEPLOYMENT_GUIDE.md
+!QUICK_DEPLOYMENT_SUMMARY.md
+# Note: DEPLOYMENT_ANALYSIS_RESULTS.md stays ignored (temporary analysis doc)

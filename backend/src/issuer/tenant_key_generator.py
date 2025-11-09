@@ -14,6 +14,7 @@ import importlib.util
 from pathlib import Path
 import sys
 from datetime import datetime
+from ..path_utils import get_backend_path
 
 # Load BBS+ core module dynamically with fallback
 try:
@@ -37,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 def get_tenant_keys_path(tenant_id: str) -> Path:
     """Get the tenant-specific keys directory"""
-    tenant_path = Path("backend/src/tenants/instances") / tenant_id / "keys"
+    tenant_path = get_backend_path('src', 'tenants', 'instances', tenant_id, 'keys')
     # Ensure directory exists
     tenant_path.mkdir(parents=True, exist_ok=True)
     return tenant_path
@@ -226,7 +227,7 @@ def generate_tenant_kid(tenant_id: str, did: str):
 def get_current_tenant_keys():
     """Get keys for the current tenant"""
     try:
-        from ..tenants import get_current_tenant_id
+        from ..tenants import get_current_tenant as get_current_tenant_id
         current_tenant = get_current_tenant_id()
         
         # Load both BBS+ and JWT keys for current tenant

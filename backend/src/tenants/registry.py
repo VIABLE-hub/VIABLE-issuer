@@ -134,7 +134,7 @@ class TenantRegistry:
                 'main_logo': 'studentVC-logo-sora-cropped.png',  # Always StudentVC logo
                 'university_logo': tenant_config.logo_filename,  # University logo (red TUB, green FUB, etc.)
                 'university_name': tenant_config.short_name,
-                'tenant_color': tenant_config.primary_color
+                'tenant_color': tenant_config.primary_color.lstrip('#')  # Strip # for template compatibility
             })
         
         return logos

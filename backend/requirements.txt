@@ -1,4 +1,4 @@
-﻿Flask==2.3.2
+Flask==2.3.2
 czifile==2019.7.2
 numpy==1.23.5
 scikit-image==0.23.2
@@ -21,3 +21,5 @@ flatten_json==0.1.14
 Pillow==10.1.0
 python-dateutil==2.8.2
 psutil==5.9.5
+marshmallow==3.20.1
+flask-limiter==3.5.0

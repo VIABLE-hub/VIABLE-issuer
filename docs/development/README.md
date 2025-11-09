@@ -1,5 +1,73 @@
 # StudentVC Development Guide
 
+This directory contains guides and documentation for developing the StudentVC system.
+
+## Contents
+
+- [Deployment](deployment/README.md) - Guides for deploying StudentVC
+- [Testing](testing/README.md) - Guides for testing StudentVC
+- [Troubleshooting](troubleshooting/README.md) - Guides for troubleshooting common issues
+
+## BBS+ Development and Debugging
+
+The StudentVC system uses BBS+ signatures for credential issuance and verification. The following guides provide information on developing, debugging, and fixing BBS+ issues:
+
+- [BBS+ UniFFI Linux Guide](bbs_uniffi_linux_guide.md) - Guide for handling BBS+ UniFFI contract differences between macOS and Linux
+- [Docker BBS+ Debugging](docker_bbs_debugging.md) - Guide for debugging BBS+ issues in Docker containers
+- [Docker BBS+ Hot-Patching](docker_bbs_hotpatch.md) - Guide for hot-patching BBS+ issues in running Docker containers
+- [Docker BBS+ Monitoring](docker_bbs_monitoring.md) - Guide for continuously monitoring BBS+ health in Docker containers
+
+## Development Environment
+
+To set up a development environment for StudentVC, follow these steps:
+
+1. Clone the repository
+2. Install dependencies
+3. Set up the environment
+4. Run the development server
+
+For detailed instructions, see the [Setup Guide](setup.md).
+
+## Multi-Tenant Development
+
+StudentVC supports multiple tenants (root, tuberlin, fuberlin). Each tenant has its own:
+
+- Configuration
+- Database
+- Keys
+- Static files
+
+For more information on developing for multiple tenants, see the [Multi-Tenant Development Guide](multi_tenant.md).
+
+## Docker Development
+
+For Docker-based development, use the following commands:
+
+```bash
+# Build Docker images
+make docker-build
+
+# Run Docker containers
+make docker-run
+
+# Test BBS+ in Docker
+make docker-bbs
+
+# Test Docker API functionality
+make test-docker-api
+
+# Debug BBS+ in Docker containers
+make debug-bbs-docker
+
+# Hot-patch BBS+ in Docker containers
+make hot-patch-bbs
+
+# Monitor BBS+ health in Docker containers
+make monitor-bbs
+```
+
+For more information on Docker development, see the [Docker Development Guide](docker.md).
+
 ## Getting Started
 
 ### Prerequisites

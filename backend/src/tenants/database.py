@@ -12,7 +12,7 @@ from flask import current_app
 logger = logging.getLogger(__name__)
 
 # Valid tenant identifiers
-ALLOWED_TENANTS = ['root', 'tub', 'fub']
+ALLOWED_TENANTS = ['root', 'tub', 'fub', 'veritas']
 
 class TenantDatabaseManager:
     """Manages database isolation for multi-tenant system"""
@@ -22,20 +22,25 @@ class TenantDatabaseManager:
         self.current_tenant = None
     
     def get_tenant_from_environment(self) -> Optional[str]:
-        """Get tenant from environment variable (the ONLY source of truth)"""
-        tenant_env = os.environ.get('TENANT_ID', '').lower().strip()
+        """
+        Get tenant from environment variable.
         
-        # 🚨 CRITICAL VALIDATION: Must be valid tenant
-        if not tenant_env or tenant_env not in ALLOWED_TENANTS:
-            logger.debug(f"❌ BULLETPROOF - Invalid tenant '{tenant_env}', must be one of {ALLOWED_TENANTS}")
-            logger.debug(f"❌ BULLETPROOF - No valid tenant detected (env: '{tenant_env}')")
-            
-            # 🚨 BULLETPROOF: For development, default to 'root' tenant
-            # In production, this should be stricter
-            return 'root'
-        
-        logger.info(f"✅ BULLETPROOF - Tenant detected: {tenant_env}")
-        return tenant_env
+        DEPRECATED: Use unified_detector.get_current_tenant() instead.
+        This method is kept for backward compatibility.
+        """
+        # Use unified detector for consistency
+        try:
+            from .unified_detector import get_current_tenant
+            tenant_id = get_current_tenant()
+            logger.debug(f"✅ Tenant from unified detector: {tenant_id}")
+            return tenant_id
+        except Exception as e:
+            logger.warning(f"⚠️ Unified detector not available, falling back to direct env check: {e}")
+            # Fallback to direct environment check
+            tenant_env = os.environ.get('TENANT_ID', '').lower().strip()
+            if tenant_env in ALLOWED_TENANTS:
+                return tenant_env
+            return 'root'  # Default fallback
     
     def get_database_uri_for_tenant(self, tenant_id: str) -> str:
         """Get database URI for specific tenant"""
