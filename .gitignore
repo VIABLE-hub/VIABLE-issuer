@@ -302,9 +302,9 @@ settings_default.json
 # ============================================================================
 # COMPILED LIBRARIES & BINARIES
 # ============================================================================
-*.dylib
-*.dll
-*.so
+#*.dylib
+#*.dll
+#*.so
 
 # ============================================================================
 # LOG FILES - IGNORE ALL
@@ -326,14 +326,14 @@ service.log
 # ============================================================================
 
 # HTML/JSON reports
-*.html
-*_vcstatus.html
-*_vcstatus_check.html
-*_test.html
-*_report.html
-tub_*.html
-fub_*.html
-root_*.html
+#*.html
+#*_vcstatus.html
+#*_vcstatus_check.html
+#*_test.html
+#*_report.html
+#tub_*.html
+#fub_*.html
+#root_*.html
 
 # JSON data files
 *.jsonl
@@ -382,21 +382,21 @@ herzchirurg_*.md
 # ============================================================================
 # BACKUP FILES - IGNORE ALL
 # ============================================================================
-*.bak
-*backup*
-*_backup_*
-*_bak
-*.backup
+#*.bak
+#*backup*
+#*_backup_*
+#*_bak
+#*.backup
 
 # Timestamped backups
 *_20[0-9][0-9][0-9][0-9][0-9][0-9]_*
 *backup_20[0-9][0-9][0-9][0-9][0-9][0-9]_*
 
 # Template backups
-*.html.bak
-*.html.backup
-*.js.bak
-*.css.bak
+#*.html.bak
+#*.html.backup
+#*.js.bak
+#*.css.bak
 
 # ============================================================================
 # ARCHIVES & CLEANUP - IGNORE ALL CONTENT

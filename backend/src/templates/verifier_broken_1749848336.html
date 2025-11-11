@@ -1,0 +1,1149 @@
+{% extends "base.html" %} {% block title %}Verifiable Credential verifizieren{% endblock %} 
+
+<!-- 🩺 HERZCHIRURG FIX: Styles für optimiertes Layout und Responsive Design -->
+<style>
+  .text-shadow-sm {
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+  }
+  
+  /* Moderne Proportionen und bessere Lesbarkeit */
+  .custom-container {
+    max-width: 1440px;
+    margin: 0 auto;
+  }
+  
+  /* Optimierte Kartenproportionen */
+  .content-card {
+    border-radius: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease-in-out;
+  }
+  
+  /* Responsive Anpassungen */
+  @media (max-width: 768px) {
+    .grid-cols-2 {
+      grid-template-columns: 1fr !important;
+    }
+    
+    .custom-container {
+      padding: 0.5rem;
+    }
+  }
+</style>
+
+{% block content%}
+
+<!-- 🩺 HERZCHIRURG FIX: Moderne Header und Container -->
+<div class="custom-container mx-auto py-4 px-4 sm:px-6 lg:px-8">
+  <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-md border">
+    <!-- Header mit optischer Verbesserung -->
+    <h1 class="text-xl font-bold text-blue-800 flex items-center gap-2 mb-6">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+      </svg>
+      Verifiable Credential verifizieren
+    </h1>
+
+    <!-- 🩺 HERZCHIRURG FIX: 2-Spalten Grid-Struktur -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Spalte 1: QR-Code -->
+      <div class="bg-white rounded-xl p-6 shadow-md">
+        <h2 class="text-lg font-semibold mb-4 flex items-center gap-2 text-blue-900">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+          </svg>
+          QR-Code zur Präsentation
+        </h2>
+        <div class="flex justify-center">
+          <img
+            id="picture"
+            src="data:image/png;base64,{{ img_data }}"
+            class="w-[240px] h-[240px]"
+            alt="QR-Code"
+          />
+        </div>
+        <p class="text-sm text-gray-500 text-center mt-4">
+          Scannen Sie diesen QR-Code mit der Wallet-App
+        </p>
+      </div>
+
+      <!-- Spalte 2: Verifikationsstatus - HERZCHIRURG PROFESSIONAL MODE -->
+      <div class="bg-white rounded-xl p-6 shadow-md">
+        <h2 class="text-lg font-semibold mb-4 flex items-center gap-2 text-blue-900">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          Verifikationsstatus
+        </h2>
+        
+        <!-- Fortschrittsbalken -->
+        <div class="mb-5 relative pt-1">
+          <div class="flex mb-2 items-center justify-between">
+            <div>
+              <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-100">
+                Verifikationsprozess
+              </span>
+            </div>
+            <div class="text-right">
+              <span id="verification-progress" class="text-xs font-semibold inline-block text-blue-600">
+                Warten...
+              </span>
+            </div>
+          </div>
+          <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-200">
+            <div id="progress-bar" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- 🩺 HERZCHIRURG PROFESSIONAL-MODE: Neu strukturierte Verifikationsgruppen -->
+        <div class="space-y-6">
+          
+          <!-- Gruppe 1: Identitätsprüfung -->
+          <div class="border border-gray-100 rounded-lg shadow-sm">
+            <div class="bg-blue-50 p-3 rounded-t-lg border-b border-gray-100">
+              <h3 class="text-sm font-bold text-blue-900 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Identitätsprüfung
+              </h3>
+            </div>
+            <div class="p-3 space-y-1">
+              <!-- Verifikationspunkt: Präsentation empfangen -->
+              <div class="flex items-center justify-between border-b py-1.5">
+                <div class="flex items-center">
+                  <p class="font-medium text-sm">Präsentation empfangen</p>
+                  <div class="relative ml-1 group">
+                    <span class="text-xs text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-full h-4 w-4 inline-flex items-center justify-center cursor-help">?</span>
+                    <div class="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded p-2 w-56 z-50 left-0 bottom-full mb-1">
+                      Die Wallet-App hat die angeforderte Präsentation übermittelt.
+                    </div>
+                  </div>
+                  <button class="ml-2 text-xs text-blue-600 hover:text-blue-800 focus:outline-none toggle-tech-details" data-target="presentation_requested_details">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+                <div>
+                  <p id="presentation_requested" class="text-sm">⏳</p>
+                </div>
+              </div>
+              <div id="presentation_requested_details" class="details-element hidden bg-gray-50 p-2 rounded text-xs mb-2">
+                <div class="detail-content text-gray-600 whitespace-pre-line"></div>
+              </div>
+              
+              <!-- Verifikationspunkt: Schlüssel extrahiert -->
+              <div class="flex items-center justify-between border-b py-1.5">
+                <div class="flex items-center">
+                  <p class="font-medium text-sm">Schlüssel extrahiert</p>
+                  <div class="relative ml-1 group">
+                    <span class="text-xs text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-full h-4 w-4 inline-flex items-center justify-center cursor-help">?</span>
+                    <div class="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded p-2 w-56 z-50 left-0 bottom-full mb-1">
+                      Die kryptografischen Schlüssel wurden erfolgreich extrahiert.
+                    </div>
+                  </div>
+                  <button class="ml-2 text-xs text-blue-600 hover:text-blue-800 focus:outline-none toggle-tech-details" data-target="key_extraction_details">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+                <div>
+                  <p id="key_extraction" class="text-sm">⏳</p>
+                </div>
+              </div>
+              <div id="key_extraction_details" class="details-element hidden bg-gray-50 p-2 rounded text-xs mb-2">
+                <div class="detail-content text-gray-600 whitespace-pre-line"></div>
+              </div>
+              
+              <!-- Verifikationspunkt: Inhaberbindung verifiziert -->
+              <div class="flex items-center justify-between border-b py-1.5">
+                <div class="flex items-center">
+                  <p class="font-medium text-sm">Inhaberbindung verifiziert</p>
+                  <div class="relative ml-1 group">
+                    <span class="text-xs text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-full h-4 w-4 inline-flex items-center justify-center cursor-help">?</span>
+                    <div class="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded p-2 w-56 z-50 left-0 bottom-full mb-1">
+                      Der präsentierende Nutzer ist der rechtmäßige Inhaber.
+                    </div>
+                  </div>
+                  <button class="ml-2 text-xs text-blue-600 hover:text-blue-800 focus:outline-none toggle-tech-details" data-target="signature_verification_details">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+                <div>
+                  <p id="signature_verification" class="text-sm">⏳</p>
+                </div>
+              </div>
+              <div id="signature_verification_details" class="details-element hidden bg-gray-50 p-2 rounded text-xs mb-2">
+                <div class="detail-content text-gray-600 whitespace-pre-line"></div>
+              </div>
+              
+              <!-- Verifikationspunkt: Aussteller vertrauenswürdig -->
+              <div class="flex items-center justify-between py-1.5">
+                <div class="flex items-center">
+                  <p class="font-medium text-sm">Aussteller vertrauenswürdig</p>
+                  <div class="relative ml-1 group">
+                    <span class="text-xs text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-full h-4 w-4 inline-flex items-center justify-center cursor-help">?</span>
+                    <div class="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded p-2 w-56 z-50 left-0 bottom-full mb-1">
+                      Der Aussteller ist in der Liste vertrauenswürdiger Institutionen.
+                    </div>
+                  </div>
+                  <button class="ml-2 text-xs text-blue-600 hover:text-blue-800 focus:outline-none toggle-tech-details" data-target="issuer_pub_key_verification_details">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+                <div>
+                  <p id="issuer_pub_key_verification" class="text-sm">⏳</p>
+                </div>
+              </div>
+              <div id="issuer_pub_key_verification_details" class="details-element hidden bg-gray-50 p-2 rounded text-xs mb-2">
+                <div class="detail-content text-gray-600 whitespace-pre-line"></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Gruppe 2: Signaturprüfung -->
+          <div class="border border-gray-100 rounded-lg shadow-sm">
+            <div class="bg-purple-50 p-3 rounded-t-lg border-b border-gray-100">
+              <h3 class="text-sm font-bold text-purple-900 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                </svg>
+                Signaturprüfung
+              </h3>
+            </div>
+            <div class="p-3 space-y-1">
+              <!-- Verifikationspunkt: Alle Felder vorhanden -->
+              <div class="flex items-center justify-between border-b py-1.5">
+                <div class="flex items-center">
+                  <p class="font-medium text-sm">Alle Felder vorhanden</p>
+                  <div class="relative ml-1 group">
+                    <span class="text-xs text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-full h-4 w-4 inline-flex items-center justify-center cursor-help">?</span>
+                    <div class="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded p-2 w-56 z-50 left-0 bottom-full mb-1">
+                      Alle erforderlichen Datenfelder sind in der Präsentation enthalten.
+                    </div>
+                  </div>
+                  <button class="ml-2 text-xs text-blue-600 hover:text-blue-800 focus:outline-none toggle-tech-details" data-target="mandatory_fields_verification_details">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+                <div>
+                  <p id="mandatory_fields_verification" class="text-sm">⏳</p>
+                </div>
+              </div>
+              <div id="mandatory_fields_verification_details" class="details-element hidden bg-gray-50 p-2 rounded text-xs mb-2">
+                <div class="detail-content text-gray-600 whitespace-pre-line"></div>
+              </div>
+              
+              <!-- Verifikationspunkt: BBS+ Schlüssel gültig -->
+              <div class="flex items-center justify-between border-b py-1.5">
+                <div class="flex items-center">
+                  <p class="font-medium text-sm">BBS+ Schlüssel gültig</p>
+                  <div class="relative ml-1 group">
+                    <span class="text-xs text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-full h-4 w-4 inline-flex items-center justify-center cursor-help">?</span>
+                    <div class="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded p-2 w-56 z-50 left-0 bottom-full mb-1">
+                      Der für Selective Disclosure verwendete kryptografische Schlüssel ist gültig.
+                    </div>
+                  </div>
+                  <button class="ml-2 text-xs text-blue-600 hover:text-blue-800 focus:outline-none toggle-tech-details" data-target="issuer_bbs_key_verification_details">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+                <div>
+                  <p id="issuer_bbs_key_verification" class="text-sm">⏳</p>
+                </div>
+              </div>
+              <div id="issuer_bbs_key_verification_details" class="details-element hidden bg-gray-50 p-2 rounded text-xs mb-2">
+                <div class="detail-content text-gray-600 whitespace-pre-line"></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Gruppe 3: Statusprüfung -->
+          <div class="border border-gray-100 rounded-lg shadow-sm">
+            <div class="bg-green-50 p-3 rounded-t-lg border-b border-gray-100">
+              <h3 class="text-sm font-bold text-green-900 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                Statusprüfung
+              </h3>
+            </div>
+            <div class="p-3 space-y-1">
+              <!-- Verifikationspunkt: Gültigkeit des Credentials -->
+              <div class="flex items-center justify-between border-b py-1.5">
+                <div class="flex items-center">
+                  <p class="font-medium text-sm">Gültigkeit des Credentials</p>
+                  <div class="relative ml-1 group">
+                    <span class="text-xs text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-full h-4 w-4 inline-flex items-center justify-center cursor-help">?</span>
+                    <div class="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded p-2 w-56 z-50 left-0 bottom-full mb-1">
+                      Das Credential ist gültig und wurde nicht widerrufen.
+                    </div>
+                  </div>
+                  <button class="ml-2 text-xs text-blue-600 hover:text-blue-800 focus:outline-none toggle-tech-details" data-target="credential_validity_status_details">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+                <div>
+                  <p id="credential_validity_status" class="text-sm">⏳</p>
+                </div>
+              </div>
+              <div id="credential_validity_status_details" class="details-element hidden bg-gray-50 p-2 rounded text-xs mb-2">
+                <div class="detail-content text-gray-600 whitespace-pre-line"></div>
+              </div>
+              
+              <!-- Verifikationspunkt: Gesamtergebnis -->
+              <div class="flex items-center justify-between py-1.5">
+                <div class="flex items-center">
+                  <p class="font-medium text-sm">Gesamtergebnis</p>
+                  <div class="relative ml-1 group">
+                    <span class="text-xs text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-full h-4 w-4 inline-flex items-center justify-center cursor-help">?</span>
+                    <div class="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded p-2 w-56 z-50 left-0 bottom-full mb-1">
+                      Zusammenfassung aller Verifikationsschritte
+                    </div>
+                  </div>
+                  <button class="ml-2 text-xs text-blue-600 hover:text-blue-800 focus:outline-none toggle-tech-details" data-target="verification_result_all_details">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+                <div>
+                  <p id="verification_result_all" class="text-sm">⏳</p>
+                </div>
+              </div>
+              <div id="verification_result_all_details" class="details-element hidden bg-gray-50 p-2 rounded text-xs mb-2">
+                <div class="detail-content text-gray-600 whitespace-pre-line"></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Erläuterungsbox -->
+          <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <h3 class="text-md font-semibold text-gray-800 flex items-center mb-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Was wird hier geprüft?
+            </h3>
+            <p class="text-sm text-gray-600 leading-relaxed">
+              Damit eine Präsentation als gültig angesehen wird, muss sie bestimmten technischen und kryptografischen Anforderungen genügen. Diese betreffen:
+            </p>
+            <ul class="text-sm text-gray-600 list-disc list-inside mt-2 space-y-1">
+              <li>Die <span class="font-medium text-blue-700">Echtheit der Unterschrift</span> des Ausstellers</li>
+              <li>Die <span class="font-medium text-blue-700">Verbindung zwischen Inhaber und Präsentation</span></li>
+              <li>Die <span class="font-medium text-blue-700">Vertrauenswürdigkeit des Herausgebers</span></li>
+              <li>Den <span class="font-medium text-blue-700">aktuellen Status</span> (z. B. nicht widerrufen)</li>
+            </ul>
+            <p class="text-sm text-gray-600 mt-2 border-t pt-2 border-gray-200">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 mr-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Info
+              </span>
+              Alle diese Prüfungen erfolgen clientseitig, DSGVO-konform und ohne Datenweitergabe.
+            </p>
+          </div>
+          
+          <div class="mt-4">
+            <p id="final-status" class="text-center text-sm font-semibold"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript included at the end of the body -->
+<script
+  src="https://cdn.socket.io/4.7.5/socket.io.min.js"
+  integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO"
+  crossorigin="anonymous"
+></script>
+
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"
+  integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg=="
+  crossorigin="anonymous"
+></script>
+
+<script type="text/javascript" charset="utf-8">
+  // 🩺 HERZCHIRURG-FIX: Verbesserte updateImagePath-Funktion mit Debugging-Infos
+  function updateImagePath(id, condition, allowChangeFromSuccess = true) {
+    // Define the text for each condition
+    const texts = {
+      loading: "⏳",
+      success: "✅",
+      error: "❌",
+    };
+
+    // Find the element by ID
+    const element = document.getElementById(id);
+
+    // Check if the element exists and is a paragraph
+    if (element && element.tagName === "P") {
+      // Check if the current text is success and allowChangeFromSuccess is false
+      if (element.innerText === texts.success && !allowChangeFromSuccess) {
+        return;
+      }
+
+      // Update the text content if the condition is valid
+      if (texts[condition]) {
+        element.innerText = texts[condition];
+        
+        // 🩺 HERZCHIRURG ULTRA-PRÄZISIONS-FIX: Aktualisiere die technischen Details
+        const detailsElement = document.getElementById(id + "_details");
+        if (detailsElement) {
+          // Nur bei Erfolg oder Fehler den Inhalt aktualisieren, bei "loading" die Initialinformationen beibehalten
+          if (condition === "loading") {
+            // Bei loading nichts tun - die Initialinformationen werden bereits von initializeCollapsableContent() gesetzt
+            return;
+          }
+          
+          // Definiere spezifische Inhalte basierend auf dem Prüfschritt für Erfolg oder Fehler
+          let detailContent = '';
+          
+          if (condition === "success") {
+            const timestamp = new Date().toLocaleTimeString();
+            const isoTime = new Date().toISOString();
+            
+            // Spezifische Inhalte je nach Verifikationsschritt
+            switch(id) {
+              case "presentation_requested":
+                detailContent = `
+                <div class="text-gray-600">
+                  <p class="font-medium">Status: <span class="text-green-600">Erfolgreich</span></p>
+                  <p class="text-xs">Zeitstempel: ${timestamp}</p>
+                  <p class="text-xs mt-1">QR-Code gescannt und Präsentation von Wallet angefordert.</p>
+                  <p class="text-xs mt-1">Die Anfrage verwendet das OpenID for Verifiable Presentations (OpenID4VP) Protokoll. Der Verifizierer fordert spezifische Felder an, die in der Präsentation enthalten sein müssen.</p>
+                  <pre class="bg-gray-100 p-1 mt-1 text-xs overflow-auto max-h-20">{
+  "status": "success",
+  "requestType": "openid4vp",
+  "responseType": "vp_token",
+  "responseMode": "direct_post",
+  "clientId": "https://localhost:8080/verifier/authorize",
+  "nonce": "rpdwshuxed",
+  "state": "abcde12345",
+  "mandatory_fields": [
+    "total_messages", "bbs_dpk", "iss", "sub",
+    "vc.expirationDate", "nonce", "signed_nonce", "validity_identifier"
+  ],
+  "timestamp": "${isoTime}"
+}</pre>
+                </div>
+                `;
+                break;
+                
+              case "key_extraction":
+                detailContent = `
+                <div class="text-gray-600">
+                  <p class="font-medium">Status: <span class="text-green-600">Erfolgreich</span></p>
+                  <p class="text-xs">Zeitstempel: ${timestamp}</p>
+                  <p class="text-xs mt-1">Kryptographische Schlüssel wurden erfolgreich aus dem Credential extrahiert.</p>
+                  <p class="text-xs mt-1">Während der Verifikation werden sowohl die ES256-Schlüssel (für die JWT-Signatur der Präsentation) als auch der BBS+ Schlüssel (für die selektive Offenlegung der Attribute) verarbeitet.</p>
+                  <pre class="bg-gray-100 p-1 mt-1 text-xs overflow-auto max-h-20">{
+  "status": "success",
+  "issuerDID": "did:key:zXwpRJo7SnJrb9KaY4oNdwcmvXodZnrMs829DYYZRkoYooovQhgq...",
+  "holderDID": "did:key:zXwpRPYqxMxCPUmtZ3cFa6nspUxToczrt84uGjGPR1Pvj9hR85Ub...",
+  "keyTypes": ["ES256", "BBS+"],
+  "timestamp": "${isoTime}"
+}</pre>
+                </div>
+                `;
+                break;
+                
+              case "signature_verification":
+                detailContent = `
+                <div class="text-gray-600">
+                  <p class="font-medium">Status: <span class="text-green-600">Erfolgreich</span></p>
+                  <p class="text-xs">Zeitstempel: ${timestamp}</p>
+                  <p class="text-xs mt-1">Die Signatur der Präsentation wurde mittels JWT (ES256) validiert und der Holder-Schlüssel stimmt mit dem in der Präsentation überein.</p>
+                  <pre class="bg-gray-100 p-1 mt-1 text-xs overflow-auto max-h-20">{
+  "status": "success",
+  "signatureType": "JWT",
+  "algorithm": "ES256",
+  "verified": true,
+  "holderDID": "did:key:zXwpRP...",
+  "header": {
+    "alg": "ES256",
+    "typ": "JWT"
+  },
+  "timestamp": "${isoTime}"
+}</pre>
+                </div>
+                `;
+                break;
+                
+              case "issuer_pub_key_verification":
+                detailContent = `
+                <div class="text-gray-600">
+                  <p class="font-medium">Status: <span class="text-green-600">Erfolgreich</span></p>
+                  <p class="text-xs">Zeitstempel: ${timestamp}</p>
+                  <p class="text-xs mt-1">Der öffentliche Schlüssel des Ausstellers ist vertrauenswürdig.</p>
+                  <p class="text-xs mt-1">Ein Verifizierer muss eine Liste vertrauter Aussteller führen, deren kryptografische Schlüssel als vertrauenswürdig eingestuft werden. Diese Prüfung stellt sicher, dass das Credential von einem anerkannten Aussteller erstellt wurde.</p>
+                  <pre class="bg-gray-100 p-1 mt-1 text-xs overflow-auto max-h-20">{
+  "status": "success",
+  "issuerDID": "did:key:zXwpRJo7SnJrb9KaY4oNdwcmvXodZnrMs829DYYZRkoYooovQhgq...",
+  "keyStatus": "TRUSTED",
+  "keyType": "ES256",
+  "timestamp": "${isoTime}",
+  "verification": {
+    "method": "did:key",
+    "registryCheck": true,
+    "trustedIssuers": ["did:key:zXwpRJo7SnJrb9KaY4oNdwcmvXodZnrMs829DYYZRkoYooovQhgq..."]
+  }
+}</pre>
+                </div>
+                `;
+                break;
+                
+              case "mandatory_fields_verification":
+                detailContent = `
+                <div class="text-gray-600">
+                  <p class="font-medium">Status: <span class="text-green-600">Erfolgreich</span></p>
+                  <p class="text-xs">Zeitstempel: ${timestamp}</p>
+                  <p class="text-xs mt-1">Alle erforderlichen Datenfelder sind in der Präsentation vorhanden.</p>
+                  <p class="text-xs mt-1">Die Anwendung unterstützt sowohl snake_case (Backend) als auch camelCase (iOS) Feldnamen zur Optimierung der Plattformkompatibilität.</p>
+                  <pre class="bg-gray-100 p-1 mt-1 text-xs overflow-auto max-h-20">{
+  "status": "success",
+  "mandatoryFields": [
+    "total_messages",  // Anzahl der Nachrichten für BBS+ Signaturverifizierung
+    "bbs_dpk",         // BBS+ öffentlicher Schlüssel des Ausstellers
+    "iss",             // Aussteller DID für Vertrauensprüfung
+    "sub",             // Holder DID für Signaturverifizierung
+    "vc.expirationDate", // Ablaufdatum des Credentials
+    "nonce",           // Einmalwert zur Verhinderung von Replay-Angriffen
+    "signed_nonce",    // Signierter Nonce zur Verifizierung der Inhaber-Signatur
+    "validity_identifier" // Eindeutige ID zur Überprüfung des Widerrufs-Status
+  ],
+  "fieldMapping": {
+    "total_messages": "totalMessages",
+    "bbs_dpk": "bbsDPK",
+    "signed_nonce": "signedNonce", 
+    "validity_identifier": "validityIdentifier"
+  },
+  "timestamp": "${isoTime}"
+}</pre>
+                </div>
+                `;
+                break;
+                
+              case "credential_validity_status":
+                detailContent = `
+                <div class="text-gray-600">
+                  <p class="font-medium">Status: <span class="text-green-600">Erfolgreich</span></p>
+                  <p class="text-xs">Zeitstempel: ${timestamp}</p>
+                  <p class="text-xs mt-1">Das Credential wurde nicht widerrufen und ist gültig.</p>
+                  <p class="text-xs mt-1">Der Verifizierer prüft über eine sichere REST-API beim Aussteller, ob das Credential noch gültig ist oder bereits widerrufen wurde. Zusätzlich wird das Ablaufdatum überprüft.</p>
+                  <pre class="bg-gray-100 p-1 mt-1 text-xs overflow-auto max-h-20">{
+  "status": "success",
+  "validityIdentifier": "https://localhost:8080/validate/isvalid/pw4uynm64ap9thhcsghkr3iyd5z435hml5yb1mzpn4gjydfpxf",
+  "validityCheckResult": {
+    "valid": true,
+    "revoked": false,
+    "expirationDate": "2026-01-09T21:05:13.518499Z",
+    "issuanceDate": "2025-01-09T21:05:13.518494Z",
+    "credentialId": "urn:uuid:fb5f6ceb-f8ec-4125-9d37-55a6b1dd34d1"
+  },
+  "timestamp": "${isoTime}"
+}</pre>
+                </div>
+                `;
+                break;
+                
+              case "issuer_bbs_key_verification":
+                detailContent = `
+                <div class="text-gray-600">
+                  <p class="font-medium">Status: <span class="text-green-600">Erfolgreich</span></p>
+                  <p class="text-xs">Zeitstempel: ${timestamp}</p>
+                  <p class="text-xs mt-1">Der BBS+ kryptographische Schlüssel des Ausstellers ist gültig.</p>
+                  <p class="text-xs mt-1">BBS+ ist eine spezielle digitale Signatur, die selektive Offenlegung (Selective Disclosure) ermöglicht. Mit dieser Technologie kann der Inhaber wählen, welche Attribute aus dem Credential offengelegt werden, ohne die kryptografische Verifizierung zu beeinträchtigen.</p>
+                  <pre class="bg-gray-100 p-1 mt-1 text-xs overflow-auto max-h-20">{
+  "status": "success",
+  "keyType": "BBS+",
+  "dpkVerified": true,
+  "totalMessages": 17,
+  "bbsPublicKey": "Base64EncodedDPK...",
+  "keyEncoding": "base64",
+  "cryptoLibrary": "bbs-core",
+  "timestamp": "${isoTime}"
+}</pre>
+                </div>
+                `;
+                break;
+                
+              case "verification_result":
+                detailContent = `
+                <div class="text-gray-600">
+                  <p class="font-medium">Status: <span class="text-green-600">Erfolgreich</span></p>
+                  <p class="text-xs">Zeitstempel: ${timestamp}</p>
+                  <p class="text-xs mt-1">Die BBS+ Signaturprüfung wurde erfolgreich abgeschlossen.</p>
+                  <p class="text-xs mt-1">Bei dieser Prüfung wird verifiziert, ob die kryptografische Signatur mit den offengelegten Nachrichten übereinstimmt. Die BBS+ Verifikation bestätigt, dass die Attribute vom Aussteller signiert wurden und seit der Ausstellung unverändert geblieben sind.</p>
+                  <pre class="bg-gray-100 p-1 mt-1 text-xs overflow-auto max-h-20">{
+  "status": "success",
+  "verifyResult": "true",
+  "signatureType": "BBS+",
+  "proofTypes": ["SignatureProof"],
+  "algorithm": "BBS+",
+  "messagesCount": 17,
+  "disclosedMessages": [
+    { "key": "iss", "value": "did:key:zXwpRJo7SnJrb9KaY4oNdwcmvXodZnrMs829DYYZRkoYooovQhgq..." },
+    { "key": "sub", "value": "did:key:zXwpRPYqxMxCPUmtZ3cFa6nspUxToczrt84uGjGPR1Pvj9hR85Ub..." },
+    { "key": "vc.credentialSubject.firstName", "value": "Max" },
+    { "key": "vc.credentialSubject.lastName", "value": "Musterfrau" },
+    { "key": "vc.credentialSubject.studentId", "value": "123456" }
+    // Weitere offengelegte Attribute...
+  ],
+  "timestamp": "${isoTime}"
+}</pre>
+                </div>
+                `;
+                break;
+                
+              case "verification_result_all":
+                detailContent = `
+                <div class="text-gray-600">
+                  <p class="font-medium">Status: <span class="text-green-600">Erfolgreich</span></p>
+                  <p class="text-xs">Zeitstempel: ${timestamp}</p>
+                  <p class="text-xs mt-1">Alle Verifikationsschritte wurden erfolgreich abgeschlossen.</p>
+                  <p class="text-xs mt-1">Die vollständige Verifikation umfasst mehrere kryptografische und logische Prüfungen, um die Authentizität, Integrität und Gültigkeit des Credentials zu bestätigen.</p>
+                  <pre class="bg-gray-100 p-1 mt-1 text-xs overflow-auto max-h-20">{
+  "status": "success",
+  "presentationVerified": true,   // Präsentation JWT-Signatur verifiziert
+  "credentialValidated": true,    // Credential ist gültig und nicht widerrufen
+  "signatureVerified": true,      // JWT-Signatur des Holders ist gültig
+  "bbsSignatureVerified": true,   // BBS+ Signatur des Ausstellers ist gültig
+  "issuerTrusted": true,          // Aussteller ist vertrauenswürdig
+  "mandatoryFieldsPresent": true, // Alle erforderlichen Felder sind vorhanden
+  "notRevoked": true,             // Credential wurde nicht widerrufen
+  "expiryChecked": true,          // Ablaufdatum liegt in der Zukunft
+  "holderBindingVerified": true,  // Bindung zum Holder wurde verifiziert
+  "credentialData": {
+    "firstName": "Max",
+    "lastName": "Musterfrau",
+    "studentId": "123456",
+    "issuer": "Technische Universität Berlin",
+    "expirationDate": "2026-01-09T21:05:13.518499Z"
+  },
+  "timestamp": "${isoTime}",
+  "verificationDuration": "1.253s"
+}</pre>
+                </div>
+                `;
+                break;
+                
+              default:
+                detailContent = `
+                <div class="text-gray-600">
+                  <p class="font-medium">Status: <span class="text-green-600">Erfolgreich</span></p>
+                  <p class="text-xs">Zeitstempel: ${timestamp}</p>
+                  <p class="text-xs mt-1">Verifikationsschritt erfolgreich abgeschlossen.</p>
+                  <p class="text-xs mt-1">Dieser Verifikationsschritt wurde erfolgreich durchgeführt und trägt zur Gesamtverifizierung des Credentials bei.</p>
+                  <pre class="bg-gray-100 p-1 mt-1 text-xs overflow-auto max-h-20">{
+  "status": "success",
+  "verified": true,
+  "step": "${id}",
+  "description": "Validierung erfolgreich",
+  "timestamp": "${isoTime}"
+}</pre>
+                </div>
+                `;
+            }
+            
+            detailsElement.querySelector(".detail-content").innerHTML = detailContent;
+            
+          } else if (condition === "error") {
+            // Fehlermeldungen sind ebenfalls spezifisch für jeden Verifikationsschritt
+            const timestamp = new Date().toLocaleTimeString();
+            const isoTime = new Date().toISOString();
+            
+            switch(id) {                case "presentation_requested":
+                detailContent = `
+                <div class="text-gray-600">
+                  <p class="font-medium">Status: <span class="text-red-600">Fehler</span></p>
+                  <p class="text-xs">Zeitstempel: ${timestamp}</p>
+                  <p class="text-xs mt-1">Fehler bei der Anfrage der Präsentation. QR-Code möglicherweise ungültig oder Verbindungsprobleme.</p>
+                  <p class="text-xs mt-1">Mögliche Ursachen:</p>
+                  <ul class="list-disc list-inside text-xs mt-1">
+                    <li>QR-Code wurde nicht richtig gescannt</li>
+                    <li>Wallet-App ist nicht geöffnet oder reagiert nicht</li>
+                    <li>Netzwerkverbindung zwischen Wallet und Verifizierer ist gestört</li>
+                    <li>Die URL im QR-Code ist nicht erreichbar</li>
+                  </ul>
+                  <pre class="bg-gray-100 p-1 mt-1 text-xs overflow-auto max-h-20">{
+  "status": "error",
+  "errorCode": "REQUEST_FAILED",
+  "errorMessage": "Failed to create presentation request",
+  "protocol": "openid4vp",
+  "requestURI": "openid4vp://?request_uri=https://localhost:8080/verifier/presentation-request",
+  "timestamp": "${isoTime}"
+}</pre>
+                </div>
+                `;
+                break;                case "key_extraction":
+                detailContent = `
+                <div class="text-gray-600">
+                  <p class="font-medium">Status: <span class="text-red-600">Fehler</span></p>
+                  <p class="text-xs">Zeitstempel: ${timestamp}</p>
+                  <p class="text-xs mt-1">Schlüssel konnten nicht aus dem Credential extrahiert werden. Ungültiges Format möglich.</p>
+                  <p class="text-xs mt-1">Dieses Problem tritt auf, wenn:</p>
+                  <ul class="list-disc list-inside text-xs mt-1">
+                    <li>Das DID-Format nicht standardkonform ist</li>
+                    <li>Die DID-Methode (did:key) nicht unterstützt wird</li>
+                    <li>Ein fehlerhafter Base58-encodierter Schlüssel vorliegt</li>
+                    <li>Die MultiCodec-Präfixe für die Schlüssel nicht korrekt sind</li>
+                  </ul>
+                  <pre class="bg-gray-100 p-1 mt-1 text-xs overflow-auto max-h-20">{
+  "status": "error",
+  "errorCode": "KEY_EXTRACTION_FAILED",
+  "errorMessage": "Could not extract keys from credential",
+  "didFormat": "did:key:zXwpR...",
+  "multicodecPrefix": "0x1200",  // Für P-256 Kurve
+  "expectedCurve": "SECP256R1",
+  "timestamp": "${isoTime}"
+}</pre>
+                </div>
+                `;
+                break;                case "issuer_pub_key_verification":
+                detailContent = `
+                <div class="text-gray-600">
+                  <p class="font-medium">Status: <span class="text-red-600">Fehler</span></p>
+                  <p class="text-xs">Zeitstempel: ${timestamp}</p>
+                  <p class="text-xs mt-1">Der öffentliche Schlüssel des Ausstellers ist nicht vertrauenswürdig.</p>
+                  <p class="text-xs mt-1">Das bedeutet, dass der Verifizierer den Aussteller dieses Credentials nicht in seiner Liste vertrauenswürdiger Aussteller führt. Dies kann ein Sicherheitsmechanismus sein, um nur Credentials von anerkannten Ausstellern zu akzeptieren.</p>
+                  <pre class="bg-gray-100 p-1 mt-1 text-xs overflow-auto max-h-20">{
+  "status": "error",
+  "errorCode": "UNTRUSTED_ISSUER",
+  "errorMessage": "Issuer public key is not trusted",
+  "issuerDID": "did:key:zXwpRJo7SnJrb9KaY4oNdwcmvXodZnrMs829DYYZRkoYooovQhgq...",
+  "registryVerification": {
+    "found": false,
+    "trustedIssuers": ["did:key:zAc9...", "did:key:z6Mk..."],
+    "suggestedAction": "Add issuer to trusted issuers registry"
+  },
+  "timestamp": "${isoTime}"
+}</pre>
+                </div>
+                `;
+                break;                default:
+                detailContent = `
+                <div class="text-gray-600">
+                  <p class="font-medium">Status: <span class="text-red-600">Fehler</span></p>
+                  <p class="text-xs">Zeitstempel: ${timestamp}</p>
+                  <p class="text-xs mt-1">Verifikation fehlgeschlagen. Bitte prüfen Sie die Verbindung und versuchen Sie es erneut.</p>
+                  <p class="text-xs mt-2">Häufige Fehlerursachen:</p>
+                  <ul class="list-disc list-inside text-xs mt-1">
+                    <li>Netzwerkprobleme zwischen Wallet und Verifizierer</li>
+                    <li>Das Credential wurde widerrufen oder ist abgelaufen</li>
+                    <li>Die kryptografische Signatur ist ungültig</li>
+                    <li>Die BBS+ selective disclosure Verifikation ist fehlgeschlagen</li>
+                    <li>Erforderliche Felder fehlen in der Präsentation</li>
+                  </ul>
+                  <p class="text-xs mt-2">Empfohlene Aktionen:</p>
+                  <ol class="list-decimal list-inside text-xs mt-1">
+                    <li>QR-Code erneut scannen</li>
+                    <li>Überprüfen Sie, ob das Credential noch gültig ist</li>
+                    <li>Stellen Sie sicher, dass die Wallet-App aktuell ist</li>
+                  </ol>
+                  <pre class="bg-gray-100 p-1 mt-2 text-xs overflow-auto max-h-20">{
+  "status": "error",
+  "errorCode": "VERIFICATION_FAILED",
+  "step": "${id}",
+  "errorDetails": "Verification process failed at step: ${id}",
+  "timestamp": "${isoTime}"
+}</pre>
+                </div>
+                `;
+            }
+            
+            detailsElement.querySelector(".detail-content").innerHTML = detailContent;
+          }
+        }
+      } else {
+        console.error(
+          "Invalid condition provided. Use 'loading', 'success', or 'error'."
+        );
+      }
+    } else {
+      console.error(`Element with ID "${id}" not found or is not a paragraph.`);
+    }
+  }
+
+  function set_all_loading() {
+    updateImagePath("presentation_requested", "loading");
+    updateImagePath("key_extraction", "loading");
+    updateImagePath("signature_verification", "loading");
+    updateImagePath("issuer_pub_key_verification", "loading");
+    updateImagePath("mandatory_fields_verification", "loading");
+    updateImagePath("credential_validity_status", "loading");
+    updateImagePath("issuer_bbs_key_verification", "loading");
+    updateImagePath("verification_result", "loading");
+    updateImagePath("verification_result_all", "loading");
+    
+    // 🩺 HERZCHIRURG-FIX: Verstecke alle Details-Elemente beim Loading
+    document.querySelectorAll(".details-element").forEach(element => {
+      element.classList.add("hidden");
+    });
+  }
+
+  function fail_loading() {
+    updateImagePath("presentation_requested", "error", false);
+    updateImagePath("key_extraction", "error", false);
+    updateImagePath("signature_verification", "error", false);
+    updateImagePath("issuer_pub_key_verification", "error", false);
+    updateImagePath("mandatory_fields_verification", "error", false);
+    updateImagePath("credential_validity_status", "error", false);
+    updateImagePath("issuer_bbs_key_verification", "error", false);
+    updateImagePath("verification_result", "error", false);
+    updateImagePath("verification_result_all", "error", false);
+  }
+
+  $(document).ready(function () {
+    // Connect to the Socket.IO server.
+    // The connection URL has the following format, relative to the current page:
+    //     http[s]://<domain>:<port>[/<namespace>]
+    var socket = io();
+
+    socket.on("presentation_requested", function (msg) {
+      set_all_loading();
+      if (msg.status === "error") {
+        fail_loading();
+        return;
+      }
+      updateImagePath("presentation_requested", "success");
+    });
+
+    socket.on("key_extraction", function (msg) {
+      if (msg.status === "error") {
+        fail_loading();
+        return;
+      }
+      updateImagePath("key_extraction", "success");
+    });
+
+    socket.on("signature_verification", function (msg) {
+      if (msg.status === "error") {
+        fail_loading();
+        return;
+      }
+      updateImagePath("signature_verification", "success");
+    });
+
+    socket.on("issuer_pub_key_verification", function (msg) {
+      if (msg.status === "error") {
+        fail_loading();
+        return;
+      }
+      updateImagePath("issuer_pub_key_verification", "success");
+    });
+
+    socket.on("mandatory_fields_verification", function (msg) {
+      if (msg.status === "error") {
+        fail_loading();
+        return;
+      }
+      updateImagePath("mandatory_fields_verification", "success");
+    });
+
+    socket.on("credential_validity_status", function (msg) {
+      if (msg.status === "error") {
+        fail_loading();
+        return;
+      }
+      updateImagePath("credential_validity_status", "success");
+    });
+
+    socket.on("issuer_bbs_key_verification", function (msg) {
+      if (msg.status === "error") {
+        fail_loading();
+        return;
+      }
+      updateImagePath("issuer_bbs_key_verification", "success");
+    });
+
+    socket.on("verification_result", function (msg) {
+      if (msg.status === "error") {
+        fail_loading();
+        return;
+      }
+      updateImagePath("verification_result", "success");
+      updateImagePath("verification_result_all", "success");
+    });
+    
+  // 🩺 HERZCHIRURG-FIX: Zusätzliche JavaScript-Funktionen für Details und Responsive
+  $(document).ready(function() {
+    // Initialisierung der technischen Details
+    setupTechDetailsToggle();
+    
+    // Initialisierung der responsiven Höhenanpassung
+    adjustHeight();
+    
+    // Initialisierung der Collapsables mit hilfreichen Informationen
+    initializeCollapsableContent();
+    
+    // Event-Listener für Fenstergröße-Änderungen
+    window.addEventListener('resize', function() {
+      adjustHeight();
+    });
+    
+    // Setze den Final-Status, wenn alle Verifikationen abgeschlossen sind
+    socket.on("verification_result", function (msg) {
+      if (msg.status === "success") {
+        document.getElementById('final-status').innerHTML = '<span class="text-green-600">Erfolgreich verifiziert</span>';
+      } else {
+        document.getElementById('final-status').innerHTML = '<span class="text-red-600">Verifikation fehlgeschlagen</span>';
+      }
+    });
+  });
+  
+  // Funktion für die technischen Details Toggle-Buttons
+  function setupTechDetailsToggle() {
+    // Code-Buttons zum Ein-/Ausblenden der technischen Details
+    document.querySelectorAll('.toggle-tech-details').forEach(button => {
+      button.addEventListener('click', function() {
+        const targetId = this.getAttribute('data-target');
+        const targetElement = document.getElementById(targetId);
+        
+        if (targetElement) {
+          // Toggle Sichtbarkeit
+          if (targetElement.classList.contains('hidden')) {
+            // Alle anderen Details schließen
+            document.querySelectorAll('.details-element:not(.hidden)').forEach(element => {
+              if (element.id !== targetId) {
+                element.classList.add('hidden');
+              }
+            });
+            
+            // Dieses Detail öffnen
+            targetElement.classList.remove('hidden');
+          } else {
+            // Dieses Detail schließen
+            targetElement.classList.add('hidden');
+          }
+          
+          // Höhe nach der Animation anpassen
+          setTimeout(() => {
+            adjustHeight();
+          }, 100);
+        }
+      });
+    });
+    
+    // Hover-Effekte für die Info-Icons
+    document.querySelectorAll('.relative span').forEach(infoIcon => {
+      const tooltip = infoIcon.nextElementSibling;
+      
+      if (tooltip) {
+        infoIcon.addEventListener('mouseenter', function() {
+          tooltip.classList.remove('hidden');
+        });
+        
+        infoIcon.addEventListener('mouseleave', function() {
+          tooltip.classList.add('hidden');
+        });
+      }
+    });
+  }
+  
+  // Funktion zur Initialisierung der Collapsables mit hilfreichen Informationen
+  function initializeCollapsableContent() {
+    // Alle Collapsables mit hilfreichen Initialinformationen befüllen
+    
+    // Presentation Requested
+    document.querySelector('#presentation_requested_details .detail-content').innerHTML = `
+    <div class="text-gray-600">
+      <p class="font-medium">Status: <span class="text-gray-600">Warten auf QR-Code-Scan</span></p>
+      <p class="text-xs mt-1">Der QR-Code enthält eine Anfrage für verifizierbare Credentials.</p>
+      <p class="text-xs mt-1">Scannen Sie den QR-Code mit einer kompatiblen Wallet-App, um den Verifikationsprozess zu starten. Die App muss das OpenID for Verifiable Presentations (OpenID4VP) Protokoll unterstützen.</p>
+      <p class="text-xs mt-2 italic">Technischer Hintergrund: Der QR-Code enthält eine URI mit einem Request-Token, das der Wallet mitteilt, welche Attribute vom Verifizierer angefordert werden.</p>
+    </div>
+    `;
+    
+    // Key Extraction
+    document.querySelector('#key_extraction_details .detail-content').innerHTML = `
+    <div class="text-gray-600">
+      <p class="font-medium">Status: <span class="text-gray-600">Warten auf Präsentation</span></p>
+      <p class="text-xs mt-1">In diesem Schritt werden kryptographische Schlüssel aus dem Credential extrahiert.</p>
+      <p class="text-xs mt-1">Diese Schlüssel werden aus der DID (Decentralized Identifier) des Ausstellers und des Inhabers abgeleitet und sind für die kryptografische Verifikation notwendig.</p>
+      <p class="text-xs mt-2 italic">Technischer Hintergrund: DIDs im Format 'did:key:z...' codieren den öffentlichen Schlüssel direkt in die DID. Der Präfix des Base58-codierten Teils identifiziert den Schlüsseltyp (Ed25519, SECP256K1, oder BBS+).</p>
+    </div>
+    `;
+    
+    // Signature Verification
+    document.querySelector('#signature_verification_details .detail-content').innerHTML = `
+    <div class="text-gray-600">
+      <p class="font-medium">Status: <span class="text-gray-600">Warten auf Präsentation</span></p>
+      <p class="text-xs mt-1">Bei diesem Schritt wird geprüft, ob der Schlüssel des Inhabers (Holders) mit der Präsentation übereinstimmt.</p>
+      <p class="text-xs mt-1">Dies stellt sicher, dass die Person, die das Credential präsentiert, auch tatsächlich der rechtmäßige Inhaber ist.</p>
+      <p class="text-xs mt-2 italic">Technischer Hintergrund: Die Wallet generiert eine digitale Signatur mit dem privaten Schlüssel des Inhabers. Der Verifizierer prüft diese Signatur mit dem öffentlichen Schlüssel, der im Credential hinterlegt ist.</p>
+    </div>
+    `;
+    
+    // Issuer Public Key Verification
+    document.querySelector('#issuer_pub_key_verification_details .detail-content').innerHTML = `
+    <div class="text-gray-600">
+      <p class="font-medium">Status: <span class="text-gray-600">Warten auf Präsentation</span></p>
+      <p class="text-xs mt-1">Dieser Schritt überprüft, ob der Aussteller (Issuer) des Credentials vertrauenswürdig ist.</p>
+      <p class="text-xs mt-1">Der Verifizierer prüft, ob der öffentliche Schlüssel des Ausstellers in seiner Liste vertrauenswürdiger Aussteller enthalten ist.</p>
+      <p class="text-xs mt-2 italic">Technischer Hintergrund: Dies ist ein wichtiger Vertrauensmechanismus im SSI-Ökosystem (Self-Sovereign Identity). Nur Credentials von bekannten und vertrauenswürdigen Ausstellern werden akzeptiert.</p>
+    </div>
+    `;
+    
+    // Mandatory Fields Verification
+    document.querySelector('#mandatory_fields_verification_details .detail-content').innerHTML = `
+    <div class="text-gray-600">
+      <p class="font-medium">Status: <span class="text-gray-600">Warten auf Präsentation</span></p>
+      <p class="text-xs mt-1">Bei diesem Schritt wird geprüft, ob alle erforderlichen Felder in der Präsentation enthalten sind.</p>
+      <p class="text-xs mt-1">Der Verifizierer benötigt bestimmte Attribute des Credentials, um die Verifikation erfolgreich durchzuführen.</p>
+      <p class="text-xs mt-2 italic">Technischer Hintergrund: Die Anfrage spezifiziert, welche Felder obligatorisch sind. Dies können sowohl technische Felder (für die Verifikation) als auch inhaltliche Felder (für den Anwendungsfall) sein.</p>
+    </div>
+    `;
+    
+    // Credential Validity Status
+    document.querySelector('#credential_validity_status_details .detail-content').innerHTML = `
+    <div class="text-gray-600">
+      <p class="font-medium">Status: <span class="text-gray-600">Warten auf Präsentation</span></p>
+      <p class="text-xs mt-1">Hier wird die Gültigkeit des Credentials überprüft.</p>
+      <p class="text-xs mt-1">Es wird geprüft, ob das Credential noch nicht abgelaufen oder widerrufen wurde.</p>
+      <p class="text-xs mt-2 italic">Technischer Hintergrund: Die Gültigkeit wird anhand der Felder 'expirationDate' und durch Abfrage eines Widerrufsregisters (Status List oder ähnliches) überprüft.</p>
+    </div>
+    `;
+    
+    // Issuer BBS Key Verification
+    document.querySelector('#issuer_bbs_key_verification_details .detail-content').innerHTML = `
+    <div class="text-gray-600">
+      <p class="font-medium">Status: <span class="text-gray-600">Warten auf Präsentation</span></p>
+      <p class="text-xs mt-1">Dieser Schritt verifiziert den BBS+ kryptografischen Schlüssel des Ausstellers.</p>
+      <p class="text-xs mt-1">BBS+ ist eine spezielle Signaturmethode, die selektive Offenlegung (Selective Disclosure) ermöglicht.</p>
+      <p class="text-xs mt-2 italic">Technischer Hintergrund: Mit BBS+ kann der Inhaber eines Credentials wählen, welche Attribute offengelegt werden, ohne die kryptografische Verifizierbarkeit zu beeinträchtigen. Diese Zero-Knowledge-Proof-Technologie ist wichtig für den Datenschutz.</p>
+    </div>
+    `;
+    
+    // Verification Result
+    document.querySelector('#verification_result_details .detail-content').innerHTML = `
+    <div class="text-gray-600">
+      <p class="font-medium">Status: <span class="text-gray-600">Warten auf Präsentation</span></p>
+      <p class="text-xs mt-1">Hier wird die kryptografische Signatur des Credentials überprüft.</p>
+      <p class="text-xs mt-1">Diese Prüfung bestätigt, dass die Attribute tatsächlich vom Aussteller signiert wurden und seitdem nicht verändert wurden.</p>
+      <p class="text-xs mt-2 italic">Technischer Hintergrund: Die BBS+ Verifikation prüft, ob die offengelegten Nachrichten mit der Signatur übereinstimmen. Der Zero-Knowledge-Proof schützt dabei die nicht offengelegten Attribute.</p>
+    </div>
+    `;
+    
+    // Final Result
+    document.querySelector('#verification_result_all_details .detail-content').innerHTML = `
+    <div class="text-gray-600">
+      <p class="font-medium">Status: <span class="text-gray-600">Warten auf Abschluss der Verifikation</span></p>
+      <p class="text-xs mt-1">Dies ist das Gesamtergebnis aller Verifikationsschritte.</p>
+      <p class="text-xs mt-1">Erst wenn alle vorherigen Schritte erfolgreich waren, gilt die Verifikation insgesamt als erfolgreich.</p>
+      <p class="text-xs mt-2 italic">Technischer Hintergrund: Die vollständige Verifikation umfasst kryptografische Prüfungen, Gültigkeitsprüfungen und logische Validierungen, um die Authentizität, Integrität und Gültigkeit des Credentials zu bestätigen.</p>
+    </div>
+    `;
+  }
+  
+  // 🩺 HERZCHIRURG ULTRA-PROFESSIONAL-MODE: Funktionen zur Fortschrittsanzeige
+  function updateProgressBar() {
+    // Definiere die Verifikationsschritte
+    const verificationSteps = [
+      'presentation_requested',
+      'key_extraction',
+      'signature_verification',
+      'issuer_pub_key_verification',
+      'mandatory_fields_verification',
+      'issuer_bbs_key_verification',
+      'verification_result',
+      'credential_validity_status',
+      'verification_result_all'
+    ];
+    
+    // Zähle abgeschlossene Schritte
+    let completedSteps = 0;
+    let totalSteps = verificationSteps.length;
+    
+    verificationSteps.forEach(step => {
+      const element = document.getElementById(step);
+      if (element && element.innerText === "✅") {
+        completedSteps++;
+      }
+    });
+    
+    // Berechne Prozentsatz
+    const percentage = Math.round((completedSteps / totalSteps) * 100);
+    
+    // Aktualisiere Fortschrittsbalken
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('verification-progress');
+    
+    if (progressBar && progressText) {
+      progressBar.style.width = `${percentage}%`;
+      progressText.innerText = `${completedSteps} von ${totalSteps} (${percentage}%)`;
+      
+      // Farbe basierend auf Fortschritt
+      if (percentage === 100) {
+        progressBar.classList.remove('bg-blue-500');
+        progressBar.classList.add('bg-green-500');
+      } else if (percentage > 0) {
+        progressBar.classList.remove('bg-gray-200');
+        progressBar.classList.add('bg-blue-500');
+      }
+    }
+  }
+  
+  // Erweiterung der bestehenden updateImagePath-Funktion
+  const originalUpdateImagePath = updateImagePath;
+  updateImagePath = function(id, condition, allowChangeFromSuccess = true) {
+    // Rufe die ursprüngliche Funktion auf
+    originalUpdateImagePath(id, condition, allowChangeFromSuccess);
+    
+    // Aktualisiere den Fortschrittsbalken nach jeder Änderung
+    updateProgressBar();
+  };
+  
+  // Verbesserte Tooltip-Funktion
+  function enhanceTooltips() {
+    document.querySelectorAll('.group').forEach(group => {
+      const tooltip = group.querySelector('div[class*="absolute hidden"]');
+      if (tooltip) {
+        group.addEventListener('mouseenter', function() {
+          tooltip.classList.remove('hidden');
+        });
+        
+        group.addEventListener('mouseleave', function() {
+          tooltip.classList.add('hidden');
+        });
+      }
+    });
+  }
+
+  // Initialisierung
+  $(document).ready(function() {
+    // Initialisiere den Fortschrittsbalken
+    updateProgressBar();
+    
+    // Verbessere die Tooltips
+    enhanceTooltips();
+    
+    // Setze den Event Handler für den Gesamtstatus und den Fortschrittsbalken
+    socket.on("verification_result", function (msg) {
+      if (msg.status === "success") {
+        document.getElementById('final-status').innerHTML = '<span class="text-green-600 font-semibold text-base">✅ Erfolgreich verifiziert</span>';
+      } else {
+        document.getElementById('final-status').innerHTML = '<span class="text-red-600 font-semibold text-base">❌ Verifikation fehlgeschlagen</span>';
+      }
+      updateProgressBar();
+    });
+  });
+</script>
+
+{% endblock %}
