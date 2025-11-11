@@ -1,9 +1,0 @@
-services:
-  issuer:
-    build:
-      context: .
-    volumes:
-      - ./instance:/instance
-    ports:
-      - "8080:8080"
-    restart: unless-stopped
