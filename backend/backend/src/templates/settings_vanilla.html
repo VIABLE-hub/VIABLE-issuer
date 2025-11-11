@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudentVC Settings</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        /* Berlin Blue Theme */
+        :root {
+            --berlin-blue: #003f7f;
+            --berlin-blue-light: #0056b3;
+            --berlin-blue-dark: #002d5a;
+        }
+        
+        .bg-berlin-blue {
+            background-color: var(--berlin-blue);
+        }
+        
+        .border-berlin-blue {
+            border-color: var(--berlin-blue);
+        }
+        
+        .text-berlin-blue {
+            color: var(--berlin-blue);
+        }
+        
+        .hover\:bg-berlin-blue-light:hover {
+            background-color: var(--berlin-blue-light);
+        }
+        
+        .dark {
+            background-color: #1f2937;
+            color: #f3f4f6;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+        
+        /* Loading Spinner */
+        .loading-spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 18px;
+            height: 18px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Toggle Switch Styles */
+        .relative.inline-block {
+            position: relative;
+        }
+        
+        input[type="checkbox"].sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+        
+        .toggle-label {
+            position: relative;
+            display: block;
+            width: 3.5rem;
+            height: 1.5rem;
+            border-radius: 9999px;
+            background-color: #d1d5db;
+            transition: background-color 0.2s ease;
+        }
+        
+        .toggle-label:after {
+            content: '';
+            position: absolute;
+            top: 0.125rem;
+            left: 0.125rem;
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 9999px;
+            background-color: white;
+            transition: transform 0.2s ease;
+        }
+        
+        input[type="checkbox"]:checked + .toggle-label {
+            background-color: var(--berlin-blue);
+        }
+        
+        input[type="checkbox"]:checked + .toggle-label:after {
+            transform: translateX(2rem);
+        }
+        
+        input[type="checkbox"]:focus + .toggle-label {
+            box-shadow: 0 0 0 2px rgba(0, 63, 127, 0.3);
+        }
+        
+        .dark input[type="checkbox"] + .toggle-label {
+            background-color: #4b5563;
+        }
+        
+        .dark input[type="checkbox"]:checked + .toggle-label {
+            background-color: var(--berlin-blue-light);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+    <!-- Notification container for dynamic notifications -->
+    <div id="notification-container"></div>
+    
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4 mb-6 flex items-center justify-between">
+            <div>
+                <h1 class="text-xl font-bold text-gray-800 dark:text-white flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    Settings
+                </h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Last updated: <span id="last-updated">-</span>
+                </p>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <button id="dark-mode-toggle" class="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                    <svg class="w-5 h-5 text-gray-800 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <!-- Sun icon (visible in dark mode) -->
+                        <path class="dark:hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        <!-- Moon icon (visible in light mode) -->
+                        <path class="hidden dark:inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                </button>
+                
+                <button id="manual-refresh-button" class="flex items-center gap-2 px-4 py-2 bg-berlin-blue text-white rounded-lg hover:bg-berlin-blue-light transition-colors disabled:opacity-50">
+                    <div class="loading-spinner hidden"></div>
+                    <span class="button-text" data-default-text="Refresh" data-loading-text="Refreshing...">Refresh</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Navigation Tabs -->
+        <div class="border-b border-gray-200 dark:border-gray-700 mb-6">
+            <nav class="-mb-px flex space-x-6 overflow-x-auto" aria-label="Tabs">
+                <button data-tab="dashboard" class="border-b-2 border-berlin-blue text-berlin-blue py-4 px-1 text-center font-medium">
+                    Dashboard
+                </button>
+                <button data-tab="system" class="border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 py-4 px-1 text-center font-medium">
+                    System
+                </button>
+                <button data-tab="database" class="border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 py-4 px-1 text-center font-medium">
+                    Database
+                </button>
+                <button data-tab="network" class="border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 py-4 px-1 text-center font-medium">
+                    Network
+                </button>
+                <button data-tab="api" class="border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 py-4 px-1 text-center font-medium">
+                    API
+                </button>
+            </nav>
+        </div>
+        
+        <!-- Tab Content -->
+        <div class="space-y-6">
+            <!-- Dashboard Tab -->
+            <div data-tab-content="dashboard" class="space-y-6">
+                <!-- Dashboard Loading State -->
+                <div data-loader="dashboard" class="flex justify-center py-8">
+                    <div class="loading-spinner border-gray-300 border-t-berlin-blue w-10 h-10"></div>
+                </div>
+                
+                <!-- System Health Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4">
+                        <h3 class="font-medium text-lg mb-2 text-gray-800 dark:text-white">System Uptime</h3>
+                        <div class="flex flex-col space-y-2">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600 dark:text-gray-400">Application</span>
+                                <span id="app-uptime" class="font-semibold text-gray-800 dark:text-white">-</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600 dark:text-gray-400">System</span>
+                                <span id="system-uptime" class="font-semibold text-gray-800 dark:text-white">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4">
+                        <h3 class="font-medium text-lg mb-2 text-gray-800 dark:text-white">System Resource</h3>
+                        <div class="flex flex-col space-y-2">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600 dark:text-gray-400">CPU</span>
+                                <span id="cpu-usage" class="font-semibold text-gray-800 dark:text-white">-</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600 dark:text-gray-400">Memory</span>
+                                <span id="memory-usage" class="font-semibold text-gray-800 dark:text-white">-</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600 dark:text-gray-400">Disk</span>
+                                <span id="disk-usage" class="font-semibold text-gray-800 dark:text-white">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4">
+                        <h3 class="font-medium text-lg mb-2 text-gray-800 dark:text-white">Service Status</h3>
+                        <div class="flex flex-col space-y-2">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600 dark:text-gray-400">Issuer</span>
+                                <div data-status="issuer" class="flex items-center">
+                                    <span class="status-dot bg-gray-400"></span>
+                                    <span>Unknown</span>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600 dark:text-gray-400">Verifier</span>
+                                <div data-status="verifier" class="flex items-center">
+                                    <span class="status-dot bg-gray-400"></span>
+                                    <span>Unknown</span>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600 dark:text-gray-400">Database</span>
+                                <div data-status="database" class="flex items-center">
+                                    <span class="status-dot bg-gray-400"></span>
+                                    <span>Unknown</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Database and Network Info Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4">
+                        <h3 class="font-medium text-lg mb-2 text-gray-800 dark:text-white">Database Status</h3>
+                        <div class="flex flex-col space-y-2">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600 dark:text-gray-400">Tables</span>
+                                <span id="db-table-count" class="font-semibold text-gray-800 dark:text-white">-</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600 dark:text-gray-400">Records</span>
+                                <span id="db-record-count" class="font-semibold text-gray-800 dark:text-white">-</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600 dark:text-gray-400">Size</span>
+                                <span id="db-size" class="font-semibold text-gray-800 dark:text-white">-</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600 dark:text-gray-400">Last Backup</span>
+                                <span id="db-last-backup" class="font-semibold text-gray-800 dark:text-white">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4">
+                        <h3 class="font-medium text-lg mb-2 text-gray-800 dark:text-white">Network Information</h3>
+                        <div class="flex flex-col space-y-2">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600 dark:text-gray-400">Hostname</span>
+                                <span id="network-hostname" class="font-semibold text-gray-800 dark:text-white">-</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600 dark:text-gray-400">Local IP</span>
+                                <span id="network-local-ip" class="font-semibold text-gray-800 dark:text-white">-</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600 dark:text-gray-400">Public IP</span>
+                                <span id="network-public-ip" class="font-semibold text-gray-800 dark:text-white">-</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600 dark:text-gray-400">WebSocket</span>
+                                <div data-status="websocket" class="flex items-center">
+                                    <span class="status-dot bg-gray-400"></span>
+                                    <span>Unknown</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- System Tab -->
+            <div data-tab-content="system" class="hidden">
+                <!-- System Loading State -->
+                <div id="system-loading" data-loader="system" class="flex justify-center py-8">
+                    <div class="loading-spinner border-gray-300 border-t-berlin-blue w-10 h-10"></div>
+                </div>
+                
+                <!-- System Tab Content -->
+                <div id="system-content" class="hidden space-y-6">
+                    <!-- System Health Section -->
+                    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
+                        <h2 class="text-lg font-semibold mb-4">System Health</h2>
+                        <!-- Content to be populated by JavaScript -->
+                    </div>
+                    
+                    <!-- System Resources Section -->
+                    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
+                        <h2 class="text-lg font-semibold mb-4">System Resources</h2>
+                        <!-- Content to be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Database Tab -->
+            <div data-tab-content="database" class="hidden">
+                <!-- Database Loading State -->
+                <div id="database-loading" data-loader="database" class="flex justify-center py-8">
+                    <div class="loading-spinner border-gray-300 border-t-berlin-blue w-10 h-10"></div>
+                </div>
+                
+                <!-- Database Tab Content -->
+                <div id="database-content" class="hidden space-y-6">
+                    <!-- Database Status Section -->
+                    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
+                        <h2 class="text-lg font-semibold mb-4">Database Status</h2>
+                        <!-- Content to be populated by JavaScript -->
+                    </div>
+                    
+                    <!-- Backup Management Section -->
+                    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
+                        <h2 class="text-lg font-semibold mb-4">Backup Management</h2>
+                        <div class="flex space-x-4 mb-4">
+                            <button id="create-backup-button" class="flex items-center gap-2 px-4 py-2 bg-berlin-blue text-white rounded-lg hover:bg-berlin-blue-light transition-colors">
+                                <div class="loading-spinner hidden"></div>
+                                <span class="button-text" data-default-text="Create Backup" data-loading-text="Creating...">Create Backup</span>
+                            </button>
+                            
+                            <button id="export-database-button" class="flex items-center gap-2 px-4 py-2 bg-berlin-blue text-white rounded-lg hover:bg-berlin-blue-light transition-colors">
+                                <div class="loading-spinner hidden"></div>
+                                <span class="button-text" data-default-text="Export SQL" data-loading-text="Exporting...">Export SQL</span>
+                            </button>
+                        </div>
+                        
+                        <!-- Import Section -->
+                        <div class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+                            <h3 class="text-lg font-medium mb-2">Import Database</h3>
+                            <form id="import-database-form" class="flex items-end">
+                                <div class="mr-4 flex-grow">
+                                    <label for="database-import-file" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        SQL File
+                                    </label>
+                                    <input id="database-import-file" type="file" accept=".sql" class="block w-full text-sm border border-gray-300 rounded-md p-2">
+                                </div>
+                                <button id="import-database-button" type="submit" class="flex items-center gap-2 px-4 py-2 bg-berlin-blue text-white rounded-lg hover:bg-berlin-blue-light transition-colors">
+                                    <div class="loading-spinner hidden"></div>
+                                    <span class="button-text" data-default-text="Import" data-loading-text="Importing...">Import</span>
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- Backup List -->
+                        <div class="mt-6">
+                            <h3 class="text-lg font-medium mb-2">Backup List</h3>
+                            <div class="mt-2 overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                    <thead class="bg-gray-50 dark:bg-gray-800">
+                                        <tr>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Filename</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Size</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="backup-list-container" class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
+                                        <!-- Content to be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Network Tab -->
+            <div data-tab-content="network" id="network-tab" class="hidden">
+                <!-- Network Loading State -->
+                <div id="network-loading" data-loader="network" class="flex justify-center py-8">
+                    <div class="loading-spinner border-gray-300 border-t-berlin-blue w-10 h-10"></div>
+                </div>
+                
+                <div id="network-content" class="hidden space-y-6">
+                    <!-- Network Information -->
+                    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+                        <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Network Information</h3>
+                        </div>
+                        <div class="px-4 py-5 sm:p-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">Local IP</div>
+                                    <div id="network-info-local-ip" class="font-medium text-gray-900 dark:text-white">Loading...</div>
+                                </div>
+                                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">Public IP</div>
+                                    <div id="network-info-public-ip" class="font-medium text-gray-900 dark:text-white">Loading...</div>
+                                </div>
+                                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">Hostname</div>
+                                    <div id="network-info-hostname" class="font-medium text-gray-900 dark:text-white">Loading...</div>
+                                </div>
+                                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">Port</div>
+                                    <div id="network-info-port" class="font-medium text-gray-900 dark:text-white">8080</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- NGROK Configuration -->
+                    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+                        <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Unified Network Configuration</h3>
+                        </div>
+                        <div class="px-4 py-5 sm:p-6 space-y-4">
+                            <!-- Toggle NGROK -->
+                            <div class="flex items-center space-x-2">
+                                <label for="use-ngrok-toggle" class="font-medium text-gray-700 dark:text-gray-300">Use NGROK</label>
+                                <div class="relative inline-block w-10 mr-2 align-middle select-none">
+                                    <input type="checkbox" id="use-ngrok-toggle" class="sr-only" />
+                                    <label for="use-ngrok-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 dark:bg-gray-600 cursor-pointer"></label>
+                                </div>
+                            </div>
+                            
+                            <!-- NGROK Domain Field -->
+                            <div id="ngrok-fields" class="space-y-4">
+                                <div>
+                                    <label for="unified-ngrok-domain" class="block text-sm font-medium text-gray-700 dark:text-gray-300">NGROK Domain</label>
+                                    <div class="mt-1 flex rounded-md shadow-sm">
+                                        <input type="text" id="unified-ngrok-domain" class="focus:ring-berlin-blue focus:border-berlin-blue flex-1 block w-full rounded-md sm:text-sm border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="your-subdomain.ngrok.io" />
+                                    </div>
+                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Enter your NGROK domain to enable remote access from mobile wallets</p>
+                                </div>
+                            </div>
+                            
+                            <!-- IP Config -->
+                            <div>
+                                <label for="unified-default-ip" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Default IP Address</label>
+                                <div class="mt-1 flex rounded-md shadow-sm">
+                                    <input type="text" id="unified-default-ip" class="focus:ring-berlin-blue focus:border-berlin-blue flex-1 block w-full rounded-md sm:text-sm border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="192.168.1.100" />
+                                </div>
+                            </div>
+                            
+                            <!-- Port Config -->
+                            <div>
+                                <label for="unified-default-port" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Default Port</label>
+                                <div class="mt-1 flex rounded-md shadow-sm">
+                                    <input type="text" id="unified-default-port" class="focus:ring-berlin-blue focus:border-berlin-blue flex-1 block w-full rounded-md sm:text-sm border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="8080" />
+                                </div>
+                            </div>
+                            
+                            <!-- Save Button -->
+                            <div class="pt-3">
+                                <button id="save-network-config-button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-berlin-blue hover:bg-berlin-blue-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-berlin-blue">
+                                    <div class="loading-spinner hidden w-4 h-4 mr-2"></div>
+                                    <span class="button-text" data-default-text="Save Network Configuration" data-loading-text="Saving...">Save Network Configuration</span>
+                                </button>
+                            </div>
+                            
+                            <div id="network-config-result" class="hidden mt-3"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Network Diagnostics -->
+                    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+                        <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Network Diagnostics</h3>
+                        </div>
+                        <div class="px-4 py-5 sm:p-6">
+                            <button id="test-network-button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-berlin-blue hover:bg-berlin-blue-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-berlin-blue">
+                                <div class="loading-spinner hidden w-4 h-4 mr-2"></div>
+                                <span class="button-text" data-default-text="Test All Components" data-loading-text="Testing...">
+                                    <svg class="w-5 h-5 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    Test All Components
+                                </span>
+                            </button>
+                            
+                            <div id="network-diagnostics-results" class="mt-4 hidden overflow-x-auto"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Service URLs -->
+                    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+                        <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Service URLs</h3>
+                        </div>
+                        <div class="px-4 py-5 sm:p-6">
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Issuer URL</span>
+                                        <button id="copy-issuer-url" class="text-berlin-blue hover:text-berlin-blue-dark focus:outline-none">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div id="issuer-url" class="mt-1 text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 p-2 rounded-md break-all">Loading...</div>
+                                </div>
+                                
+                                <div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Verifier URL</span>
+                                        <button id="copy-verifier-url" class="text-berlin-blue hover:text-berlin-blue-dark focus:outline-none">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div id="verifier-url" class="mt-1 text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 p-2 rounded-md break-all">Loading...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- API Tab -->
+            <div data-tab-content="api" class="hidden">
+                <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
+                    <h2 class="text-lg font-semibold mb-4">API Documentation</h2>
+                    <p class="mb-4">Access the API documentation to learn how to interact with the StudentVC system programmatically.</p>
+                    
+                    <div class="space-y-4">
+                        <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <h3 class="font-medium mb-2">Swagger UI</h3>
+                            <p class="text-gray-600 dark:text-gray-400 mb-2">Interactive API documentation</p>
+                            <a href="/swagger" target="_blank" class="inline-flex items-center px-4 py-2 bg-berlin-blue text-white rounded-lg hover:bg-berlin-blue-light transition-colors">
+                                Open Swagger UI
+                            </a>
+                        </div>
+                        
+                        <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <h3 class="font-medium mb-2">API Key Management</h3>
+                            <p class="text-gray-600 dark:text-gray-400 mb-2">Generate and manage API keys for secure access</p>
+                            <a href="/settings/api-keys" class="inline-flex items-center px-4 py-2 bg-berlin-blue text-white rounded-lg hover:bg-berlin-blue-light transition-colors">
+                                Manage API Keys
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Include settings.js -->
+    <script src="/static/js/settings.js"></script>
+</body>
+</html> 

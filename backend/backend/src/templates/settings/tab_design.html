@@ -1,0 +1,126 @@
+<!-- Design Tab Content -->
+<div class="settings-fade-in">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+    <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Design-Einstellungen</h3>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Farbthema-Einstellungen -->
+      <div>
+        <h4 class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold mb-3">Farbschema</h4>
+        
+        <div class="mb-4">
+          <label class="block text-xs text-gray-700 dark:text-gray-300 mb-2">Primärfarbe</label>
+          <div class="flex items-center space-x-3">
+            <div id="primary-color-picker" class="h-8 w-8 rounded-full border-2 border-gray-200 dark:border-gray-700 cursor-pointer bg-berlin-blue"></div>
+            <div class="font-mono text-xs text-gray-600 dark:text-gray-400">#0063AF</div>
+          </div>
+        </div>
+        
+        <div class="mb-4">
+          <label class="block text-xs text-gray-700 dark:text-gray-300 mb-2">Akzentfarbe</label>
+          <div class="flex items-center space-x-3">
+            <div id="accent-color-picker" class="h-8 w-8 rounded-full border-2 border-gray-200 dark:border-gray-700 cursor-pointer bg-amber-500"></div>
+            <div class="font-mono text-xs text-gray-600 dark:text-gray-400">#F59E0B</div>
+          </div>
+        </div>
+        
+        <div class="mb-4">
+          <label class="block text-xs text-gray-700 dark:text-gray-300 mb-2">Farbmodus</label>
+          <div class="flex items-center space-x-3 mt-2">
+            <button @click="toggleDarkMode" class="flex items-center rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors px-3 py-2">
+              <template x-if="darkMode">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              </template>
+              <template x-if="!darkMode">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+              </template>
+              <span class="text-sm" x-text="darkMode ? 'Zum hellen Modus wechseln' : 'Zum dunklen Modus wechseln'"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- UI-Einstellungen -->
+      <div>
+        <h4 class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold mb-3">Benutzeroberfläche</h4>
+        
+        <div class="mb-4">
+          <label class="block text-xs text-gray-700 dark:text-gray-300 mb-2">Anzeigedichte</label>
+          <div class="inline-flex rounded-md shadow-sm mt-2" role="group" aria-label="Density settings">
+            <button @click="setDensity('compact')" class="px-4 py-2 text-sm font-medium rounded-l-md" :class="{'bg-berlin-blue text-white': density === 'compact', 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600': density !== 'compact'}">
+              <i class="fas fa-compress-alt mr-1.5"></i>Kompakt
+            </button>
+            <button @click="setDensity('comfortable')" class="px-4 py-2 text-sm font-medium rounded-r-md" :class="{'bg-berlin-blue text-white': density === 'comfortable', 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600': density !== 'comfortable'}">
+              <i class="fas fa-expand-alt mr-1.5"></i>Komfortabel
+            </button>
+          </div>
+        </div>
+        
+        <div class="mb-4">
+          <label class="block text-xs text-gray-700 dark:text-gray-300 mb-2">Schriftgröße</label>
+          <div class="flex items-center space-x-2">
+            <input type="range" min="12" max="18" step="1" value="14" class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer">
+            <span class="text-xs font-mono text-gray-600 dark:text-gray-400">14px</span>
+          </div>
+        </div>
+        
+        <div class="mb-4">
+          <label class="block text-xs text-gray-700 dark:text-gray-300 mb-2">Animation</label>
+          <div class="flex items-center mt-2">
+            <label class="inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="sr-only peer" checked>
+              <div class="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:bg-berlin-blue peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+              <span class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300">Animationen aktivieren</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+      <div class="flex justify-end space-x-3">
+        <button class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">Zurücksetzen</button>
+        <button class="px-4 py-2 bg-berlin-blue text-white rounded-md hover:bg-blue-700 transition-colors">Änderungen speichern</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+    <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Vorschau</h3>
+    
+    <div class="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-6">
+      <h4 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Komponenten-Vorschau</h4>
+      <p class="text-gray-600 dark:text-gray-400 mb-4">So werden die UI-Komponenten mit Ihren aktuellen Einstellungen aussehen.</p>
+      
+      <div class="flex flex-wrap gap-4 mb-4">
+        <button class="px-4 py-2 bg-berlin-blue text-white rounded-md hover:bg-blue-700 transition-colors">Primäre Schaltfläche</button>
+        <button class="px-4 py-2 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">Sekundäre Schaltfläche</button>
+        <button class="px-4 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition-colors">Akzent-Schaltfläche</button>
+      </div>
+      
+      <div class="flex flex-wrap gap-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+          <h5 class="text-sm font-medium text-gray-900 dark:text-white mb-2">Karte</h5>
+          <p class="text-xs text-gray-600 dark:text-gray-400">Beispielinhalt für eine Karten-Komponente.</p>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+          <div class="flex items-center justify-between mb-2">
+            <h5 class="text-sm font-medium text-gray-900 dark:text-white">Status</h5>
+            <span class="flex items-center px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-xs">
+              <span class="h-1.5 w-1.5 rounded-full bg-green-500 mr-1.5"></span>
+              Aktiv
+            </span>
+          </div>
+          <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+            <div class="h-1.5 rounded-full bg-berlin-blue" style="width: 75%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

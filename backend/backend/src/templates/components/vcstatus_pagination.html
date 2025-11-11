@@ -1,0 +1,19 @@
+<!-- Pagination für VC Status -->
+<div class="pagination" id="pagination-container">
+  <div class="flex items-center justify-between">
+    <div class="text-sm text-gray-500" id="pagination-info">
+      Anzeige von <span class="font-medium" id="page-start">1</span> bis <span class="font-medium" id="page-end">20</span> von <span class="font-medium" id="total-items">{{ total_credentials }}</span> Ergebnissen
+    </div>
+    <div class="flex space-x-1" id="pagination-buttons">
+      <button id="prev-page" class="pagination-button" disabled>
+        Zurück
+      </button>
+      <div id="page-numbers" class="flex space-x-1">
+        <!-- Hier werden dynamisch Seitenzahlen eingefügt -->
+      </div>
+      <button id="next-page" class="pagination-button">
+        Weiter
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,125 @@
+{% extends "verifier_base.html" %}
+
+{% block usecase_title %}Bildung | StudentVC{% endblock %}
+
+{% block style %}
+<!-- Bildungs-Theme -->
+<style>
+  :root {
+    --theme-primary: #f9a825;
+    --theme-primary-dark: #f57f17;
+    --theme-primary-light: #fdd835;
+    --theme-secondary: #ed6c02;
+    --theme-accent: #ffca28;
+    --theme-info-bg: rgba(249, 168, 37, 0.1);
+    --theme-info-border: rgba(249, 168, 37, 0.5);
+    --theme-info-text: #f57f17;
+    --theme-check-color: #f9a825;
+  }
+  
+  /* Dark mode theme overrides */
+  .dark {
+    --theme-primary: #ffb300;
+    --theme-primary-dark: #ffa000;
+    --theme-primary-light: #ffc107;
+    --theme-secondary: #ff9800;
+    --theme-accent: #ffca28;
+    --theme-info-bg: rgba(255, 179, 0, 0.2);
+    --theme-info-border: rgba(255, 179, 0, 0.5);
+    --theme-info-text: #ffd54f;
+    --theme-check-color: #ffb300;
+  }
+  
+  .verification-step.education-verified {
+    background-color: rgba(249, 168, 37, 0.1);
+    border-left: 3px solid var(--theme-primary);
+  }
+  
+  .dark .verification-step.education-verified {
+    background-color: rgba(255, 179, 0, 0.2);
+    border-left: 3px solid var(--theme-primary);
+  }
+  
+  .edu-benefits-card {
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+  }
+  
+  .dark .edu-benefits-card {
+    background-color: #1f2937;
+    border: 1px solid #374151;
+  }
+  
+  .edu-check-icon {
+    color: var(--theme-check-color);
+  }
+</style>
+{% endblock %}
+
+{% block usecase_icon %}
+<i class="fas fa-graduation-cap text-2xl mr-2"></i>
+{% endblock %}
+
+{% block usecase_heading %}Bildung & Zertifizierung{% endblock %}
+
+{% block usecase_description %}
+<div class="mb-8 usecase-container">
+  <p class="mb-4 text-gray-700 dark:text-gray-300">Verifiable Credentials im Bildungsbereich ermöglichen die sichere Ausstellung, Verwaltung und Überprüfung von akademischen Leistungen, Zeugnissen und Qualifikationen.</p>
+  
+  <div class="info-block bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500 dark:border-yellow-400 p-4 rounded mb-6">
+    <h4 class="font-semibold text-yellow-800 dark:text-yellow-300 mb-2">Anwendungsfälle im Bildungsbereich:</h4>
+    <ul class="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">
+      <li>Digitale Universitätsabschlüsse</li>
+      <li>Schulzeugnisse und Zertifikate</li>
+      <li>Fortbildungsnachweise</li>
+      <li>Berufliche Qualifikationen</li>
+      <li>Online-Kursabschlüsse</li>
+    </ul>
+  </div>
+  
+  <div class="edu-benefits-card rounded-lg shadow-md p-5 mb-6">
+    <h4 class="font-semibold text-gray-800 dark:text-white mb-3">Vorteile für Bildungseinrichtungen</h4>
+    
+    <div class="space-y-3">
+      <div class="flex items-start">
+        <div class="flex-shrink-0 h-5 w-5 edu-check-icon mt-1">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="ml-3">
+          <p class="text-gray-700 dark:text-gray-300">Reduzierter Verwaltungsaufwand durch automatisierte Verifikation</p>
+        </div>
+      </div>
+      
+      <div class="flex items-start">
+        <div class="flex-shrink-0 h-5 w-5 edu-check-icon mt-1">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="ml-3">
+          <p class="text-gray-700 dark:text-gray-300">Fälschungssichere akademische Nachweise</p>
+        </div>
+      </div>
+      
+      <div class="flex items-start">
+        <div class="flex-shrink-0 h-5 w-5 edu-check-icon mt-1">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="ml-3">
+          <p class="text-gray-700 dark:text-gray-300">Interoperable Zertifikate für internationale Anerkennung</p>
+        </div>
+      </div>
+      
+      <div class="flex items-start">
+        <div class="flex-shrink-0 h-5 w-5 edu-check-icon mt-1">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="ml-3">
+          <p class="text-gray-700 dark:text-gray-300">Selbstsouveräne Kontrolle über Bildungsnachweise für Studenten</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="text-gray-700 dark:text-gray-300">Scannen Sie den QR-Code, um ein Beispiel-Credential zu verifizieren oder um einen Bildungsnachweis zu validieren.</p>
+</div>
+{% endblock %}

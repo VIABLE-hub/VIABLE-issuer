@@ -1,0 +1,119 @@
+{% extends "verifier_base.html" %}
+
+{% block usecase_title %}KYC & Identifikation | StudentVC{% endblock %}
+
+{% block style %}
+<!-- KYC-Theme -->
+<style>
+  :root {
+    --theme-primary: #8e24aa;
+    --theme-primary-dark: #6a1b9a;
+    --theme-primary-light: #ab47bc;
+    --theme-secondary: #5e35b1;
+    --theme-accent: #7e57c2;
+    --theme-info-bg: rgba(142, 36, 170, 0.1);
+    --theme-info-border: rgba(142, 36, 170, 0.5);
+    --theme-info-text: #6a1b9a;
+    --theme-comparison-header: #8e24aa;
+    --theme-comparison-text: #ab47bc;
+  }
+  
+  /* Dark mode theme overrides */
+  .dark {
+    --theme-primary: #ab47bc;
+    --theme-primary-dark: #8e24aa;
+    --theme-primary-light: #ce93d8;
+    --theme-secondary: #7e57c2;
+    --theme-accent: #9575cd;
+    --theme-info-bg: rgba(171, 71, 188, 0.2);
+    --theme-info-border: rgba(171, 71, 188, 0.5);
+    --theme-info-text: #ce93d8;
+    --theme-comparison-header: #9c27b0;
+    --theme-comparison-text: #ce93d8;
+  }
+  
+  .verification-step.kyc-verified {
+    background-color: rgba(142, 36, 170, 0.1);
+    border-left: 3px solid var(--theme-primary);
+  }
+  
+  .dark .verification-step.kyc-verified {
+    background-color: rgba(171, 71, 188, 0.2);
+    border-left: 3px solid var(--theme-primary);
+  }
+  
+  /* KYC Comparison Table */
+  .kyc-comparison-header {
+    background-color: var(--theme-comparison-header);
+  }
+  
+  .kyc-comparison-highlight {
+    color: var(--theme-comparison-text);
+  }
+  
+  .kyc-comparison-card {
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+  }
+  
+  .dark .kyc-comparison-card {
+    background-color: #1f2937;
+    border: 1px solid #374151;
+  }
+</style>
+{% endblock %}
+
+{% block usecase_icon %}
+<i class="fas fa-id-card text-2xl mr-2"></i>
+{% endblock %}
+
+{% block usecase_heading %}KYC & Identitätsverifikation{% endblock %}
+
+{% block usecase_description %}
+<div class="mb-8 usecase-container">
+  <p class="mb-4 text-gray-700 dark:text-gray-300">Verifiable Credentials revolutionieren KYC-Prozesse (Know Your Customer) und Identitätsverifikation durch sichere, datenschutzkonforme und wiederverwendbare digitale Nachweise.</p>
+  
+  <div class="info-block bg-purple-50 dark:bg-purple-900/20 border-l-4 border-purple-500 dark:border-purple-400 p-4 rounded mb-6">
+    <h4 class="font-semibold text-purple-800 dark:text-purple-300 mb-2">Anwendungsfälle für KYC & Identifikation:</h4>
+    <ul class="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">
+      <li>Banking & Finanzdienstleistungen</li>
+      <li>Altersnachweise (18+)</li>
+      <li>Reiseidentifikation</li>
+      <li>Zugangsberechtigung zu geschützten Bereichen</li>
+      <li>Onboarding für digitale Services</li>
+    </ul>
+  </div>
+  
+  <div class="flex flex-col mb-6 kyc-comparison-card rounded-lg shadow-md overflow-hidden">
+    <div class="kyc-comparison-header text-white p-4">
+      <h4 class="font-semibold">KYC mit Verifiable Credentials im Vergleich</h4>
+    </div>
+    <div class="p-4">
+      <div class="grid grid-cols-3 gap-4">
+        <div class="font-medium text-gray-800 dark:text-white"></div>
+        <div class="font-medium text-gray-800 dark:text-white text-center">Traditionelles KYC</div>
+        <div class="font-medium text-gray-800 dark:text-white text-center">VC-basiertes KYC</div>
+        
+        <div class="text-gray-700 dark:text-gray-300">Dauer</div>
+        <div class="text-center text-gray-600 dark:text-gray-400">Tage</div>
+        <div class="text-center kyc-comparison-highlight font-medium">Sekunden</div>
+        
+        <div class="text-gray-700 dark:text-gray-300">Datenschutz</div>
+        <div class="text-center text-gray-600 dark:text-gray-400">Niedrig</div>
+        <div class="text-center kyc-comparison-highlight font-medium">Hoch</div>
+        
+        <div class="text-gray-700 dark:text-gray-300">Wiederverwendbarkeit</div>
+        <div class="text-center text-gray-600 dark:text-gray-400">Keine</div>
+        <div class="text-center kyc-comparison-highlight font-medium">Unbegrenzt</div>
+        
+        <div class="text-gray-700 dark:text-gray-300">Nutzerfreundlichkeit</div>
+        <div class="text-center text-gray-600 dark:text-gray-400">Komplex</div>
+        <div class="text-center kyc-comparison-highlight font-medium">Einfach</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="text-gray-700 dark:text-gray-300">Scannen Sie den QR-Code, um ein Beispiel-Credential zu verifizieren oder um einen Identitätsnachweis zu validieren.</p>
+</div>
+{% endblock %}
