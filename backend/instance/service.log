@@ -1,0 +1,32 @@
+2025-07-02 11:14:29,734 - INFO - LOGGER - Logger initialized!
+2025-07-02 11:14:29,872 - DEBUG - PIL.PngImagePlugin - STREAM b'IHDR' 16 13
+2025-07-02 11:14:29,873 - DEBUG - PIL.PngImagePlugin - STREAM b'sRGB' 41 1
+2025-07-02 11:14:29,873 - DEBUG - PIL.PngImagePlugin - STREAM b'IDAT' 54 8192
+2025-07-02 11:14:29,904 - DEBUG - PIL.PngImagePlugin - STREAM b'IHDR' 16 13
+2025-07-02 11:14:29,904 - DEBUG - PIL.PngImagePlugin - STREAM b'IDAT' 41 65536
+2025-07-02 11:14:30,088 - DEBUG - PIL.PngImagePlugin - STREAM b'IHDR' 16 13
+2025-07-02 11:14:30,089 - DEBUG - PIL.PngImagePlugin - STREAM b'sRGB' 41 1
+2025-07-02 11:14:30,090 - DEBUG - PIL.PngImagePlugin - STREAM b'IDAT' 54 8192
+2025-07-02 11:14:30,131 - DEBUG - PIL.PngImagePlugin - STREAM b'IHDR' 16 13
+2025-07-02 11:14:30,132 - DEBUG - PIL.PngImagePlugin - STREAM b'IDAT' 41 65536
+2025-07-02 11:14:30,276 - WARNING - werkzeug - Werkzeug appears to be used in a production deployment. Consider switching to a production web server instead.
+2025-07-02 11:14:30,393 - INFO - werkzeug - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on https://127.0.0.1:8080
+ * Running on https://172.18.0.2:8080
+2025-07-02 11:14:30,393 - INFO - werkzeug - [33mPress CTRL+C to quit[0m
+2025-07-02 11:14:30,394 - INFO - werkzeug -  * Restarting with stat
+2025-07-02 11:14:30,690 - INFO - LOGGER - Logger initialized!
+2025-07-02 11:14:30,733 - DEBUG - PIL.PngImagePlugin - STREAM b'IHDR' 16 13
+2025-07-02 11:14:30,733 - DEBUG - PIL.PngImagePlugin - STREAM b'sRGB' 41 1
+2025-07-02 11:14:30,733 - DEBUG - PIL.PngImagePlugin - STREAM b'IDAT' 54 8192
+2025-07-02 11:14:30,752 - DEBUG - PIL.PngImagePlugin - STREAM b'IHDR' 16 13
+2025-07-02 11:14:30,752 - DEBUG - PIL.PngImagePlugin - STREAM b'IDAT' 41 65536
+2025-07-02 11:14:30,769 - DEBUG - PIL.PngImagePlugin - STREAM b'IHDR' 16 13
+2025-07-02 11:14:30,769 - DEBUG - PIL.PngImagePlugin - STREAM b'sRGB' 41 1
+2025-07-02 11:14:30,769 - DEBUG - PIL.PngImagePlugin - STREAM b'IDAT' 54 8192
+2025-07-02 11:14:30,786 - DEBUG - PIL.PngImagePlugin - STREAM b'IHDR' 16 13
+2025-07-02 11:14:30,786 - DEBUG - PIL.PngImagePlugin - STREAM b'IDAT' 41 65536
+2025-07-02 11:14:30,833 - WARNING - werkzeug - Werkzeug appears to be used in a production deployment. Consider switching to a production web server instead.
+2025-07-02 11:14:30,834 - WARNING - werkzeug -  * Debugger is active!
+2025-07-02 11:14:30,836 - INFO - werkzeug -  * Debugger PIN: 381-673-830

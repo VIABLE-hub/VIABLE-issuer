@@ -1,0 +1,426 @@
+2025-11-11 19:55:06,349 - INFO - LOGGER - Logger initialized!
+2025-11-11 19:55:06,350 - INFO - LOGGER - 🔐 Generated new persistent SECRET_KEY and saved to file
+2025-11-11 19:55:06,351 - INFO - __main__ - TENANT DETECTED: TUB
+2025-11-11 19:55:06,351 - INFO - __main__ - DATABASE ISOLATION: Each tenant uses separate database
+2025-11-11 19:55:06,430 - INFO - src.tenants.database - 💾 Database URI for tenant 'root': sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/root/database.db
+2025-11-11 19:55:06,430 - INFO - src.tenants.database - 💾 Database URI for tenant 'tub': sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/tub/database.db
+2025-11-11 19:55:06,430 - INFO - src.tenants.database - 💾 Database URI for tenant 'fub': sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/fub/database.db
+2025-11-11 19:55:06,430 - INFO - src.tenants.database - 💾 Database URI for tenant 'veritas': sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/veritas/database.db
+2025-11-11 19:55:06,430 - INFO - __main__ - Tenant database initialization results: {'root': {'status': 'success', 'db_uri': 'sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/root/database.db'}, 'tub': {'status': 'success', 'db_uri': 'sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/tub/database.db'}, 'fub': {'status': 'success', 'db_uri': 'sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/fub/database.db'}, 'veritas': {'status': 'success', 'db_uri': 'sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/veritas/database.db'}}
+2025-11-11 19:55:06,430 - INFO - __main__ - Current active tenant: tub
+2025-11-11 19:55:06,431 - INFO - src.tenants.middleware - 🔧 Tenant middleware initialized
+2025-11-11 19:55:06,432 - DEBUG - LOGGER - Tenant middleware initialized early
+2025-11-11 19:55:06,432 - DEBUG - src.tenants.unified_detector - 🎯 Tenant from environment: tub
+2025-11-11 19:55:06,432 - DEBUG - src.tenants.database - ✅ Tenant from unified detector: tub
+2025-11-11 19:55:06,432 - INFO - src.tenants.database - 💾 Database URI for tenant 'tub': sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/tub/database.db
+2025-11-11 19:55:06,432 - INFO - src.tenants.database - 🏛️  App configured for tenant: tub
+2025-11-11 19:55:06,432 - INFO - src.tenants.database - 💾 Database: sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/tub/database.db
+2025-11-11 19:55:06,432 - INFO - src.tenants.database - 🏛️  Stored tenant in app config: tub
+2025-11-11 19:55:06,432 - INFO - LOGGER - Tenant database configured: sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/tub/database.db
+2025-11-11 19:55:06,432 - INFO - LOGGER - CORS configured for development (allow all origins)
+2025-11-11 19:55:06,510 - INFO - LOGGER - ✅ Rate limiting initialized
+2025-11-11 19:55:06,530 - INFO - src.tenants.setup - Initializing StudentVC multi-tenant system...
+2025-11-11 19:55:06,530 - INFO - src.tenants.setup - 🚀 ENHANCED: Starting robust 4-tenant registration (root, tub, fub, veritas)...
+2025-11-11 19:55:06,531 - INFO - src.tenants.setup - ✅ Cleared ALL existing tenant registrations and patterns
+2025-11-11 19:55:06,532 - INFO - src.tenants.registry - Registered tenant: root
+2025-11-11 19:55:06,532 - INFO - src.tenants.setup - ✅ Registered Root tenant (default): root
+2025-11-11 19:55:06,532 - INFO - src.tenants.registry - Registered tenant: tub
+2025-11-11 19:55:06,532 - INFO - src.tenants.setup - ✅ Registered TU Berlin tenant: tub
+2025-11-11 19:55:06,533 - INFO - src.tenants.registry - Registered tenant: fub
+2025-11-11 19:55:06,533 - INFO - src.tenants.setup - ✅ Registered FU Berlin tenant: fub
+2025-11-11 19:55:06,533 - INFO - src.tenants.registry - Registered tenant: veritas
+2025-11-11 19:55:06,533 - INFO - src.tenants.setup - ✅ Registered Veritas University tenant: veritas
+2025-11-11 19:55:06,533 - INFO - src.tenants.setup - ✅ SUCCESS: Exactly 4 tenants registered: ['fub', 'root', 'tub', 'veritas']
+2025-11-11 19:55:06,533 - INFO - src.tenants.setup - ✅ SUCCESS: Total registered tenants: 4 - ['root', 'tub', 'fub', 'veritas']
+2025-11-11 19:55:06,533 - INFO - src.tenants.registry - Created tenant instance: root
+2025-11-11 19:55:06,534 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/root
+2025-11-11 19:55:06,535 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/root/keys
+2025-11-11 19:55:06,535 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/root/static
+2025-11-11 19:55:06,535 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/root/backups
+2025-11-11 19:55:06,535 - INFO - src.tenants.setup - Ensured directories for tenant: root
+2025-11-11 19:55:06,535 - INFO - src.tenants.registry - Created tenant instance: tub
+2025-11-11 19:55:06,537 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/tub
+2025-11-11 19:55:06,537 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/tub/keys
+2025-11-11 19:55:06,537 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/tub/static
+2025-11-11 19:55:06,537 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/tub/backups
+2025-11-11 19:55:06,537 - INFO - src.tenants.setup - Ensured directories for tenant: tub
+2025-11-11 19:55:06,537 - INFO - src.tenants.registry - Created tenant instance: fub
+2025-11-11 19:55:06,538 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/fub
+2025-11-11 19:55:06,538 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/fub/keys
+2025-11-11 19:55:06,538 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/fub/static
+2025-11-11 19:55:06,538 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/fub/backups
+2025-11-11 19:55:06,539 - INFO - src.tenants.setup - Ensured directories for tenant: fub
+2025-11-11 19:55:06,539 - INFO - src.tenants.registry - Created tenant instance: veritas
+2025-11-11 19:55:06,541 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/veritas
+2025-11-11 19:55:06,542 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/veritas/keys
+2025-11-11 19:55:06,546 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/veritas/static
+2025-11-11 19:55:06,551 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/veritas/backups
+2025-11-11 19:55:06,552 - INFO - src.tenants.setup - Ensured directories for tenant: veritas
+2025-11-11 19:55:06,552 - INFO - src.tenants.registry - Tenant detected via environment: tub
+2025-11-11 19:55:06,552 - INFO - src.tenants.setup - Current tenant detected: tub (TU Berlin)
+2025-11-11 19:55:06,552 - INFO - src.tenants.setup - StudentVC multi-tenant system initialized successfully
+2025-11-11 19:55:06,552 - INFO - LOGGER - Multi-tenant system registry initialized successfully
+2025-11-11 19:55:06,732 - INFO - src.tenants.registry - Tenant detected via environment: tub
+2025-11-11 19:55:06,733 - INFO - LOGGER - 🎓 TENANT LOGO - Checking tenant static path: /home/mensch/lastclonestvc/backend/src/tenants/instances/tub/static
+2025-11-11 19:55:06,733 - INFO - LOGGER - 🎓 TENANT LOGO - Looking for logo at: /home/mensch/lastclonestvc/backend/src/tenants/instances/tub/static/studentVC-logo-sora-cropped-darkmode.png
+2025-11-11 19:55:06,733 - INFO - LOGGER - 🎓 TENANT LOGO - Tenant logo not found, falling back to: /home/mensch/lastclonestvc/backend/src/issuer/../static/studentVC-logo-sora-cropped-darkmode.png
+2025-11-11 19:55:06,733 - INFO - LOGGER - 🩺 HERZCHIRURG DEBUG - get_placeholders called:
+2025-11-11 19:55:06,733 - INFO - LOGGER - 🩺 Logo filename: studentVC-logo-sora-cropped-darkmode.png
+2025-11-11 19:55:06,733 - INFO - LOGGER - 🩺 Profile filename: student.png
+2025-11-11 19:55:06,733 - INFO - LOGGER - 🩺 Logo path: /home/mensch/lastclonestvc/backend/src/issuer/../static/studentVC-logo-sora-cropped-darkmode.png
+2025-11-11 19:55:06,733 - INFO - LOGGER - 🩺 Profile path: /home/mensch/lastclonestvc/backend/src/issuer/../static/student.png
+2025-11-11 19:55:06,734 - INFO - LOGGER - 🩺 HERZCHIRURG - preprocess_image called with path: /home/mensch/lastclonestvc/backend/src/issuer/../static/studentVC-logo-sora-cropped-darkmode.png
+2025-11-11 19:55:06,752 - DEBUG - PIL.PngImagePlugin - STREAM b'IHDR' 16 13
+2025-11-11 19:55:06,753 - DEBUG - PIL.PngImagePlugin - STREAM b'caBX' 41 45729
+2025-11-11 19:55:06,753 - DEBUG - PIL.PngImagePlugin - b'caBX' 41 45729 (unknown)
+2025-11-11 19:55:06,753 - DEBUG - PIL.PngImagePlugin - STREAM b'IDAT' 45782 65536
+2025-11-11 19:55:06,753 - INFO - LOGGER - 🩺 Image loaded successfully - Size: (1024, 1536), Mode: RGBA
+2025-11-11 19:55:06,753 - INFO - LOGGER - 🩺 RGBA detected - analyzing image to choose background color
+2025-11-11 19:55:07,067 - INFO - LOGGER - 🩺 Average brightness of logo: 247.2
+2025-11-11 19:55:07,067 - INFO - LOGGER - 🩺 Light logo detected - using dark background: (40, 40, 40)
+2025-11-11 19:55:07,078 - INFO - LOGGER - 🩺 Image converted to RGB mode
+2025-11-11 19:55:07,099 - INFO - LOGGER - 🩺 Image resized (aspect ratio) to: (200, 300)
+2025-11-11 19:55:07,102 - INFO - LOGGER - 🩺 Image successfully encoded to base64, length: 10080
+2025-11-11 19:55:07,115 - INFO - LOGGER - 🩺 HERZCHIRURG - preprocess_image called with path: /home/mensch/lastclonestvc/backend/src/issuer/../static/student.png
+2025-11-11 19:55:07,117 - DEBUG - PIL.PngImagePlugin - STREAM b'IHDR' 16 13
+2025-11-11 19:55:07,117 - DEBUG - PIL.PngImagePlugin - STREAM b'pHYs' 41 9
+2025-11-11 19:55:07,117 - DEBUG - PIL.PngImagePlugin - STREAM b'IDAT' 62 2093
+2025-11-11 19:55:07,118 - INFO - LOGGER - 🩺 Image loaded successfully - Size: (100, 100), Mode: RGBA
+2025-11-11 19:55:07,118 - INFO - LOGGER - 🩺 RGBA detected - analyzing image to choose background color
+2025-11-11 19:55:07,120 - INFO - LOGGER - 🩺 Average brightness of logo: 0.0
+2025-11-11 19:55:07,120 - INFO - LOGGER - 🩺 Dark logo detected - using light background: (255, 255, 255)
+2025-11-11 19:55:07,120 - INFO - LOGGER - 🩺 Image converted to RGB mode
+2025-11-11 19:55:07,123 - INFO - LOGGER - 🩺 Image resized (aspect ratio) to: (400, 400)
+2025-11-11 19:55:07,125 - INFO - LOGGER - 🩺 Image successfully encoded to base64, length: 20828
+2025-11-11 19:55:07,133 - INFO - LOGGER - 🩺 Final logo base64 length: 10080
+2025-11-11 19:55:07,134 - INFO - LOGGER - 🩺 Final profile base64 length: 20828
+2025-11-11 19:55:07,225 - DEBUG - LOGGER - Loading BBS+ core from: /home/mensch/lastclonestvc/backend/bbs_core.py
+2025-11-11 19:55:07,262 - INFO - LOGGER - 🔐 Authentication module initialized with VC support
+2025-11-11 19:55:07,351 - WARNING - src.settings.network.ngrok - NGROK monitor not available
+2025-11-11 19:55:07,441 - INFO - src.settings.network_api - 🔧 ✅ Modernized Network API registered
+2025-11-11 19:55:07,441 - INFO - LOGGER - Registered 17 blueprints
+2025-11-11 19:55:07,600 - INFO - LOGGER - Socket.IO CORS configured for development (allow all)
+2025-11-11 19:55:07,600 - INFO - LOGGER - Socket.IO configured for development mode
+2025-11-11 19:55:07,639 - INFO - __main__ - App configured for tenant: tub
+2025-11-11 19:55:07,639 - INFO - __main__ - Development mode detected
+2025-11-11 19:55:07,639 - INFO - __main__ - Binding to: 0.0.0.0:8081
+2025-11-11 19:55:07,639 - INFO - __main__ - SSL Context: adhoc
+2025-11-11 19:55:07,639 - INFO - __main__ - Local IP: 172.30.44.90
+2025-11-11 19:55:07,639 - INFO - __main__ - Network mode: Local development with WiFi access
+2025-11-11 19:55:07,639 - INFO - __main__ - Starting StudentVC server...
+2025-11-11 19:55:07,639 - INFO - __main__ - 
+2025-11-11 19:55:07,640 - INFO - __main__ - NGROK URLS: Server URLs now retrieved dynamically from tenant database
+2025-11-11 19:55:07,640 - INFO - __main__ - Set NGROK URLs via tenant config API and they will be used immediately
+2025-11-11 19:55:07,640 - INFO - __main__ - 
+2025-11-11 19:55:07,640 - INFO - __main__ - MOBILE WALLET ACCESS:
+2025-11-11 19:55:07,640 - INFO - __main__ -    - Local network: https://172.30.44.90:8081
+2025-11-11 19:55:07,640 - INFO - __main__ -    - NGROK: Configure via Settings -> Network -> NGROK Domain
+2025-11-11 19:55:07,640 - INFO - __main__ - 
+2025-11-11 19:55:20,109 - INFO - LOGGER - Logger initialized!
+2025-11-11 19:55:20,110 - INFO - LOGGER - 🔐 Loaded persistent SECRET_KEY from file
+2025-11-11 19:55:20,111 - INFO - __main__ - TENANT DETECTED: TUB
+2025-11-11 19:55:20,111 - INFO - __main__ - DATABASE ISOLATION: Each tenant uses separate database
+2025-11-11 19:55:20,145 - INFO - src.tenants.database - 💾 Database URI for tenant 'root': sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/root/database.db
+2025-11-11 19:55:20,147 - INFO - src.tenants.database - 💾 Database URI for tenant 'tub': sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/tub/database.db
+2025-11-11 19:55:20,148 - INFO - src.tenants.database - 💾 Database URI for tenant 'fub': sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/fub/database.db
+2025-11-11 19:55:20,149 - INFO - src.tenants.database - 💾 Database URI for tenant 'veritas': sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/veritas/database.db
+2025-11-11 19:55:20,149 - INFO - __main__ - Tenant database initialization results: {'root': {'status': 'success', 'db_uri': 'sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/root/database.db'}, 'tub': {'status': 'success', 'db_uri': 'sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/tub/database.db'}, 'fub': {'status': 'success', 'db_uri': 'sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/fub/database.db'}, 'veritas': {'status': 'success', 'db_uri': 'sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/veritas/database.db'}}
+2025-11-11 19:55:20,149 - INFO - __main__ - Current active tenant: tub
+2025-11-11 19:55:20,150 - INFO - src.tenants.middleware - 🔧 Tenant middleware initialized
+2025-11-11 19:55:20,150 - DEBUG - LOGGER - Tenant middleware initialized early
+2025-11-11 19:55:20,150 - DEBUG - src.tenants.unified_detector - 🎯 Tenant from environment: tub
+2025-11-11 19:55:20,150 - DEBUG - src.tenants.database - ✅ Tenant from unified detector: tub
+2025-11-11 19:55:20,151 - INFO - src.tenants.database - 💾 Database URI for tenant 'tub': sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/tub/database.db
+2025-11-11 19:55:20,151 - INFO - src.tenants.database - 🏛️  App configured for tenant: tub
+2025-11-11 19:55:20,151 - INFO - src.tenants.database - 💾 Database: sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/tub/database.db
+2025-11-11 19:55:20,151 - INFO - src.tenants.database - 🏛️  Stored tenant in app config: tub
+2025-11-11 19:55:20,151 - INFO - LOGGER - Tenant database configured: sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/tub/database.db
+2025-11-11 19:55:20,151 - INFO - LOGGER - CORS configured for development (allow all origins)
+2025-11-11 19:55:20,222 - INFO - LOGGER - ✅ Rate limiting initialized
+2025-11-11 19:55:20,234 - INFO - src.tenants.setup - Initializing StudentVC multi-tenant system...
+2025-11-11 19:55:20,234 - INFO - src.tenants.setup - 🚀 ENHANCED: Starting robust 4-tenant registration (root, tub, fub, veritas)...
+2025-11-11 19:55:20,234 - INFO - src.tenants.setup - ✅ Cleared ALL existing tenant registrations and patterns
+2025-11-11 19:55:20,234 - INFO - src.tenants.registry - Registered tenant: root
+2025-11-11 19:55:20,234 - INFO - src.tenants.setup - ✅ Registered Root tenant (default): root
+2025-11-11 19:55:20,235 - INFO - src.tenants.registry - Registered tenant: tub
+2025-11-11 19:55:20,235 - INFO - src.tenants.setup - ✅ Registered TU Berlin tenant: tub
+2025-11-11 19:55:20,235 - INFO - src.tenants.registry - Registered tenant: fub
+2025-11-11 19:55:20,235 - INFO - src.tenants.setup - ✅ Registered FU Berlin tenant: fub
+2025-11-11 19:55:20,235 - INFO - src.tenants.registry - Registered tenant: veritas
+2025-11-11 19:55:20,235 - INFO - src.tenants.setup - ✅ Registered Veritas University tenant: veritas
+2025-11-11 19:55:20,235 - INFO - src.tenants.setup - ✅ SUCCESS: Exactly 4 tenants registered: ['fub', 'root', 'tub', 'veritas']
+2025-11-11 19:55:20,235 - INFO - src.tenants.setup - ✅ SUCCESS: Total registered tenants: 4 - ['root', 'tub', 'fub', 'veritas']
+2025-11-11 19:55:20,235 - INFO - src.tenants.registry - Created tenant instance: root
+2025-11-11 19:55:20,236 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/root
+2025-11-11 19:55:20,236 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/root/keys
+2025-11-11 19:55:20,236 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/root/static
+2025-11-11 19:55:20,237 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/root/backups
+2025-11-11 19:55:20,237 - INFO - src.tenants.setup - Ensured directories for tenant: root
+2025-11-11 19:55:20,237 - INFO - src.tenants.registry - Created tenant instance: tub
+2025-11-11 19:55:20,237 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/tub
+2025-11-11 19:55:20,237 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/tub/keys
+2025-11-11 19:55:20,237 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/tub/static
+2025-11-11 19:55:20,238 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/tub/backups
+2025-11-11 19:55:20,238 - INFO - src.tenants.setup - Ensured directories for tenant: tub
+2025-11-11 19:55:20,238 - INFO - src.tenants.registry - Created tenant instance: fub
+2025-11-11 19:55:20,239 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/fub
+2025-11-11 19:55:20,239 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/fub/keys
+2025-11-11 19:55:20,239 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/fub/static
+2025-11-11 19:55:20,239 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/fub/backups
+2025-11-11 19:55:20,239 - INFO - src.tenants.setup - Ensured directories for tenant: fub
+2025-11-11 19:55:20,240 - INFO - src.tenants.registry - Created tenant instance: veritas
+2025-11-11 19:55:20,240 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/veritas
+2025-11-11 19:55:20,240 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/veritas/keys
+2025-11-11 19:55:20,240 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/veritas/static
+2025-11-11 19:55:20,240 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/veritas/backups
+2025-11-11 19:55:20,240 - INFO - src.tenants.setup - Ensured directories for tenant: veritas
+2025-11-11 19:55:20,240 - INFO - src.tenants.registry - Tenant detected via environment: tub
+2025-11-11 19:55:20,240 - INFO - src.tenants.setup - Current tenant detected: tub (TU Berlin)
+2025-11-11 19:55:20,240 - INFO - src.tenants.setup - StudentVC multi-tenant system initialized successfully
+2025-11-11 19:55:20,240 - INFO - LOGGER - Multi-tenant system registry initialized successfully
+2025-11-11 19:55:20,341 - INFO - src.tenants.registry - Tenant detected via environment: tub
+2025-11-11 19:55:20,342 - INFO - LOGGER - 🎓 TENANT LOGO - Checking tenant static path: /home/mensch/lastclonestvc/backend/src/tenants/instances/tub/static
+2025-11-11 19:55:20,342 - INFO - LOGGER - 🎓 TENANT LOGO - Looking for logo at: /home/mensch/lastclonestvc/backend/src/tenants/instances/tub/static/studentVC-logo-sora-cropped-darkmode.png
+2025-11-11 19:55:20,342 - INFO - LOGGER - 🎓 TENANT LOGO - Tenant logo not found, falling back to: /home/mensch/lastclonestvc/backend/src/issuer/../static/studentVC-logo-sora-cropped-darkmode.png
+2025-11-11 19:55:20,342 - INFO - LOGGER - 🩺 HERZCHIRURG DEBUG - get_placeholders called:
+2025-11-11 19:55:20,342 - INFO - LOGGER - 🩺 Logo filename: studentVC-logo-sora-cropped-darkmode.png
+2025-11-11 19:55:20,342 - INFO - LOGGER - 🩺 Profile filename: student.png
+2025-11-11 19:55:20,342 - INFO - LOGGER - 🩺 Logo path: /home/mensch/lastclonestvc/backend/src/issuer/../static/studentVC-logo-sora-cropped-darkmode.png
+2025-11-11 19:55:20,343 - INFO - LOGGER - 🩺 Profile path: /home/mensch/lastclonestvc/backend/src/issuer/../static/student.png
+2025-11-11 19:55:20,343 - INFO - LOGGER - 🩺 HERZCHIRURG - preprocess_image called with path: /home/mensch/lastclonestvc/backend/src/issuer/../static/studentVC-logo-sora-cropped-darkmode.png
+2025-11-11 19:55:20,351 - DEBUG - PIL.PngImagePlugin - STREAM b'IHDR' 16 13
+2025-11-11 19:55:20,351 - DEBUG - PIL.PngImagePlugin - STREAM b'caBX' 41 45729
+2025-11-11 19:55:20,351 - DEBUG - PIL.PngImagePlugin - b'caBX' 41 45729 (unknown)
+2025-11-11 19:55:20,351 - DEBUG - PIL.PngImagePlugin - STREAM b'IDAT' 45782 65536
+2025-11-11 19:55:20,352 - INFO - LOGGER - 🩺 Image loaded successfully - Size: (1024, 1536), Mode: RGBA
+2025-11-11 19:55:20,352 - INFO - LOGGER - 🩺 RGBA detected - analyzing image to choose background color
+2025-11-11 19:55:20,659 - INFO - LOGGER - 🩺 Average brightness of logo: 247.2
+2025-11-11 19:55:20,659 - INFO - LOGGER - 🩺 Light logo detected - using dark background: (40, 40, 40)
+2025-11-11 19:55:20,675 - INFO - LOGGER - 🩺 Image converted to RGB mode
+2025-11-11 19:55:20,694 - INFO - LOGGER - 🩺 Image resized (aspect ratio) to: (200, 300)
+2025-11-11 19:55:20,697 - INFO - LOGGER - 🩺 Image successfully encoded to base64, length: 10080
+2025-11-11 19:55:20,705 - INFO - LOGGER - 🩺 HERZCHIRURG - preprocess_image called with path: /home/mensch/lastclonestvc/backend/src/issuer/../static/student.png
+2025-11-11 19:55:20,706 - DEBUG - PIL.PngImagePlugin - STREAM b'IHDR' 16 13
+2025-11-11 19:55:20,706 - DEBUG - PIL.PngImagePlugin - STREAM b'pHYs' 41 9
+2025-11-11 19:55:20,706 - DEBUG - PIL.PngImagePlugin - STREAM b'IDAT' 62 2093
+2025-11-11 19:55:20,706 - INFO - LOGGER - 🩺 Image loaded successfully - Size: (100, 100), Mode: RGBA
+2025-11-11 19:55:20,706 - INFO - LOGGER - 🩺 RGBA detected - analyzing image to choose background color
+2025-11-11 19:55:20,708 - INFO - LOGGER - 🩺 Average brightness of logo: 0.0
+2025-11-11 19:55:20,709 - INFO - LOGGER - 🩺 Dark logo detected - using light background: (255, 255, 255)
+2025-11-11 19:55:20,710 - INFO - LOGGER - 🩺 Image converted to RGB mode
+2025-11-11 19:55:20,714 - INFO - LOGGER - 🩺 Image resized (aspect ratio) to: (400, 400)
+2025-11-11 19:55:20,717 - INFO - LOGGER - 🩺 Image successfully encoded to base64, length: 20828
+2025-11-11 19:55:20,719 - INFO - LOGGER - 🩺 Final logo base64 length: 10080
+2025-11-11 19:55:20,719 - INFO - LOGGER - 🩺 Final profile base64 length: 20828
+2025-11-11 19:55:20,751 - DEBUG - LOGGER - Loading BBS+ core from: /home/mensch/lastclonestvc/backend/bbs_core.py
+2025-11-11 19:55:20,784 - INFO - LOGGER - 🔐 Authentication module initialized with VC support
+2025-11-11 19:55:20,852 - WARNING - src.settings.network.ngrok - NGROK monitor not available
+2025-11-11 19:55:20,934 - INFO - src.settings.network_api - 🔧 ✅ Modernized Network API registered
+2025-11-11 19:55:20,934 - INFO - LOGGER - Registered 17 blueprints
+2025-11-11 19:55:20,938 - INFO - LOGGER - Socket.IO CORS configured for development (allow all)
+2025-11-11 19:55:20,938 - INFO - LOGGER - Socket.IO configured for development mode
+2025-11-11 19:55:20,975 - INFO - __main__ - App configured for tenant: tub
+2025-11-11 19:55:20,976 - INFO - __main__ - Development mode detected
+2025-11-11 19:55:20,977 - INFO - __main__ - Binding to: 0.0.0.0:8081
+2025-11-11 19:55:20,977 - INFO - __main__ - SSL Context: adhoc
+2025-11-11 19:55:20,978 - INFO - __main__ - Local IP: 172.30.44.90
+2025-11-11 19:55:20,978 - INFO - __main__ - Network mode: Local development with WiFi access
+2025-11-11 19:55:20,978 - INFO - __main__ - Starting StudentVC server...
+2025-11-11 19:55:20,979 - INFO - __main__ - 
+2025-11-11 19:55:20,979 - INFO - __main__ - NGROK URLS: Server URLs now retrieved dynamically from tenant database
+2025-11-11 19:55:20,979 - INFO - __main__ - Set NGROK URLs via tenant config API and they will be used immediately
+2025-11-11 19:55:20,979 - INFO - __main__ - 
+2025-11-11 19:55:20,979 - INFO - __main__ - MOBILE WALLET ACCESS:
+2025-11-11 19:55:20,979 - INFO - __main__ -    - Local network: https://172.30.44.90:8081
+2025-11-11 19:55:20,979 - INFO - __main__ -    - NGROK: Configure via Settings -> Network -> NGROK Domain
+2025-11-11 19:55:20,979 - INFO - __main__ - 
+2025-11-11 19:55:21,115 - INFO - werkzeug - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on https://127.0.0.1:8081
+ * Running on https://172.30.44.90:8081
+2025-11-11 19:55:21,115 - INFO - werkzeug - [33mPress CTRL+C to quit[0m
+2025-11-11 19:55:21,115 - INFO - werkzeug -  * Restarting with stat
+2025-11-11 19:55:21,706 - INFO - LOGGER - Logger initialized!
+2025-11-11 19:55:21,706 - INFO - LOGGER - 🔐 Loaded persistent SECRET_KEY from file
+2025-11-11 19:55:21,707 - INFO - __main__ - TENANT DETECTED: TUB
+2025-11-11 19:55:21,707 - INFO - __main__ - DATABASE ISOLATION: Each tenant uses separate database
+2025-11-11 19:55:21,745 - INFO - src.tenants.database - 💾 Database URI for tenant 'root': sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/root/database.db
+2025-11-11 19:55:21,745 - INFO - src.tenants.database - 💾 Database URI for tenant 'tub': sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/tub/database.db
+2025-11-11 19:55:21,745 - INFO - src.tenants.database - 💾 Database URI for tenant 'fub': sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/fub/database.db
+2025-11-11 19:55:21,745 - INFO - src.tenants.database - 💾 Database URI for tenant 'veritas': sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/veritas/database.db
+2025-11-11 19:55:21,746 - INFO - __main__ - Tenant database initialization results: {'root': {'status': 'success', 'db_uri': 'sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/root/database.db'}, 'tub': {'status': 'success', 'db_uri': 'sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/tub/database.db'}, 'fub': {'status': 'success', 'db_uri': 'sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/fub/database.db'}, 'veritas': {'status': 'success', 'db_uri': 'sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/veritas/database.db'}}
+2025-11-11 19:55:21,746 - INFO - __main__ - Current active tenant: tub
+2025-11-11 19:55:21,747 - INFO - src.tenants.middleware - 🔧 Tenant middleware initialized
+2025-11-11 19:55:21,748 - DEBUG - LOGGER - Tenant middleware initialized early
+2025-11-11 19:55:21,748 - DEBUG - src.tenants.unified_detector - 🎯 Tenant from environment: tub
+2025-11-11 19:55:21,748 - DEBUG - src.tenants.database - ✅ Tenant from unified detector: tub
+2025-11-11 19:55:21,748 - INFO - src.tenants.database - 💾 Database URI for tenant 'tub': sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/tub/database.db
+2025-11-11 19:55:21,748 - INFO - src.tenants.database - 🏛️  App configured for tenant: tub
+2025-11-11 19:55:21,748 - INFO - src.tenants.database - 💾 Database: sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/tub/database.db
+2025-11-11 19:55:21,748 - INFO - src.tenants.database - 🏛️  Stored tenant in app config: tub
+2025-11-11 19:55:21,748 - INFO - LOGGER - Tenant database configured: sqlite:////home/mensch/lastclonestvc/backend/src/tenants/instances/tub/database.db
+2025-11-11 19:55:21,748 - INFO - LOGGER - CORS configured for development (allow all origins)
+2025-11-11 19:55:21,811 - INFO - LOGGER - ✅ Rate limiting initialized
+2025-11-11 19:55:21,814 - INFO - src.tenants.setup - Initializing StudentVC multi-tenant system...
+2025-11-11 19:55:21,814 - INFO - src.tenants.setup - 🚀 ENHANCED: Starting robust 4-tenant registration (root, tub, fub, veritas)...
+2025-11-11 19:55:21,814 - INFO - src.tenants.setup - ✅ Cleared ALL existing tenant registrations and patterns
+2025-11-11 19:55:21,814 - INFO - src.tenants.registry - Registered tenant: root
+2025-11-11 19:55:21,814 - INFO - src.tenants.setup - ✅ Registered Root tenant (default): root
+2025-11-11 19:55:21,814 - INFO - src.tenants.registry - Registered tenant: tub
+2025-11-11 19:55:21,814 - INFO - src.tenants.setup - ✅ Registered TU Berlin tenant: tub
+2025-11-11 19:55:21,814 - INFO - src.tenants.registry - Registered tenant: fub
+2025-11-11 19:55:21,814 - INFO - src.tenants.setup - ✅ Registered FU Berlin tenant: fub
+2025-11-11 19:55:21,814 - INFO - src.tenants.registry - Registered tenant: veritas
+2025-11-11 19:55:21,814 - INFO - src.tenants.setup - ✅ Registered Veritas University tenant: veritas
+2025-11-11 19:55:21,814 - INFO - src.tenants.setup - ✅ SUCCESS: Exactly 4 tenants registered: ['fub', 'root', 'tub', 'veritas']
+2025-11-11 19:55:21,815 - INFO - src.tenants.setup - ✅ SUCCESS: Total registered tenants: 4 - ['root', 'tub', 'fub', 'veritas']
+2025-11-11 19:55:21,815 - INFO - src.tenants.registry - Created tenant instance: root
+2025-11-11 19:55:21,815 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/root
+2025-11-11 19:55:21,815 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/root/keys
+2025-11-11 19:55:21,815 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/root/static
+2025-11-11 19:55:21,815 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/root/backups
+2025-11-11 19:55:21,815 - INFO - src.tenants.setup - Ensured directories for tenant: root
+2025-11-11 19:55:21,816 - INFO - src.tenants.registry - Created tenant instance: tub
+2025-11-11 19:55:21,816 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/tub
+2025-11-11 19:55:21,817 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/tub/keys
+2025-11-11 19:55:21,817 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/tub/static
+2025-11-11 19:55:21,817 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/tub/backups
+2025-11-11 19:55:21,817 - INFO - src.tenants.setup - Ensured directories for tenant: tub
+2025-11-11 19:55:21,817 - INFO - src.tenants.registry - Created tenant instance: fub
+2025-11-11 19:55:21,817 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/fub
+2025-11-11 19:55:21,817 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/fub/keys
+2025-11-11 19:55:21,818 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/fub/static
+2025-11-11 19:55:21,818 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/fub/backups
+2025-11-11 19:55:21,818 - INFO - src.tenants.setup - Ensured directories for tenant: fub
+2025-11-11 19:55:21,818 - INFO - src.tenants.registry - Created tenant instance: veritas
+2025-11-11 19:55:21,818 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/veritas
+2025-11-11 19:55:21,818 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/veritas/keys
+2025-11-11 19:55:21,818 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/veritas/static
+2025-11-11 19:55:21,818 - INFO - src.tenants.base_config - Ensured directory exists: /home/mensch/lastclonestvc/backend/src/tenants/instances/veritas/backups
+2025-11-11 19:55:21,818 - INFO - src.tenants.setup - Ensured directories for tenant: veritas
+2025-11-11 19:55:21,818 - INFO - src.tenants.registry - Tenant detected via environment: tub
+2025-11-11 19:55:21,818 - INFO - src.tenants.setup - Current tenant detected: tub (TU Berlin)
+2025-11-11 19:55:21,818 - INFO - src.tenants.setup - StudentVC multi-tenant system initialized successfully
+2025-11-11 19:55:21,818 - INFO - LOGGER - Multi-tenant system registry initialized successfully
+2025-11-11 19:55:21,908 - INFO - src.tenants.registry - Tenant detected via environment: tub
+2025-11-11 19:55:21,908 - INFO - LOGGER - 🎓 TENANT LOGO - Checking tenant static path: /home/mensch/lastclonestvc/backend/src/tenants/instances/tub/static
+2025-11-11 19:55:21,908 - INFO - LOGGER - 🎓 TENANT LOGO - Looking for logo at: /home/mensch/lastclonestvc/backend/src/tenants/instances/tub/static/studentVC-logo-sora-cropped-darkmode.png
+2025-11-11 19:55:21,909 - INFO - LOGGER - 🎓 TENANT LOGO - Tenant logo not found, falling back to: /home/mensch/lastclonestvc/backend/src/issuer/../static/studentVC-logo-sora-cropped-darkmode.png
+2025-11-11 19:55:21,909 - INFO - LOGGER - 🩺 HERZCHIRURG DEBUG - get_placeholders called:
+2025-11-11 19:55:21,909 - INFO - LOGGER - 🩺 Logo filename: studentVC-logo-sora-cropped-darkmode.png
+2025-11-11 19:55:21,910 - INFO - LOGGER - 🩺 Profile filename: student.png
+2025-11-11 19:55:21,910 - INFO - LOGGER - 🩺 Logo path: /home/mensch/lastclonestvc/backend/src/issuer/../static/studentVC-logo-sora-cropped-darkmode.png
+2025-11-11 19:55:21,911 - INFO - LOGGER - 🩺 Profile path: /home/mensch/lastclonestvc/backend/src/issuer/../static/student.png
+2025-11-11 19:55:21,912 - INFO - LOGGER - 🩺 HERZCHIRURG - preprocess_image called with path: /home/mensch/lastclonestvc/backend/src/issuer/../static/studentVC-logo-sora-cropped-darkmode.png
+2025-11-11 19:55:21,928 - DEBUG - PIL.PngImagePlugin - STREAM b'IHDR' 16 13
+2025-11-11 19:55:21,928 - DEBUG - PIL.PngImagePlugin - STREAM b'caBX' 41 45729
+2025-11-11 19:55:21,928 - DEBUG - PIL.PngImagePlugin - b'caBX' 41 45729 (unknown)
+2025-11-11 19:55:21,928 - DEBUG - PIL.PngImagePlugin - STREAM b'IDAT' 45782 65536
+2025-11-11 19:55:21,928 - INFO - LOGGER - 🩺 Image loaded successfully - Size: (1024, 1536), Mode: RGBA
+2025-11-11 19:55:21,929 - INFO - LOGGER - 🩺 RGBA detected - analyzing image to choose background color
+2025-11-11 19:55:22,230 - INFO - LOGGER - 🩺 Average brightness of logo: 247.2
+2025-11-11 19:55:22,230 - INFO - LOGGER - 🩺 Light logo detected - using dark background: (40, 40, 40)
+2025-11-11 19:55:22,250 - INFO - LOGGER - 🩺 Image converted to RGB mode
+2025-11-11 19:55:22,267 - INFO - LOGGER - 🩺 Image resized (aspect ratio) to: (200, 300)
+2025-11-11 19:55:22,268 - INFO - LOGGER - 🩺 Image successfully encoded to base64, length: 10080
+2025-11-11 19:55:22,280 - INFO - LOGGER - 🩺 HERZCHIRURG - preprocess_image called with path: /home/mensch/lastclonestvc/backend/src/issuer/../static/student.png
+2025-11-11 19:55:22,280 - DEBUG - PIL.PngImagePlugin - STREAM b'IHDR' 16 13
+2025-11-11 19:55:22,281 - DEBUG - PIL.PngImagePlugin - STREAM b'pHYs' 41 9
+2025-11-11 19:55:22,281 - DEBUG - PIL.PngImagePlugin - STREAM b'IDAT' 62 2093
+2025-11-11 19:55:22,281 - INFO - LOGGER - 🩺 Image loaded successfully - Size: (100, 100), Mode: RGBA
+2025-11-11 19:55:22,281 - INFO - LOGGER - 🩺 RGBA detected - analyzing image to choose background color
+2025-11-11 19:55:22,283 - INFO - LOGGER - 🩺 Average brightness of logo: 0.0
+2025-11-11 19:55:22,283 - INFO - LOGGER - 🩺 Dark logo detected - using light background: (255, 255, 255)
+2025-11-11 19:55:22,283 - INFO - LOGGER - 🩺 Image converted to RGB mode
+2025-11-11 19:55:22,285 - INFO - LOGGER - 🩺 Image resized (aspect ratio) to: (400, 400)
+2025-11-11 19:55:22,287 - INFO - LOGGER - 🩺 Image successfully encoded to base64, length: 20828
+2025-11-11 19:55:22,288 - INFO - LOGGER - 🩺 Final logo base64 length: 10080
+2025-11-11 19:55:22,288 - INFO - LOGGER - 🩺 Final profile base64 length: 20828
+2025-11-11 19:55:22,314 - DEBUG - LOGGER - Loading BBS+ core from: /home/mensch/lastclonestvc/backend/bbs_core.py
+2025-11-11 19:55:22,327 - INFO - LOGGER - 🔐 Authentication module initialized with VC support
+2025-11-11 19:55:22,375 - WARNING - src.settings.network.ngrok - NGROK monitor not available
+2025-11-11 19:55:22,435 - INFO - src.settings.network_api - 🔧 ✅ Modernized Network API registered
+2025-11-11 19:55:22,435 - INFO - LOGGER - Registered 17 blueprints
+2025-11-11 19:55:22,437 - INFO - LOGGER - Socket.IO CORS configured for development (allow all)
+2025-11-11 19:55:22,438 - INFO - LOGGER - Socket.IO configured for development mode
+2025-11-11 19:55:22,477 - INFO - __main__ - App configured for tenant: tub
+2025-11-11 19:55:22,478 - INFO - __main__ - Development mode detected
+2025-11-11 19:55:22,478 - INFO - __main__ - Binding to: 0.0.0.0:8081
+2025-11-11 19:55:22,478 - INFO - __main__ - SSL Context: adhoc
+2025-11-11 19:55:22,478 - INFO - __main__ - Local IP: 172.30.44.90
+2025-11-11 19:55:22,478 - INFO - __main__ - Network mode: Local development with WiFi access
+2025-11-11 19:55:22,478 - INFO - __main__ - Starting StudentVC server...
+2025-11-11 19:55:22,478 - INFO - __main__ - 
+2025-11-11 19:55:22,479 - INFO - __main__ - NGROK URLS: Server URLs now retrieved dynamically from tenant database
+2025-11-11 19:55:22,479 - INFO - __main__ - Set NGROK URLs via tenant config API and they will be used immediately
+2025-11-11 19:55:22,479 - INFO - __main__ - 
+2025-11-11 19:55:22,479 - INFO - __main__ - MOBILE WALLET ACCESS:
+2025-11-11 19:55:22,479 - INFO - __main__ -    - Local network: https://172.30.44.90:8081
+2025-11-11 19:55:22,479 - INFO - __main__ -    - NGROK: Configure via Settings -> Network -> NGROK Domain
+2025-11-11 19:55:22,479 - INFO - __main__ - 
+2025-11-11 19:55:22,499 - WARNING - werkzeug -  * Debugger is active!
+2025-11-11 19:55:22,502 - INFO - werkzeug -  * Debugger PIN: 897-685-275
+2025-11-11 19:55:31,489 - DEBUG - src.tenants.unified_detector - 🎯 Tenant from environment: tub
+2025-11-11 19:55:31,489 - DEBUG - src.tenants.middleware - Request tenant: tub (method: environment) | Path: /
+2025-11-11 19:55:31,492 - INFO - werkzeug - 172.30.44.90 - - [11/Nov/2025 19:55:31] "[32mGET / HTTP/1.1[0m" 302 -
+2025-11-11 19:55:31,512 - DEBUG - src.tenants.unified_detector - 🎯 Tenant from environment: tub
+2025-11-11 19:55:31,513 - DEBUG - src.tenants.middleware - Request tenant: tub (method: environment) | Path: /login
+2025-11-11 19:55:31,517 - INFO - LOGGER - GET request for login page
+2025-11-11 19:55:31,558 - INFO - src.tenants.registry - Tenant detected via environment: tub
+2025-11-11 19:55:31,560 - INFO - werkzeug - 172.30.44.90 - - [11/Nov/2025 19:55:31] "GET /login?next=/ HTTP/1.1" 200 -
+2025-11-11 19:55:31,746 - DEBUG - src.tenants.unified_detector - 🎯 Tenant from environment: tub
+2025-11-11 19:55:31,747 - DEBUG - src.tenants.middleware - Request tenant: tub (method: environment) | Path: /static/css/tailwind.css
+2025-11-11 19:55:31,755 - INFO - werkzeug - 172.30.44.90 - - [11/Nov/2025 19:55:31] "GET /static/css/tailwind.css HTTP/1.1" 200 -
+2025-11-11 19:55:31,780 - DEBUG - src.tenants.unified_detector - 🎯 Tenant from environment: tub
+2025-11-11 19:55:31,781 - DEBUG - src.tenants.middleware - Request tenant: tub (method: environment) | Path: /static/tub_logo.png
+2025-11-11 19:55:31,787 - INFO - werkzeug - 172.30.44.90 - - [11/Nov/2025 19:55:31] "GET /static/tub_logo.png HTTP/1.1" 200 -
+2025-11-11 19:55:49,958 - DEBUG - src.tenants.unified_detector - 🎯 Tenant from environment: tub
+2025-11-11 19:55:49,958 - DEBUG - src.tenants.middleware - Request tenant: tub (method: environment) | Path: /login
+2025-11-11 19:55:49,966 - INFO - LOGGER - Attempted Login: admin@studentvc.de
+2025-11-11 19:55:49,988 - ERROR - LOGGER - LOGIN failed: User with name: admin@studentvc.de does not exist.
+2025-11-11 19:55:49,988 - INFO - src.tenants.registry - Tenant detected via environment: tub
+2025-11-11 19:55:49,989 - INFO - werkzeug - 172.30.44.90 - - [11/Nov/2025 19:55:49] "POST /login HTTP/1.1" 200 -
+2025-11-11 19:55:50,160 - DEBUG - src.tenants.unified_detector - 🎯 Tenant from environment: tub
+2025-11-11 19:55:50,160 - DEBUG - src.tenants.middleware - Request tenant: tub (method: environment) | Path: /static/css/tailwind.css
+2025-11-11 19:55:50,164 - INFO - werkzeug - 172.30.44.90 - - [11/Nov/2025 19:55:50] "[36mGET /static/css/tailwind.css HTTP/1.1[0m" 304 -
+2025-11-11 19:55:50,190 - DEBUG - src.tenants.unified_detector - 🎯 Tenant from environment: tub
+2025-11-11 19:55:50,191 - DEBUG - src.tenants.middleware - Request tenant: tub (method: environment) | Path: /static/tub_logo.png
+2025-11-11 19:55:50,197 - INFO - werkzeug - 172.30.44.90 - - [11/Nov/2025 19:55:50] "[36mGET /static/tub_logo.png HTTP/1.1[0m" 304 -
+2025-11-11 19:56:14,178 - DEBUG - src.tenants.unified_detector - 🎯 Tenant from environment: tub
+2025-11-11 19:56:14,178 - DEBUG - src.tenants.middleware - Request tenant: tub (method: environment) | Path: /login
+2025-11-11 19:56:14,179 - INFO - LOGGER - Attempted Login: admin@studentvc.de
+2025-11-11 19:56:14,183 - ERROR - LOGGER - LOGIN failed: User with name: admin@studentvc.de does not exist.
+2025-11-11 19:56:14,184 - INFO - src.tenants.registry - Tenant detected via environment: tub
+2025-11-11 19:56:14,185 - INFO - werkzeug - 172.30.44.90 - - [11/Nov/2025 19:56:14] "POST /login HTTP/1.1" 200 -
+2025-11-11 19:56:14,323 - DEBUG - src.tenants.unified_detector - 🎯 Tenant from environment: tub
+2025-11-11 19:56:14,324 - DEBUG - src.tenants.middleware - Request tenant: tub (method: environment) | Path: /static/css/tailwind.css
+2025-11-11 19:56:14,331 - INFO - werkzeug - 172.30.44.90 - - [11/Nov/2025 19:56:14] "[36mGET /static/css/tailwind.css HTTP/1.1[0m" 304 -
+2025-11-11 19:56:14,358 - DEBUG - src.tenants.unified_detector - 🎯 Tenant from environment: tub
+2025-11-11 19:56:14,364 - DEBUG - src.tenants.middleware - Request tenant: tub (method: environment) | Path: /static/tub_logo.png
+2025-11-11 19:56:14,368 - INFO - werkzeug - 172.30.44.90 - - [11/Nov/2025 19:56:14] "[36mGET /static/tub_logo.png HTTP/1.1[0m" 304 -
+2025-11-11 19:56:45,029 - DEBUG - src.tenants.unified_detector - 🎯 Tenant from environment: tub
+2025-11-11 19:56:45,030 - DEBUG - src.tenants.middleware - Request tenant: tub (method: environment) | Path: /
+2025-11-11 19:56:45,039 - INFO - werkzeug - 172.30.44.90 - - [11/Nov/2025 19:56:45] "[32mGET / HTTP/1.1[0m" 302 -
+2025-11-11 19:56:45,094 - DEBUG - src.tenants.unified_detector - 🎯 Tenant from environment: tub
+2025-11-11 19:56:45,095 - DEBUG - src.tenants.middleware - Request tenant: tub (method: environment) | Path: /login
+2025-11-11 19:56:45,103 - INFO - LOGGER - GET request for login page
+2025-11-11 19:56:45,104 - INFO - src.tenants.registry - Tenant detected via environment: tub
+2025-11-11 19:56:45,109 - INFO - werkzeug - 172.30.44.90 - - [11/Nov/2025 19:56:45] "GET /login?next=/ HTTP/1.1" 200 -
+2025-11-11 19:56:45,282 - DEBUG - src.tenants.unified_detector - 🎯 Tenant from environment: tub
+2025-11-11 19:56:45,283 - DEBUG - src.tenants.middleware - Request tenant: tub (method: environment) | Path: /static/css/tailwind.css
+2025-11-11 19:56:45,285 - INFO - werkzeug - 172.30.44.90 - - [11/Nov/2025 19:56:45] "[36mGET /static/css/tailwind.css HTTP/1.1[0m" 304 -
+2025-11-11 19:56:45,345 - DEBUG - src.tenants.unified_detector - 🎯 Tenant from environment: tub
+2025-11-11 19:56:45,346 - DEBUG - src.tenants.middleware - Request tenant: tub (method: environment) | Path: /static/tub_logo.png
+2025-11-11 19:56:45,350 - INFO - werkzeug - 172.30.44.90 - - [11/Nov/2025 19:56:45] "[36mGET /static/tub_logo.png HTTP/1.1[0m" 304 -
+2025-11-11 19:57:08,611 - DEBUG - src.tenants.unified_detector - 🎯 Tenant from environment: tub
+2025-11-11 19:57:08,611 - DEBUG - src.tenants.middleware - Request tenant: tub (method: environment) | Path: /login
+2025-11-11 19:57:08,614 - INFO - LOGGER - Attempted Login: admin-tub@studentvc.de
+2025-11-11 19:57:08,617 - ERROR - LOGGER - LOGIN failed: User with name: admin-tub@studentvc.de does not exist.
+2025-11-11 19:57:08,618 - INFO - src.tenants.registry - Tenant detected via environment: tub
+2025-11-11 19:57:08,628 - INFO - werkzeug - 172.30.44.90 - - [11/Nov/2025 19:57:08] "POST /login HTTP/1.1" 200 -
+2025-11-11 19:57:08,790 - DEBUG - src.tenants.unified_detector - 🎯 Tenant from environment: tub
+2025-11-11 19:57:08,791 - DEBUG - src.tenants.middleware - Request tenant: tub (method: environment) | Path: /static/css/tailwind.css
+2025-11-11 19:57:08,793 - INFO - werkzeug - 172.30.44.90 - - [11/Nov/2025 19:57:08] "[36mGET /static/css/tailwind.css HTTP/1.1[0m" 304 -
+2025-11-11 19:57:08,814 - DEBUG - src.tenants.unified_detector - 🎯 Tenant from environment: tub
+2025-11-11 19:57:08,814 - DEBUG - src.tenants.middleware - Request tenant: tub (method: environment) | Path: /static/tub_logo.png
+2025-11-11 19:57:08,817 - INFO - werkzeug - 172.30.44.90 - - [11/Nov/2025 19:57:08] "[36mGET /static/tub_logo.png HTTP/1.1[0m" 304 -
