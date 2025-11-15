@@ -8,18 +8,19 @@
 
 ## Project Overview
 
-VERITAS is a multi-tenant platform currently in prototype stage, being developed into a university-ready infrastructure. The project aims to scale the platform, enhance reliability, and increase interoperability through backend modernization, real-time monitoring, automated certificate management, and cross-platform mobile wallet support.
-
-**Current Status:** Prototype → Enterprise-Ready Infrastructure
+VERITAS is a multi-tenant platform currently in prototype stage, being developed into a university-ready infrastructure.
 
 ---
 
 ## Quick Start
 
+### Prerequisites
+** Python 3.12
+** Rust
+
 ### Setup
 ```bash
 make setup              # Install dependencies
-make test-startup       # Verify installation
 ```
 
 ### Start/Stop Tenants
