@@ -15,7 +15,9 @@ VERITAS is a multi-tenant platform currently in prototype stage, being developed
 ## Quick Start
 
 ### Prerequisites
+
 **Python 3.12**
+
 **Rust**
 
 ### Setup
@@ -114,5 +116,4 @@ mobile/
 └── ios/                 # iOS Wallet (existing)
     └── [Android wallet to be developed]
 ```
-
 ---
