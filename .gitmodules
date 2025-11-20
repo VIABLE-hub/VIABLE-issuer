@@ -1,3 +1,0 @@
-[submodule "backend/bbs-core"]
-	path = backend/bbs-core
-	url = https://github.com/Internet-of-Services-Lab/bbs-core.git
