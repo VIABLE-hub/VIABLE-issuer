@@ -19,12 +19,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.MobileWallet"
-        tools:targetApi="29">
-        <activity
-            android:name=".QrCodeScanningActivity"
-            android:exported="false"
-            android:label="@string/title_activity_qr_code_scanning"
-            android:theme="@style/Theme.MobileWallet" />
+        tools:targetApi="29"
+        tools:ignore="DataExtractionRules">
         <activity
             android:name=".MainActivity"
             android:exported="false"

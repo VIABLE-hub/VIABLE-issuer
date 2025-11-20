@@ -6,10 +6,13 @@ import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.util.Base64
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -29,6 +32,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -63,14 +67,33 @@ import com.tuberlin.mobilewallet.utils.Utilities
 import com.tuberlin.mobilewallet.utils.WalletCredential
 import kotlinx.serialization.Serializable
 import java.security.KeyPairGenerator
+import androidx.core.graphics.toColorInt
 
 class MainActivity : ComponentActivity() {
+
+
+    // not needed
+//    //External storage browsing permission
+//    private val mediaPermissionRequestLauncher: ActivityResultLauncher<String> =
+//        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+//            if (isGranted) {
+//                // Permission granted
+//            } else {
+//                // Permission denied: inform the user to enable it through settings
+//                Toast.makeText(
+//                    this,
+//                    "Enable media browsing permission to use this App",
+//                    Toast.LENGTH_SHORT
+//                ).show()
+//            }
+//        }
 
     //CAMERA PERSMISSION
     private val cameraPermissionRequestLauncher: ActivityResultLauncher<String> =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (isGranted) {
                 // Permission granted
+                Log.d("MainActivity","Permission already granted")
             } else {
                 // Permission denied: inform the user to enable it through settings
                 Toast.makeText(
@@ -85,7 +108,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         cameraPermissionRequestLauncher.launch(Manifest.permission.CAMERA)
-
+//        mediaPermissionRequestLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
         setContent {
             MobileWalletTheme {
                 // A surface container using the 'background' color from the theme
@@ -104,6 +127,8 @@ class MainActivity : ComponentActivity() {
 object Home
 @Serializable
 data class QrCodeScanner(val id: String? = null)
+@Serializable
+data class LocalFilesBrowser(val id: String? = null)
 @Serializable
 data class DetailView(val id: String)
 
@@ -132,6 +157,9 @@ fun Navigation() {
                 credentialStore = wallet.data,
                 onNavigateToQrCodeScanner = {x ->
                     navController.navigate(route = QrCodeScanner(id = x))
+                },
+                onNavigateToLocalFiles = {x ->
+                    navController.navigate(route = LocalFilesBrowser(id = x))
                 }
                 )
         }
@@ -145,6 +173,28 @@ fun Navigation() {
                 cs = vc
             )
         }
+        composable<LocalFilesBrowser> { backStackEntry ->
+            val vcId: LocalFilesBrowser = backStackEntry.toRoute()
+            val vc = if (vcId.id != null)  wallet.getVc(vcId.id) else null
+
+            val pickMedia = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+
+                if (uri != null) {
+                    println(uri)
+                } else {
+                    println("no photo selected yet")
+                }
+            }
+            // UI with a button
+            Column {
+                Button(onClick = { pickMedia.launch("*/*") }) {
+                    Text("Pick a file")
+                }
+
+            }
+
+
+        }
         composable<DetailView> { backStackEntry ->
             val vcId: DetailView = backStackEntry.toRoute()
             val vc = wallet.getVc(vcId.id)
@@ -157,6 +207,11 @@ fun Navigation() {
                     onNavigateToQrCodeScanner = {x ->
                         navController.navigate(
                             route = QrCodeScanner(id = x)
+                        )
+                    },
+                    onNavigateToLocalFiles = {x ->
+                        navController.navigate(
+                            route = LocalFilesBrowser(id = x)
                         )
                     }
                 )
@@ -175,6 +230,7 @@ fun Overview(
     credentialStore: LiveData<List<CredentialStore>>,
     onNavigateToDetailView: (String) -> Unit,
     onNavigateToQrCodeScanner: (String?) -> Unit,
+    onNavigateToLocalFiles: (String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val credList by credentialStore.observeAsState(emptyList())
@@ -219,6 +275,23 @@ fun Overview(
                     .clickable { onClickAdd({ onNavigateToQrCodeScanner(null) }, context) }
             )
         }
+        Row(
+            Modifier.fillMaxWidth(),
+            Arrangement.Center
+        ) {
+            val image7 = painterResource(R.drawable.plus_circle_svgrepo_com)
+            val context = LocalContext.current
+            Image(
+                painter = image7,
+                contentDescription = null,
+                modifier = Modifier
+                    .width(70.dp)
+                    .padding(10.dp)
+                    .clickable { onClickBrowseLocalFiles({ onNavigateToLocalFiles(null) }, context) }
+            )
+        }
+
+
     }
 }
 
@@ -248,7 +321,7 @@ fun IdCard(cs: CredentialStore, onNavigateToDetailView: (String) -> Unit) {
         Box(
             Modifier
                 .fillMaxWidth()
-                .background(Color(android.graphics.Color.parseColor("#" + cred.vc.credentialSubject.theme.bgColorCard))),
+                .background(Color(("#" + cred.vc.credentialSubject.theme.bgColorCard).toColorInt())),
             contentAlignment = Alignment.BottomEnd
         ) {
             Text(
@@ -258,7 +331,7 @@ fun IdCard(cs: CredentialStore, onNavigateToDetailView: (String) -> Unit) {
                     .fillMaxWidth(),
                 fontSize = 15.sp,
                 textAlign = TextAlign.Left,
-                color = Color(android.graphics.Color.parseColor("#" + cred.vc.credentialSubject.theme.fgColorTitle))
+                color = Color(("#" + cred.vc.credentialSubject.theme.fgColorTitle).toColorInt())
             )
             Image(
                 bitmap = decodedIcon,
@@ -323,7 +396,7 @@ fun IdCard(cs: CredentialStore, onNavigateToDetailView: (String) -> Unit) {
             Modifier
                 .height(20.dp)
                 .fillMaxWidth()
-                .background(Color(android.graphics.Color.parseColor("#" + cred.vc.credentialSubject.theme.bgColorCard))),
+                .background(Color(("#" + cred.vc.credentialSubject.theme.bgColorCard).toColorInt())),
         )
     }
 }
@@ -350,6 +423,7 @@ fun OverviewPreview() {
             walletData,
             onNavigateToDetailView = {},
             onNavigateToQrCodeScanner = {  },
+            onNavigateToLocalFiles = {}
         )
     }
 }
@@ -437,5 +511,9 @@ fun onClickAdd(onNavigateToQrCodeScanner: () -> Unit, context: Context) {
             ).show()
         }
     }
+
+}
+fun onClickBrowseLocalFiles(onNavigateToLocalFiles: () -> Unit, context: Context) {
+            onNavigateToLocalFiles()
 
 }

@@ -13,6 +13,7 @@ import com.tuberlin.mobilewallet.utils.encodeToBase58String
 import io.jsonwebtoken.Jwts
 import okhttp3.Call
 import okhttp3.Callback
+import okhttp3.FormBody
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -224,12 +225,14 @@ private fun requestDirectPost(
             // Handle success
             // Process the response data
             Log.i(TAG, "requestDirectPost")
+            Log.i(TAG,response.toString())
             Log.i(TAG, response.header("Location") ?: "")
 
             //get query parameter
             val string: String = response.header("Location")?.replace("#", "?") ?: ""
-            val code = Uri.parse(string).getQueryParameter("code")
+            Log.i(TAG, string)
 
+            val code = Uri.parse(string).getQueryParameter("code")
 
             if (code == null){
                 Log.e(
@@ -254,20 +257,30 @@ private fun requestToken(baseUrl: String, code: String, codeVerifier: String, ke
 
 
     val urlBuilder: HttpUrl.Builder? = ("$baseUrl/token").toHttpUrlOrNull()?.newBuilder()
-    urlBuilder?.addQueryParameter("grant_type", "authorization_code")
-    urlBuilder?.addQueryParameter("client_id", generateDID(keyPair))
-    urlBuilder?.addQueryParameter("code", code)
-    urlBuilder?.addQueryParameter("code_verifier", codeVerifier)
-    urlBuilder?.addQueryParameter("redirect_uri", baseUrl)
+    val didkeypair = generateDID(keyPair);
+    Log.i(TAG, "didkeypair$didkeypair")
+    Log.i(TAG, "baseurl$baseUrl")
+    Log.i(TAG, "code$code")
+    Log.i(TAG, "code_verifier$codeVerifier")
+    val formBody = FormBody.Builder()
+        .add("grant_type", "authorization_code")
+        .add("client_id",didkeypair)
+        .add("code",code)
+        .add("code_verifier",codeVerifier)
+        .add("redirect_uri",baseUrl)
+        .build()
     //jsonObject.put("preAuthorisedCode", "")
     //jsonObject.put("userPin", "")
     //jsonObject.put("clientAssertion", "")
     //jsonObject.put("clientAssertionType", "")
+    Log.i(TAG, urlBuilder.toString())
 
     val request = Request.Builder()
         .url(urlBuilder?.build().toString())
-        .post("".toRequestBody(null))
+        .post(formBody)
         .build()
+    Log.i(TAG,"request is: ")
+    Log.i(TAG, request.toString())
 
     client.newCall(request).enqueue(object : Callback {
         override fun onFailure(call: Call, e: java.io.IOException) {
@@ -278,9 +291,13 @@ private fun requestToken(baseUrl: String, code: String, codeVerifier: String, ke
             // Handle success
             val result = response.body?.string() ?: ""
             // Process the response data
-            Log.i(TAG, "RequestToken\n$result")
+            Log.i(TAG, "Response\n$response")
+            Log.i(TAG, "result\n$result")
+
+
             //get access_token
             val accessToken = JSONObject(result).getString("access_token")
+            Log.i(TAG, "access token:$accessToken")
 
             // Pass context to the next function
             requestCredential(baseUrl, accessToken, keyPair, context)

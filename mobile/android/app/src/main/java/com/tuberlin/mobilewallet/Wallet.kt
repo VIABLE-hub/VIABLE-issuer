@@ -1,10 +1,12 @@
 package com.tuberlin.mobilewallet
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.security.KeyChain
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Log
+import androidx.activity.ComponentActivity
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.gson.Gson
@@ -31,6 +33,7 @@ class Wallet private constructor(private val context: Context) {
 
     // Singleton
     companion object {
+        @SuppressLint("StaticFieldLeak")
         @Volatile
         private var instance: Wallet? = null
 

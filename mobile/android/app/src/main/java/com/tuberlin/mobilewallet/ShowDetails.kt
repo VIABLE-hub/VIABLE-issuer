@@ -4,8 +4,7 @@ import android.annotation.SuppressLint
 import android.graphics.BitmapFactory
 import android.util.Base64
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -48,6 +47,7 @@ fun ShowDetailVC(
     cs: CredentialStore,
     onNavigateBack: () -> Unit,
     onNavigateToQrCodeScanner: (String) -> Unit,
+    onNavigateToLocalFiles: (String) -> Unit
 ) {
     val credSub = cs.credential.vc.credentialSubject
     val imageBytes = Base64.decode(credSub.image, Base64.DEFAULT)
@@ -211,7 +211,8 @@ fun DetailPreview() {
         ShowDetailVC(
             cs = cs,
             onNavigateBack = {},
-            onNavigateToQrCodeScanner = {}
+            onNavigateToQrCodeScanner = {},
+            onNavigateToLocalFiles = {}
         )
     }
 }
