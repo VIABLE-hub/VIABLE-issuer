@@ -78,7 +78,15 @@ dev:
 	cd $(BACKEND_DIR) && ../$(VENV_DIR)/bin/python main.py --host $(HOST) --port $(PORT)
 
 # Erstellt die virtuelle Umgebung und installiert Abhängigkeiten
+# TODO: windows support & make sure that .so or .dylib is copied correctly
 setup:
+	@echo "Compiling bbs-core libs..."
+	rm -f backend/bbs_core.py backend/libuniffi_bbs_core.*
+	cd backend/bbs-core/python && chmod +x build.sh && ./build.sh
+	mv backend/bbs-core/python/bbs_core.py backend/
+	mv backend/bbs-core/python/libuniffi_bbs_core.so backend/ || true
+	mv backend/bbs-core/python/libuniffi_bbs_core.dylib backend/ || true
+	
 	@echo "Creating virtual Environment: $(VENV_DIR)"
 	$(PYTHON) -m venv $(VENV_DIR)
 	@echo "Installing Dependencies"
