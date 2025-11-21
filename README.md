@@ -15,14 +15,53 @@ VERITAS is a multi-tenant platform currently in prototype stage, being developed
 ## Quick Start
 
 ### Prerequisites
-
 - **Python 3.12**
 - **Rust**
 - **For Windows Users:** WSL (Windows Subsystem for Linux) is **required** - see [Windows Setup Guide](#-windows-setup-guide) below
 
+#### General
+```bash
+# On Ubuntu: essential build tools, git, curl
+sudo apt update
+sudo apt install build-essential git curl
+
+# Suggestion: gh to authenticate with GitHub
+sudo apt install gh
+```
+
+#### Python & venv
+Verified working python versions: 3.10 & 3.12
+```bash
+# On Ubuntu:
+sudo apt install python3 python3-pip python3-venv
+```
+
+#### Rust & Cargo
+Note: Please install via script, not apt. This will make sure you have the latest version.
+```bash
+#
+# !!Attention!!
+#
+# This fetch and run external scripts!
+# It's the recommended installation method according to:
+# https://rust-lang.org/learn/get-started/
+#
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+#
+# Important: You have to restart your terminal for rustc and cargo commands to work!
+# Do this before running make setup!
+#
+```
+
 ### Setup
 ```bash
-make setup              # Install dependencies
+# Pull bbs-core submodule
+# (Will also update submodules later on)
+git submodule sync --recursive
+git submodule update --init --recursive
+
+# Sets up venv, installs requirements and compiles bbs-core
+make setup
 ```
 
 ### Start/Stop Tenants

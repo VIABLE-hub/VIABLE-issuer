@@ -97,20 +97,19 @@ dev:
 	cd $(BACKEND_DIR) && ../$(VENV_DIR)/bin/python main.py --host $(HOST) --port $(PORT)
 
 # Erstellt die virtuelle Umgebung und installiert Abhängigkeiten
+# TODO: windows support & make sure that .so or .dylib is copied correctly
 setup:
-ifeq ($(OS),Windows_NT)
-	@echo "Creating virtual environment: .venv"
-	python -m venv .venv
-	@echo "Installing dependencies"
-	.venv\Scripts\python.exe -m pip install --upgrade pip
-	.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
-else
-	@echo "Creating virtual environment: .venv"
-	python3 -m venv .venv
-	@echo "Installing dependencies"
-	.venv/bin/pip install --upgrade pip
-	.venv/bin/pip install -r backend/requirements.txt
-endif
+	@echo "Compiling bbs-core libs..."
+	rm -f backend/bbs_core.py backend/libuniffi_bbs_core.*
+	cd backend/bbs-core/python && chmod +x build.sh && ./build.sh
+	mv backend/bbs-core/python/bbs_core.py backend/
+	mv backend/bbs-core/python/libuniffi_bbs_core.so backend/ || true
+	mv backend/bbs-core/python/libuniffi_bbs_core.dylib backend/ || true
+
+	@echo "Creating virtual Environment: $(VENV_DIR)"
+	$(PYTHON) -m venv $(VENV_DIR)
+	@echo "Installing Dependencies"
+	$(VENV_DIR)/bin/pip install -r $(BACKEND_DIR)/requirements.txt
 
 # Installiert nur Abhängigkeiten (ohne venv zu erstellen)
 install:
