@@ -29,9 +29,9 @@ info:
 dev-root:
 ifeq ($(OS),Windows_NT)
 	@echo "Starting StudentVC with ROOT tenant on port 8083"
-	cd backend && set TENANT_ID=root&& set SERVER_PORT=8083&& ..\.venv\Scripts\python.exe main.py
+	cd $(BACKEND_DIR) && set TENANT_ID=root&& set SERVER_PORT=8083&& ..\$(VENV_DIR)\Scripts\python.exe main.py
 else
-	@echo "Starte StudentVC mit Root Tenant auf Port 8083"
+	@echo "Starting StudentVC with ROOT tenant on port 8083"
 	cd $(BACKEND_DIR) && TENANT_ID=root SERVER_PORT=8083 ../$(VENV_DIR)/bin/python main.py
 endif
 
@@ -39,19 +39,19 @@ endif
 dev-tub:
 ifeq ($(OS),Windows_NT)
 	@echo "Starting StudentVC with TUB tenant on port 8081"
-	cd backend && set TENANT_ID=tub&& set SERVER_PORT=8081&& ..\.venv\Scripts\python.exe main.py
+	cd $(BACKEND_DIR) && set TENANT_ID=tub&& set SERVER_PORT=8081&& ..\$(VENV_DIR)\Scripts\python.exe main.py
 else
 	@echo "Starting StudentVC with TUB tenant on port 8081"
-	cd backend && TENANT_ID=tub SERVER_PORT=8081 ../.venv/bin/python main.py
+	cd $(BACKEND_DIR) && TENANT_ID=tub SERVER_PORT=8081 ../$(VENV_DIR)/bin/python main.py
 endif
 
 # Startet die Anwendung mit FU Berlin tenant on port 8082
 dev-fub:
 ifeq ($(OS),Windows_NT)
 	@echo "Starting StudentVC with FUB tenant on port 8082"
-	cd backend && set TENANT_ID=fub&& set SERVER_PORT=8082&& ..\.venv\Scripts\python.exe main.py
+	cd $(BACKEND_DIR) && set TENANT_ID=fub&& set SERVER_PORT=8082&& ..\$(VENV_DIR)\Scripts\python.exe main.py
 else
-	@echo "Starte StudentVC mit FUB Tenant auf Port 8082"
+	@echo "Starting StudentVC with FUB tenant on port 8082"
 	cd $(BACKEND_DIR) && TENANT_ID=fub SERVER_PORT=8082 ../$(VENV_DIR)/bin/python main.py
 endif
 
@@ -59,12 +59,11 @@ endif
 dev-veritas:
 ifeq ($(OS),Windows_NT)
 	@echo "Starting StudentVC with VERITAS tenant on port 8080"
-	cd backend && set TENANT_ID=veritas&& set SERVER_PORT=8080&& ..\.venv\Scripts\python.exe main.py
+	cd $(BACKEND_DIR) && set TENANT_ID=veritas&& set SERVER_PORT=8080&& ..\$(VENV_DIR)\Scripts\python.exe main.py
 else
-	@echo "Starte StudentVC mit Veritas Tenant auf Port 8080"
+	@echo "Starting StudentVC with VERITAS tenant on port 8080"
 	cd $(BACKEND_DIR) && TENANT_ID=veritas SERVER_PORT=8080 ../$(VENV_DIR)/bin/python main.py
 endif
-
 
 # Starts ALL tenants on different ports simultaneously
 dev-all:
@@ -97,23 +96,41 @@ dev:
 	cd $(BACKEND_DIR) && ../$(VENV_DIR)/bin/python main.py --host $(HOST) --port $(PORT)
 
 # Erstellt die virtuelle Umgebung und installiert Abhängigkeiten
-# TODO: windows support & make sure that .so or .dylib is copied correctly
+# TODO: windows support "we need to add the instructions for compiling/running bbs-core on windows"
 setup:
+ifeq ($(OS),Windows_NT)
+	@echo "⚠️  WARNING: Native Windows is not fully supported!"
+	@echo "⚠️  BBS+ core library requires Linux binaries."
+	@echo "⚠️  Please use WSL (Windows Subsystem for Linux) instead."
+	@echo "⚠️  See README.md for Windows setup instructions."
+	@echo ""
+	@echo "Creating virtual environment: $(VENV_DIR)"
+	$(PYTHON) -m venv $(VENV_DIR)
+	@echo "Installing dependencies"
+	$(VENV_DIR)\Scripts\python.exe -m pip install --upgrade pip
+	$(VENV_DIR)\Scripts\python.exe -m pip install -r $(BACKEND_DIR)/requirements.txt
+	@echo ""
+	@echo "⚠️  NOTE: BBS+ compilation skipped on Windows."
+	@echo "⚠️  The application will NOT work without BBS+ binaries."
+	@echo "⚠️  Please switch to WSL for full functionality."
+else
 	@echo "Compiling bbs-core libs..."
-	rm -f backend/bbs_core.py backend/libuniffi_bbs_core.*
-	cd backend/bbs-core/python && chmod +x build.sh && ./build.sh
-	mv backend/bbs-core/python/bbs_core.py backend/
-	mv backend/bbs-core/python/libuniffi_bbs_core.so backend/ || true
-	mv backend/bbs-core/python/libuniffi_bbs_core.dylib backend/ || true
+	rm -f $(BACKEND_DIR)/bbs_core.py $(BACKEND_DIR)/libuniffi_bbs_core.*
+	cd $(BACKEND_DIR)/bbs-core/python && chmod +x build.sh && ./build.sh
+	mv $(BACKEND_DIR)/bbs-core/python/bbs_core.py $(BACKEND_DIR)/
+	mv $(BACKEND_DIR)/bbs-core/python/libuniffi_bbs_core.so $(BACKEND_DIR)/ || true
+	mv $(BACKEND_DIR)/bbs-core/python/libuniffi_bbs_core.dylib $(BACKEND_DIR)/ || true
 
 	@echo "Creating virtual Environment: $(VENV_DIR)"
 	$(PYTHON) -m venv $(VENV_DIR)
 	@echo "Installing Dependencies"
+	$(VENV_DIR)/bin/pip install --upgrade pip
 	$(VENV_DIR)/bin/pip install -r $(BACKEND_DIR)/requirements.txt
+endif
 
 # Installiert nur Abhängigkeiten (ohne venv zu erstellen)
 install:
-	@echo "Installing Dependencies in existing enviornment"
+	@echo "Installing Dependencies in existing environment"
 	$(VENV_DIR)/bin/pip install -r $(BACKEND_DIR)/requirements.txt
 
 # Bereinigt temporäre Dateien
@@ -182,15 +199,15 @@ setup-bbs:
 # Apply macOS BBS+ build for local development
 use-macos-bbs:
 	@echo "Applying macOS BBS+ build for local development..."
-	@cp backend/bbs-core/macos-build/bbs_core.py backend/bbs_core.py 2>/dev/null || echo "⚠️  macOS build not found, run 'make setup-bbs' first"
-	@cp backend/bbs-core/macos-build/libuniffi_bbs_core.dylib backend/libuniffi_bbs_core.dylib 2>/dev/null || echo "⚠️  macOS dylib not found"
+	@cp $(BACKEND_DIR)/bbs-core/macos-build/bbs_core.py $(BACKEND_DIR)/bbs_core.py 2>/dev/null || echo "⚠️  macOS build not found, run 'make setup-bbs' first"
+	@cp $(BACKEND_DIR)/bbs-core/macos-build/libuniffi_bbs_core.dylib $(BACKEND_DIR)/libuniffi_bbs_core.dylib 2>/dev/null || echo "⚠️  macOS dylib not found"
 	@echo "Ready for local development"
 
 # Apply Linux BBS+ build for Docker deployment
 use-linux-bbs:
 	@echo "Applying Linux BBS+ build for Docker deployment..."
-	@cp backend/bbs-core/linux-build/bbs_core.py backend/bbs_core.py 2>/dev/null || echo "⚠️  Linux build not found"
-	@cp backend/bbs-core/linux-build/libuniffi_bbs_core.so backend/libuniffi_bbs_core.dylib 2>/dev/null || echo "⚠️  Linux .so not found"
+	@cp $(BACKEND_DIR)/bbs-core/linux-build/bbs_core.py $(BACKEND_DIR)/bbs_core.py 2>/dev/null || echo "⚠️  Linux build not found"
+	@cp $(BACKEND_DIR)/bbs-core/linux-build/libuniffi_bbs_core.so $(BACKEND_DIR)/libuniffi_bbs_core.dylib 2>/dev/null || echo "⚠️  Linux .so not found"
 	@echo "Ready for Docker deployment"
 
 # Pre-deployment testing
@@ -208,7 +225,7 @@ test-startup:
 # User Management
 create-veritas-admin:
 	@echo "Creating Veritas admin user..."
-	@cd backend && python3 scripts/create_veritas_admin.py
+	@cd $(BACKEND_DIR) && python3 scripts/create_veritas_admin.py
 
 show-veritas-credentials:
 	@echo ""
@@ -227,19 +244,19 @@ show-veritas-credentials:
 # Diagnostic Tools
 check-disclosure-veritas:
 	@echo "Checking Veritas selective disclosure settings..."
-	@python3 backend/scripts/check_disclosure_settings.py veritas
+	@python3 $(BACKEND_DIR)/scripts/check_disclosure_settings.py veritas
 
 check-disclosure-tuberlin:
 	@echo "Checking TU Berlin selective disclosure settings..."
-	@python3 backend/scripts/check_disclosure_settings.py tuberlin
+	@python3 $(BACKEND_DIR)/scripts/check_disclosure_settings.py tuberlin
 
 check-disclosure-fuberlin:
 	@echo "Checking FU Berlin selective disclosure settings..."
-	@python3 backend/scripts/check_disclosure_settings.py fuberlin
+	@python3 $(BACKEND_DIR)/scripts/check_disclosure_settings.py fuberlin
 
 check-disclosure-root:
 	@echo "Checking Root tenant selective disclosure settings..."
-	@python3 backend/scripts/check_disclosure_settings.py root
+	@python3 $(BACKEND_DIR)/scripts/check_disclosure_settings.py root
 
 check-disclosure-all:
 	@echo "Checking ALL tenants selective disclosure settings..."
