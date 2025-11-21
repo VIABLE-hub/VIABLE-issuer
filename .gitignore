@@ -12,3 +12,4 @@ __pycache__/
 *zip
 .Python
 instance/service.log
+backend/bbs_core.py
