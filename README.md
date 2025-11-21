@@ -44,6 +44,10 @@ Note: Please install via script, not apt. This will make sure you have the lates
 # https://rust-lang.org/learn/get-started/
 #
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+#
+# Important: You have to restart your terminal for rustc and cargo commands to work!
+# Do this before running make setup!
+#
 ```
 
 ### Setup
