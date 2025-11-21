@@ -2,8 +2,6 @@
 
 BACKEND_DIR = backend
 VENV_DIR = .venv
-
-VENV_DIR = test_venv
 PYTHON = python3
 PIP = pip3
 PORT = 8080
@@ -29,23 +27,44 @@ info:
 
 # Startet die Anwendung mit root tenant on port 8083
 dev-root:
+ifeq ($(OS),Windows_NT)
+	@echo "Starting StudentVC with ROOT tenant on port 8083"
+	cd backend && set TENANT_ID=root&& set SERVER_PORT=8083&& ..\.venv\Scripts\python.exe main.py
+else
 	@echo "Starte StudentVC mit Root Tenant auf Port 8083"
 	cd $(BACKEND_DIR) && TENANT_ID=root SERVER_PORT=8083 ../$(VENV_DIR)/bin/python main.py
+endif
 
 # Startet die Anwendung mit TU Berlin tenant on port 8081
 dev-tub:
-	@echo "Starte StudentVC mit TUB Tenant auf Port 8081"
-	cd $(BACKEND_DIR) && TENANT_ID=tub SERVER_PORT=8081 ../$(VENV_DIR)/bin/python main.py
+ifeq ($(OS),Windows_NT)
+	@echo "Starting StudentVC with TUB tenant on port 8081"
+	cd backend && set TENANT_ID=tub&& set SERVER_PORT=8081&& ..\.venv\Scripts\python.exe main.py
+else
+	@echo "Starting StudentVC with TUB tenant on port 8081"
+	cd backend && TENANT_ID=tub SERVER_PORT=8081 ../.venv/bin/python main.py
+endif
 
 # Startet die Anwendung mit FU Berlin tenant on port 8082
 dev-fub:
+ifeq ($(OS),Windows_NT)
+	@echo "Starting StudentVC with FUB tenant on port 8082"
+	cd backend && set TENANT_ID=fub&& set SERVER_PORT=8082&& ..\.venv\Scripts\python.exe main.py
+else
 	@echo "Starte StudentVC mit FUB Tenant auf Port 8082"
 	cd $(BACKEND_DIR) && TENANT_ID=fub SERVER_PORT=8082 ../$(VENV_DIR)/bin/python main.py
+endif
 
 # Startet die Anwendung mit Veritas tenant on port 8080
 dev-veritas:
+ifeq ($(OS),Windows_NT)
+	@echo "Starting StudentVC with VERITAS tenant on port 8080"
+	cd backend && set TENANT_ID=veritas&& set SERVER_PORT=8080&& ..\.venv\Scripts\python.exe main.py
+else
 	@echo "Starte StudentVC mit Veritas Tenant auf Port 8080"
 	cd $(BACKEND_DIR) && TENANT_ID=veritas SERVER_PORT=8080 ../$(VENV_DIR)/bin/python main.py
+endif
+
 
 # Starts ALL tenants on different ports simultaneously
 dev-all:
@@ -79,10 +98,19 @@ dev:
 
 # Erstellt die virtuelle Umgebung und installiert Abhängigkeiten
 setup:
-	@echo "Creating virtual Environment: $(VENV_DIR)"
-	$(PYTHON) -m venv $(VENV_DIR)
-	@echo "Installing Dependencies"
-	$(VENV_DIR)/bin/pip install -r $(BACKEND_DIR)/requirements.txt
+ifeq ($(OS),Windows_NT)
+	@echo "Creating virtual environment: .venv"
+	python -m venv .venv
+	@echo "Installing dependencies"
+	.venv\Scripts\python.exe -m pip install --upgrade pip
+	.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
+else
+	@echo "Creating virtual environment: .venv"
+	python3 -m venv .venv
+	@echo "Installing dependencies"
+	.venv/bin/pip install --upgrade pip
+	.venv/bin/pip install -r backend/requirements.txt
+endif
 
 # Installiert nur Abhängigkeiten (ohne venv zu erstellen)
 install:
