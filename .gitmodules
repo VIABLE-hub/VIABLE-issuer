@@ -1,6 +1,6 @@
 [submodule "backend/bbs-core"]
 	path = backend/bbs-core
-	url = git@github.com:SNET-VERITAS/bbs-core.git
+	url = ../bbs-core.git
 [submodule "mobile/android"]
 	path = mobile/android
-	url = git@github.com:SNET-VERITAS/android.git
+    url = ../android.git
