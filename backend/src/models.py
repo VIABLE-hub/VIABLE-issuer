@@ -30,7 +30,7 @@ class VC_Token(db.Model):
     token = db.Column(db.String(255), unique=True, nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), default=func.now())
     expires_at = db.Column(db.DateTime(timezone=True),
-                           default=(datetime.datetime.now() + datetime.timedelta(hours=1)))
+                           default=lambda: datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1))
 
 
 class VC_AuthorizationCode(db.Model):
@@ -44,7 +44,7 @@ class VC_AuthorizationCode(db.Model):
     created_at = db.Column(db.DateTime(timezone=True), default=func.now())
     used_at = db.Column(db.DateTime(timezone=True), nullable=True)
     expires_at = db.Column(db.DateTime(timezone=True), 
-                          default=(datetime.datetime.now() + datetime.timedelta(minutes=10)))
+                           default=lambda: datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=10))
 
     def __str__(self) -> str:
         return f"{self.client_id} - {self.code_challenge} - {self.auth_code} - {self.issuer_state} - used:{self.used}"
