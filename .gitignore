@@ -3,6 +3,7 @@
 .claude/
 .idea/
 .venv/
+.lh/
 test_venv/
 __pycache__/
 *.py[cod]
