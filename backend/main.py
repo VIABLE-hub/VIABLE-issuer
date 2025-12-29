@@ -74,7 +74,8 @@ def get_server_configuration():
         'ssl_context': ssl_context,
         'local_ip': LOCAL_IP
     }
-
+    
+# remove this for seperate tenants !!!
 def ensure_tenant_database_isolation():
     """CRITICAL: Ensure tenant database isolation"""
     import logging
@@ -121,9 +122,11 @@ def ensure_tenant_database_isolation():
 
 if __name__ == "__main__":
     # CRITICAL: Initialize tenant system before creating app
+    # remove this for seperate tenants!!!
     current_tenant = ensure_tenant_database_isolation()
 
     # Set tenant in environment for app creation (tenant middleware uses this)
+    # remove this for seperate tenants!!!
     os.environ['TENANT_ID'] = current_tenant
 
     app = create_app()
@@ -134,7 +137,7 @@ if __name__ == "__main__":
     # Store current tenant in app config
     import logging
     logger = logging.getLogger(__name__)
-    
+    # remove this for seperate tenants!!!
     app.config['CURRENT_TENANT'] = current_tenant
     logger.info(f"App configured for tenant: {current_tenant}")
     
