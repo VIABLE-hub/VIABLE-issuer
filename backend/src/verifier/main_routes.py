@@ -32,7 +32,8 @@ verifier_bp.register_blueprint(debug_bp)
 def index():
     # 🚀 PRODUCTION-READY: Use configurable URLs for QR code and Socket.IO
     external_server_url = get_current_server_url()  # External URL for QR code
-    
+
+
     # Socket.IO URL: Use environment variable or same as external for production
     import os
     socket_server_url = os.environ.get('SOCKET_IO_URL', external_server_url)
