@@ -1,5 +1,6 @@
 """
 Konstanten und Definitionen für den Verifier.
+TODO: Add FIELDS_EN and FIELDS_DE for german and english 
 """
 
 # Presentation Definition - Technische Felder
