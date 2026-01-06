@@ -973,10 +973,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (useNgrok && ngrokDomain) {
       return `https://${ngrokDomain}/verifier`;
-    } else {
-      const protocol = state.networkSettings?.use_https ? 'https' : 'http';
-      return `${protocol}://${defaultIp}:${port}/verifier`;
-    }
+    } 
+    //  else {
+    //  const protocol = state.networkSettings?.use_https ? 'https' : 'http';
+    //  return `${protocol}://${defaultIp}:${port}/verifier`;
+   // }
   }
   
   function copyToClipboard(text) {

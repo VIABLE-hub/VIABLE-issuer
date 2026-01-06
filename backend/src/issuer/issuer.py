@@ -22,6 +22,7 @@ placeholder_logo, placeholder_profile = None, None
 issuer = Blueprint('issuer', __name__)
 logger = getLogger("LOGGER")
 
+
 # Add request logging middleware for issuer routes
 @issuer.before_request
 def log_request_info():

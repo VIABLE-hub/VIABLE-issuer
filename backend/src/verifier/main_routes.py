@@ -27,17 +27,38 @@ verifier_bp.register_blueprint(verification_bp)
 verifier_bp.register_blueprint(debug_bp)
 
 
+
+@verifier_bp.before_request
+def log_request_info():
+    logger.info('--- VERIFIER REQUEST ---')
+    logger.info(f'Endpoint: {request.endpoint}')
+    logger.info(f'Method: {request.method}')
+    logger.info(f'URL: {request.url}')
+    logger.info(f'Headers: {dict(request.headers)}')
+    logger.info(f'Args: {request.args.to_dict()}')
+    if request.method in ['POST', 'PUT', 'PATCH']:
+        logger.info(f'Form data: {request.form.to_dict()}')
+        # Safely access JSON data only if content type is JSON
+        try:
+            if request.is_json:
+                logger.info(f'JSON data: {request.get_json()}')
+            else:
+                logger.info('JSON data: Not a JSON request')
+        except Exception as e:
+            logger.info(f'JSON data: Error accessing JSON - {e}')
+        logger.info(f'Content-Type: {request.content_type}')
+    logger.info('--- END REQUEST ---')
+
 @verifier_bp.route('/', methods=['GET', 'POST'])
 @login_required
 def index():
     # 🚀 PRODUCTION-READY: Use configurable URLs for QR code and Socket.IO
     external_server_url = get_current_server_url()  # External URL for QR code
-
-
+        
     # Socket.IO URL: Use environment variable or same as external for production
     import os
     socket_server_url = os.environ.get('SOCKET_IO_URL', external_server_url)
-    
+        
     # Construct OID4VP URL
     presentation_request_url = f"openid4vp://?request_uri={external_server_url}/verifier/presentation-request"
     img = generate_qr_code(presentation_request_url)
