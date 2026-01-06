@@ -171,6 +171,7 @@ if __name__ == "__main__":
             allow_unsafe_werkzeug=True,
             log_output=False if os.environ.get('DOCKER_MODE') == 'true' else True
         )
+        
     except Exception as e:
         logger.error(f"Server startup error: {e}")
         if os.environ.get('DOCKER_MODE') == 'true':

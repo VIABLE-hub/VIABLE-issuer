@@ -64,13 +64,13 @@
 <script>
   // 🚀 SOCKET.IO FIX: Use separate URLs for QR code and Socket.IO
   let externalServerUrl = "{{ server_url }}";    // ngrok URL for QR code display
-  let socketServerUrl = "{{ socket_url }}";      // localhost for Socket.IO connection
-  
+  // let socketServerUrl = "{{ socket_url }}";      // localhost for Socket.IO connection
+  let socketServerUrl  = externalServerUrl;
   // Convert 127.0.0.1 to localhost for SSL certificate compatibility
-  if (socketServerUrl.includes('127.0.0.1')) {
-    socketServerUrl = socketServerUrl.replace('127.0.0.1', 'localhost');
-    console.log('🔧 HERZCHIRURG: Converted 127.0.0.1 to localhost for SSL compatibility');
-  }
+  //if (socketServerUrl.includes('127.0.0.1')) {
+  //  socketServerUrl = socketServerUrl.replace('127.0.0.1', 'localhost');
+  //  console.log('🔧 HERZCHIRURG: Converted 127.0.0.1 to localhost for SSL compatibility');
+  //}
   
   // Set both URLs for different purposes
   window.SERVER_URL = socketServerUrl;           // Socket.IO will use this (localhost)
