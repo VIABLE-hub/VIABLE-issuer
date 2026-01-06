@@ -317,8 +317,12 @@ def settings_network_get():
 
 def update_flask_server_url(ngrok_domain, default_ip, default_port, use_https=True):
     """
-    Update Flask server URL based on NGROK domain
+    Update Flask server URL based on NGROK domain.
+
+    Note: To play nicely with reverse proxies, SERVER_NAME is only set when
+    FORCE_SERVER_NAME=true. Otherwise we rely on the incoming Host/X-Forwarded-* headers.
     """
+    force_server_name = os.environ.get('FORCE_SERVER_NAME', 'false').lower() == 'true'
     try:
         # Parse NGROK domain
         parsed_url = urlparse(ngrok_domain)
@@ -334,10 +338,11 @@ def update_flask_server_url(ngrok_domain, default_ip, default_port, use_https=Tr
         server_url = f"{protocol}://{hostname}"
         
         # Update Flask configuration
-        current_app.config['SERVER_NAME'] = hostname
+        if force_server_name:
+            current_app.config['SERVER_NAME'] = hostname
         current_app.config['SERVER_URL'] = server_url
         
-        logger.info(f"Updated Flask server URL to {server_url}")
+        logger.info(f"Updated Flask server URL to {server_url} (force_server_name={force_server_name})")
         return server_url
     except Exception as e:
         logger.error(f"Error updating Flask server URL: {e}")
@@ -346,10 +351,11 @@ def update_flask_server_url(ngrok_domain, default_ip, default_port, use_https=Tr
         protocol = "https" if use_https else "http"
         fallback_url = f"{protocol}://{default_ip}:{default_port}"
         
-        current_app.config['SERVER_NAME'] = f"{default_ip}:{default_port}"
+        if force_server_name:
+            current_app.config['SERVER_NAME'] = f"{default_ip}:{default_port}"
         current_app.config['SERVER_URL'] = fallback_url
         
-        logger.info(f"Fallback to default server URL: {fallback_url}")
+        logger.info(f"Fallback to default server URL: {fallback_url} (force_server_name={force_server_name})")
         return fallback_url
 
 # Register routes with blueprint

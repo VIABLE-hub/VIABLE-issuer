@@ -7,6 +7,7 @@ import logging
 import random
 import os
 from flask_socketio import SocketIO
+from werkzeug.middleware.proxy_fix import ProxyFix
 import warnings
 
 # Suppress specific warnings
@@ -159,7 +160,29 @@ else:
 def create_app():
     app = Flask(__name__)
 
+    # Trust reverse-proxy headers (X-Forwarded-*) when enabled.
+    # Defaults to on, can be disabled with TRUST_PROXY_HEADERS=false.
+    trust_proxy_headers = os.environ.get('TRUST_PROXY_HEADERS', 'true').lower() == 'true'
+    if trust_proxy_headers:
+        proxy_kw = {
+            'x_for': int(os.environ.get('PROXY_FIX_FOR', 1)),
+            'x_proto': int(os.environ.get('PROXY_FIX_PROTO', 1)),
+            'x_host': int(os.environ.get('PROXY_FIX_HOST', 1)),
+            'x_port': int(os.environ.get('PROXY_FIX_PORT', 1)),
+            'x_prefix': int(os.environ.get('PROXY_FIX_PREFIX', 1)),
+        }
+        app.wsgi_app = ProxyFix(app.wsgi_app, **proxy_kw)
+        logger.info(
+            "ProxyFix enabled (for=%s proto=%s host=%s port=%s prefix=%s)",
+            proxy_kw['x_for'], proxy_kw['x_proto'], proxy_kw['x_host'],
+            proxy_kw['x_port'], proxy_kw['x_prefix']
+        )
+
     app.config['SECRET_KEY'] = SECRET_KEY
+    
+    # Configure URL generation - use environment variable if set
+    # Don't set SERVER_NAME as it causes redirects to fail
+    app.config['PREFERRED_URL_SCHEME'] = os.environ.get('PREFERRED_URL_SCHEME', 'https')
     
     # Initialize tenant middleware EARLY (before database config for optimal performance)
     # This ensures tenant context is available for all subsequent operations
@@ -261,6 +284,19 @@ def create_app():
                 logger.warning(f"Tenant detection failed - using default: {e}, fallback: {fallback_error}")
         
         return context
+
+    # Optional debugging: log host-related headers to diagnose redirects/host issues
+    #if os.environ.get('LOG_HOST_HEADERS', 'false').lower() == 'true':
+    @app.before_request
+    def log_host_headers():
+        logger.info(
+            "HOST DEBUG | Host=%s | XFH=%s | XFP=%s | XRI=%s | URL=%s",
+            request.headers.get('Host'),
+            request.headers.get('X-Forwarded-Host'),
+            request.headers.get('X-Forwarded-Proto'),
+            request.headers.get('X-Real-IP'),
+            request.url,
+        )
     
     # Explizite Route für favicon.ico, um 405-Fehler zu vermeiden
     @app.route('/favicon.ico')
