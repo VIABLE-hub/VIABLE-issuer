@@ -63,6 +63,7 @@ def index():
     presentation_request_url = f"openid4vp://?request_uri={external_server_url}/verifier/presentation-request"
     img = generate_qr_code(presentation_request_url)
 
+    # TODO: why load mandatory fields, then save in database then load again
     # Get current settings dynamically
     current_mandatory_fields = get_current_selective_disclosure_settings()
     
