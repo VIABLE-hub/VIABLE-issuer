@@ -1,9 +1,8 @@
 // Socket.IO Connection Handler and Event Handling
 document.addEventListener('DOMContentLoaded', function() {
   // Get the server URL from the window object (will be set in the template)
-  const serverUrl = window.SERVER_URL //|| window.location.origin;
-  const fallbackUrl = window.location.origin; // Always have localhost as fallback
-  fallbackUrl = serverUrl
+  const serverUrl = window.SERVER_URL; //|| window.location.origin;
+  const fallbackUrl = serverUrl;
   console.log('[Socket.IO] Primary server URL:', serverUrl);
   console.log('[Socket.IO] Fallback server URL:', fallbackUrl);
   
