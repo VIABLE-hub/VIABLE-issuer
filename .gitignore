@@ -4,6 +4,7 @@
 .idea/
 .venv/
 .lh/
+tags
 test_venv/
 __pycache__/
 *.py[cod]

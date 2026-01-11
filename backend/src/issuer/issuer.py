@@ -314,7 +314,6 @@ def offer():
     #     return redirect(get_offer_url(request.json))
     credential_offer_uri = get_offer_url(None)
     logger.info(f"Generated credential offer URI: {credential_offer_uri}")
-    # 🩺 HERZCHIRURG FIX: Redirect to credential offer URI for mobile wallet compatibility
     return redirect(credential_offer_uri)
 
 
