@@ -385,7 +385,6 @@ def create_app():
     def load_user(id):
         return User.query.get(int(id))
 
-    # CRITICAL FIX: Enhanced Socket.IO configuration for ngrok compatibility
     # Match CORS configuration for security consistency
     if environment == 'production':
         socketio_cors_origins = [origin.strip() for origin in cors_origins.split(',')]
@@ -408,7 +407,6 @@ def create_app():
         'logger': False               # Disable for production
     }
     
-    # DOCKER SOCKET.IO FIX: Enhanced configuration for Docker environments
     if os.environ.get('DOCKER_MODE') == 'true':
         socketio_config.update({
             'ping_timeout': 120,        # Longer timeout for container networking

@@ -20,7 +20,6 @@ def get_server_url_no_context():
     This function works in any environment and prioritizes external configuration.
     """
     try:
-        # 🚀 PRODUCTION DOCKER: Check for external server URL first
         external_url = os.environ.get('EXTERNAL_SERVER_URL')
         use_external = os.environ.get('USE_EXTERNAL_URL', 'false').lower() == 'true'
         
@@ -34,7 +33,6 @@ def get_server_url_no_context():
             logger.info(f"🌐 Using NGROK_URL from environment: {ngrok_url}")
             return ngrok_url.rstrip('/')
         
-        # 🚨 DOCKER DETECTION: Check if we're in Docker and warn about internal IP
         if os.environ.get('DOCKER_MODE') == 'true':
             local_ip = get_local_ip()
             if local_ip.startswith('172.'):
@@ -67,7 +65,6 @@ def get_current_server_url():
         str: The current server URL (either external, NGROK, or local IP)
     """
     try:
-        # 🚀 PRODUCTION DOCKER: Check for external server URL first (no Flask context needed)
         external_url = os.environ.get('EXTERNAL_SERVER_URL')
         use_external = os.environ.get('USE_EXTERNAL_URL', 'false').lower() == 'true'
         
@@ -109,7 +106,6 @@ def get_current_server_url():
             else:
                 raise e
         
-        # 🚨 DOCKER DETECTION: Check if we're in Docker and warn about internal IP
         if os.environ.get('DOCKER_MODE') == 'true':
             local_ip = get_local_ip()
             if local_ip.startswith('172.'):

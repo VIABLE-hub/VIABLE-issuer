@@ -2,10 +2,10 @@ from src import create_app, socketio
 import os
 import socket
 
+
 # Database cleanup disabled to prevent startup issues
 # if os.path.exists("instance/database.db"):
 #     os.remove("instance/database.db")
-
 def get_local_ip():
     """Get the local IP address of the machine"""
     try:
@@ -120,8 +120,7 @@ def ensure_tenant_database_isolation():
         logger.info(f"Falling back to simple tenant: {tenant_env}")
         return tenant_env
 
-if __name__ == "__main__":
-    # CRITICAL: Initialize tenant system before creating app
+def main():
     # remove this for seperate tenants!!!
     current_tenant = ensure_tenant_database_isolation()
 
@@ -130,7 +129,7 @@ if __name__ == "__main__":
     os.environ['TENANT_ID'] = current_tenant
 
     app = create_app()
-    
+
     # DOCKER COMPATIBILITY: Set debug mode based on environment
     app.config['DEBUG'] = os.environ.get('DOCKER_MODE') != 'true'
 
@@ -140,7 +139,7 @@ if __name__ == "__main__":
     # remove this for seperate tenants!!!
     app.config['CURRENT_TENANT'] = current_tenant
     logger.info(f"App configured for tenant: {current_tenant}")
-    
+
     # Note: TenantMiddleware is now initialized inside create_app() for optimal performance
     # No need for post-creation initialization
 
@@ -149,7 +148,7 @@ if __name__ == "__main__":
 
     # Get server configuration
     server_config = get_server_configuration()
-    
+
     logger.info("Starting StudentVC server...")
     logger.info("")
     logger.info("NGROK URLS: Server URLs now retrieved dynamically from tenant database")
@@ -159,7 +158,7 @@ if __name__ == "__main__":
     logger.info(f"   - Local network: https://{server_config['local_ip']}:{server_config['port']}")
     logger.info(f"   - NGROK: Configure via Settings -> Network -> NGROK Domain")
     logger.info("")
-    
+
     try:
         # ENHANCED SOCKET.IO: Configure for Docker compatibility
         socketio.run(
@@ -171,7 +170,7 @@ if __name__ == "__main__":
             allow_unsafe_werkzeug=True,
             log_output=False if os.environ.get('DOCKER_MODE') == 'true' else True
         )
-        
+
     except Exception as e:
         logger.error(f"Server startup error: {e}")
         if os.environ.get('DOCKER_MODE') == 'true':
@@ -180,4 +179,6 @@ if __name__ == "__main__":
             logger.error("   - Verify SSL certificate generation")
             logger.error("   - Check Docker network configuration")
         else:
-            logger.error("Try: pkill -f 'python.*main.py' to kill existing processes")
+            logger.error("Try: pkill -f 'python.*main.py' to kill existing processes") 
+if __name__ == "__main__":
+    main()
