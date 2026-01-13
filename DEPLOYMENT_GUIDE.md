@@ -149,7 +149,7 @@ The system uses this priority order for server URLs:
 1. **Start ngrok manually:**
    ```bash
    # In separate terminal
-   ngrok http 8080
+   ngrok http https://192.168.178.172:8080 --host-header=rewrite
    ```
 
 2. **Copy the ngrok URL:**
