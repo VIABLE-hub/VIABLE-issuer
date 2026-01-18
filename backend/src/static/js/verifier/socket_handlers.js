@@ -125,6 +125,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
     newSocket.on('credential_validity_status', function(msg) {
       updateVerificationStep('credential_validity_status', msg.status === 'success' ? 'success' : 'error');
+      
+      // Update the details view
+      const detailsElement = document.getElementById('code-credential-status');
+      if (detailsElement) {
+          const colorClass = msg.status === 'success' ? 'text-green-600' : 'text-red-600';
+          const icon = msg.status === 'success' ? '✓' : '✗';
+          const validValue = msg.status === 'success' ? 1 : 0;
+          
+          detailsElement.innerHTML = `
+             <div><span class="text-blue-600">Registry:</span> StatusList2021 (W3C Specification)</div>
+             <div><span class="text-blue-600">Endpoint:</span> GET /vcstatus/isvalid/{credentialId}</div>
+             <div><span class="text-blue-600">Database Query:</span> PostgreSQL lookup in vc_credentials table</div>
+             <div><span class="text-blue-600">Response:</span> {"valid": ${validValue}}</div>
+             <div><span class="${colorClass}">Status:</span> ${icon} ${msg.message}</div>
+          `;
+      }
     });
 
     newSocket.on('issuer_bbs_key_verification', function(msg) {
