@@ -7,9 +7,17 @@ from ..issuer.jwks import pem_to_jwk
 logger = logging.getLogger(__name__)
 
 def verify_sd_jwt_presentation(raw_token):
+    # Ensure keys are initialized
+    if not issuer.public_key:
+        logger.info("SD-JWT: Issuer keys not initialized. Attemping initialization...")
+        try:
+            issuer.initialize_keys()
+        except Exception as e:
+            logger.warning(f"SD-JWT: Failed to initialize issuer keys: {e}")
+
     if not issuer.public_key:
          logger.error("Issuer public key not available for SD-JWT verification")
-         return False, "Issuer public key not available"
+         return False, "Issuer public key not available", {}
 
     try:
         def cb_get_issuer_key(issuer_id, key_id):
@@ -34,10 +42,10 @@ def verify_sd_jwt_presentation(raw_token):
         
         payload = verifier.get_verified_payload()
         logger.info(f"SD-JWT verification successful. Payload keys: {payload.keys()}")
-        return True, "SD-JWT Verified"
+        return True, "SD-JWT Verified", payload
 
     except Exception as e:
         logger.error(f"SD-JWT Verification exception: {e}")
         import traceback
         logger.error(traceback.format_exc())
-        return False, f"SD-JWT Verification failed: {str(e)}"
+        return False, f"SD-JWT Verification failed: {str(e)}", {}

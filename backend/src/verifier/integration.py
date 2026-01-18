@@ -37,75 +37,144 @@ def safe_verify_presentation(decoded_vp, presentation_definition, raw_token=None
             'oversized_fields': {'status': 'pending', 'message': ''}
         }
         
-        # Extrahiere die Präsentation
-        presentation = extract_presentation_from_vp(decoded_vp)
+        # Detect SD-JWT
+        is_sd_jwt = raw_token and "~" in raw_token
+
+        # Extrahiere die Präsentation (nur für BBS+)
+        if not is_sd_jwt:
+            presentation = extract_presentation_from_vp(decoded_vp)
         
         # SCHRITT 1: Präsentationsintegrität prüfen
-        try:
-            integrity_valid, integrity_msg = check_presentation_integrity(decoded_vp, presentation_definition)
-            if integrity_valid:
-                verification_steps['integrity'] = {
-                    'status': 'success',
-                    'message': 'Präsentationsintegrität erfolgreich geprüft'
-                }
-            else:
+        # Für SD-JWT verschieben wir dies nach die Signaturprüfung, da wir den Payload erst dann haben
+        if not is_sd_jwt:
+            try:
+                integrity_valid, integrity_msg = check_presentation_integrity(decoded_vp, presentation_definition)
+                if integrity_valid:
+                    verification_steps['integrity'] = {
+                        'status': 'success',
+                        'message': 'Präsentationsintegrität erfolgreich geprüft'
+                    }
+                else:
+                    verification_steps['integrity'] = {
+                        'status': 'error',
+                        'message': f'Präsentationsintegritätsprüfung fehlgeschlagen: {integrity_msg}'
+                    }
+                    return False, {
+                        'steps': verification_steps,
+                        'error': integrity_msg,
+                        'error_type': 'presentation_integrity_error'
+                    }
+            except Exception as e:
                 verification_steps['integrity'] = {
                     'status': 'error',
-                    'message': f'Präsentationsintegritätsprüfung fehlgeschlagen: {integrity_msg}'
+                    'message': f'Fehler bei der Integritätsprüfung: {str(e)}'
                 }
+                logger.error(f"Exception in integrity check: {traceback.format_exc()}")
                 return False, {
                     'steps': verification_steps,
-                    'error': integrity_msg,
-                    'error_type': 'presentation_integrity_error'
+                    'error': f'Fehler bei der Integritätsprüfung: {str(e)}',
+                    'error_type': 'integrity_check_exception'
                 }
-        except Exception as e:
-            verification_steps['integrity'] = {
-                'status': 'error',
-                'message': f'Fehler bei der Integritätsprüfung: {str(e)}'
-            }
-            logger.error(f"Exception in integrity check: {traceback.format_exc()}")
-            return False, {
-                'steps': verification_steps,
-                'error': f'Fehler bei der Integritätsprüfung: {str(e)}',
-                'error_type': 'integrity_check_exception'
-            }
+        else:
+             verification_steps['integrity'] = {
+                'status': 'pending',
+                'message': 'Warte auf SD-JWT Payload...' 
+             }
         
         # SCHRITT 2: Verarbeite übergroße Felder (wie Base64-Bilder)
-        try:
-            # Hole die offengelegten Werte
-            vc = decoded_vp.get("verifiable_credential", {})
-            if "values" in vc:
-                # Verarbeite übergroße Felder in den Werten
-                vc["values"] = process_oversized_fields(vc["values"])
-                verification_steps['oversized_fields'] = {
-                    'status': 'success', 
-                    'message': f'Übergroße Felder verarbeitet: {len(vc["values"])} Felder geprüft'
-                }
-            else:
+        # Nur für BBS relevant bzw. wenn strukturierte Daten vorliegen
+        if not is_sd_jwt:
+            try:
+                # Hole die offengelegten Werte
+                vc = decoded_vp.get("verifiable_credential", {})
+                if "values" in vc:
+                    # Verarbeite übergroße Felder in den Werten
+                    vc["values"] = process_oversized_fields(vc["values"])
+                    verification_steps['oversized_fields'] = {
+                        'status': 'success', 
+                        'message': f'Übergroße Felder verarbeitet: {len(vc["values"])} Felder geprüft'
+                    }
+                else:
+                    verification_steps['oversized_fields'] = {
+                        'status': 'warning',
+                        'message': 'Keine übergroßen Felder gefunden oder keine Werte vorhanden'
+                    }
+            except Exception as e:
                 verification_steps['oversized_fields'] = {
                     'status': 'warning',
-                    'message': 'Keine übergroßen Felder gefunden oder keine Werte vorhanden'
+                    'message': f'Fehler bei der Verarbeitung übergroßer Felder: {str(e)}'
                 }
-        except Exception as e:
-            verification_steps['oversized_fields'] = {
-                'status': 'warning',
-                'message': f'Fehler bei der Verarbeitung übergroßer Felder: {str(e)}'
-            }
-            logger.warning(f"Exception in oversized field processing: {str(e)}")
-            # Wir brechen hier nicht ab, da dies nur eine Optimierung ist
+                logger.warning(f"Exception in oversized field processing: {str(e)}")
+                # Wir brechen hier nicht ab, da dies nur eine Optimierung ist
         
         # SCHRITT 3: Führe die kryptographische Verifikation durch
         try:
-            is_sd_jwt = raw_token and "~" in raw_token
-            
             if is_sd_jwt:
                 from .sd_jwt_verification import verify_sd_jwt_presentation
-                sd_valid, sd_msg = verify_sd_jwt_presentation(raw_token)
+                # Adjusted to receive payload
+                sd_valid, sd_msg, sd_payload = verify_sd_jwt_presentation(raw_token)
+                
                 if sd_valid:
                     verification_steps['bbs_verification'] = {
                         'status': 'success',
                         'message': 'SD-JWT Signatur (ECDSA) erfolgreich verifiziert'
                     }
+                    
+                    # JETZT: Integritätsprüfung für SD-JWT ("Delayed Step 1")
+                    # Wir müssen eine synthetische Struktur schaffen, damit die Validatoren funktionieren
+                    # SD-JWT Payload entspricht i.d.R. den Claims.
+                    # Wir wrappen es in eine Struktur, die 'values' oder 'credentialSubject' imitiert, 
+                    # je nachdem wie check_presentation_integrity sucht.
+                    
+                    # Construct synthetic VP for validation
+                    # Note: check_presentation_integrity looks in 'verifiable_credential.values' OR top-level fields
+                    synthetic_vp = {
+                        "verifiable_credential": {
+                            "values": sd_payload,
+                            "credentialSubject": sd_payload
+                        }
+                    }
+                    # Merge top-level claims too just in case
+                    synthetic_vp.update(sd_payload)
+                    
+                    # Modifiziere die Definition: Entferne technische BBS-Felder
+                    sd_def = presentation_definition.copy()
+                    sd_def['technical_fields'] = [] # Keine BBS Felder für SD-JWT
+                    
+                    try:
+                        int_valid, int_msg = check_presentation_integrity(synthetic_vp, sd_def)
+                        if int_valid:
+                            verification_steps['integrity'] = {
+                                'status': 'success',
+                                'message': 'SD-JWT Claims erfolgreich validiert'
+                            }
+                            # Update decoded_vp to be the synthetic one for Step 4
+                            decoded_vp = synthetic_vp
+                        else:
+                             verification_steps['integrity'] = {
+                                'status': 'error',
+                                'message': f'SD-JWT Claims unvollständig: {int_msg}'
+                            }
+                             return False, {
+                                'steps': verification_steps,
+                                'error': int_msg,
+                                'error_type': 'presentation_integrity_error'
+                            }
+                    except Exception as e:
+                        return False, {
+                             'steps': verification_steps,
+                             'error': f'Fehler bei SD-JWT Integrity Check: {e}',
+                             'error_type': 'integrity_check_exception'
+                        }
+                    
+                    # Return success with payload
+                    return True, {
+                        'steps': verification_steps,
+                        'message': 'Verifikation erfolgreich abgeschlossen',
+                        'verified_payload': sd_payload,
+                        'format': 'sd_jwt'
+                    }
+
                 else:
                     verification_steps['bbs_verification'] = {
                         'status': 'error',

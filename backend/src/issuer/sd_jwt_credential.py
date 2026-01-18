@@ -60,18 +60,50 @@ def generate_sd_jwt_credential(auth_header, private_key, issuer_did, issuer_kid)
     iat = int(datetime.now(tz=timezone.utc).timestamp())
     exp = iat + 86400 # 24h
     
-    payload = {
+    # Generate validity identifier for revocation check
+    unique_id = generate_nonce(50)
+    unique_id_path = get_current_server_url() + \
+        "/vcstatus/isvalid/" + unique_id
+        
+    # Payload mainly for the DB (Clean JSON, no SDObj)
+    db_payload = {
         "iss": issuer_did,
         "iat": iat,
         "nbf": iat, 
         "exp": exp,
         "jti": uniqID,
+        "validity_identifier": unique_id_path,
         "vc": {
             "@context": ["https://www.w3.org/2018/credentials/v1"],
             "type": ["VerifiableCredential", "StudentIDCard"],
-            "credentialSubject": sd_user_claims
+            "credentialSubject": user_claims # Clean dictionary
         }
     }
+
+    # Payload for Issuance (With SDObj)
+    issuance_payload = {
+        "iss": issuer_did,
+        "iat": iat,
+        "nbf": iat, 
+        "exp": exp,
+        "jti": uniqID,
+        "validity_identifier": unique_id_path,
+        "vc": {
+            "@context": ["https://www.w3.org/2018/credentials/v1"],
+            "type": ["VerifiableCredential", "StudentIDCard"],
+            "credentialSubject": sd_user_claims # Contains SDObj objects
+        }
+    }
+    
+    # Save validity to DB using valid JSON data
+    try:
+        vc_validity = VC_validity(identifier=unique_id, credential_data=db_payload)
+        db.session.add(vc_validity)
+        db.session.commit()
+    except Exception as e:
+        logger.error(f"Failed to save VC validity: {e}")
+        db.session.rollback()
+        return jsonify({"error": "Database error saving credential validity"}), 500
     
     try:
         # Create the SD-JWT
@@ -91,7 +123,7 @@ def generate_sd_jwt_credential(auth_header, private_key, issuer_did, issuer_kid)
         issuer_key = JWK.from_pem(private_key_pem)
         
         sdjwt = SDJWTIssuer(
-            user_claims=payload,
+            user_claims=issuance_payload,
             issuer_key=issuer_key,
             sign_alg="ES256",
         )

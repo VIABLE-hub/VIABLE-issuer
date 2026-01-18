@@ -194,7 +194,16 @@ def direct_post():
             })
             
             # Step 6: Check credential validity status
-            valid_status, status_msg = validate_credential_validity(decoded_vp)
+            # For SD-JWT, use the verified payload which includes validity_identifier (if added by issuer)
+            # The original decoded_vp might hide it or not be the best source.
+            vp_to_validate = decoded_vp
+            if valid and verification_details.get('format') == 'sd_jwt' and verification_details.get('verified_payload'):
+                # Wrap payload in a structure validate_credential_validity understands if needed
+                # But validity_identifier is usually top level.
+                vp_to_validate = verification_details.get('verified_payload')
+                # If verified_payload is just {iss, ...}, allow searching it.
+
+            valid_status, status_msg = validate_credential_validity(vp_to_validate)
             if not valid_status:
                 logger.error(f"Credential validity check failed: {status_msg}")
                 socketio.emit('credential_validity_status', {
