@@ -109,10 +109,67 @@ document.addEventListener('DOMContentLoaded', function() {
 
     newSocket.on('signature_verification', function(msg) {
       updateVerificationStep('signature_verification', msg.status === 'success' ? 'success' : 'error');
+      
+      // Update dynamic details for both Crypto and Identity sections
+      if (msg.details) {
+          [ 'code-signature', 'code-holder-binding' ].forEach(id => {
+              const el = document.getElementById(id);
+              if (el) {
+                  // Update Title if SD-JWT
+                  if (msg.format === 'sd_jwt') {
+                      const title = el.querySelector('.font-semibold');
+                      if (title) {
+                          if (id === 'code-signature') title.textContent = '✅ ECDSA Signature Verification';
+                          if (id === 'code-holder-binding') title.textContent = '👤 Holder Binding (KB-JWT)';
+                      }
+                  }
+                  
+                  // Update Content
+                  const content = el.querySelector('.space-y-1');
+                  if (content) {
+                      let html = '';
+                      for (const [key, value] of Object.entries(msg.details)) {
+                           // Filter fields based on section logic
+                           let show = true;
+                           if (id === 'code-signature' && key === 'key_binding') show = false;
+                           if (id === 'code-holder-binding' && (key === 'serialization' || key === 'hashing')) show = false;
+                           
+                           if (show) {
+                               const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                               html += `<div><span class="text-blue-600">${label}:</span> ${value}</div>`;
+                           }
+                      }
+                      
+                      const colorClass = msg.status === 'success' ? 'text-green-600' : 'text-red-600';
+                      const icon = msg.status === 'success' ? '✓' : '✗';
+                      html += `<div><span class="${colorClass}">Status:</span> ${icon} ${msg.status === 'success' ? 'Verified' : 'Failed'}</div>`;
+                      content.innerHTML = html;
+                  }
+              }
+          });
+      }
     });
 
     newSocket.on('issuer_pub_key_verification', function(msg) {
       updateVerificationStep('issuer_pub_key_verification', msg.status === 'success' ? 'success' : 'error');
+      
+      if (msg.details) {
+          const el = document.getElementById('code-issuer-trust');
+          if (el) {
+              const content = el.querySelector('.space-y-1');
+              if (content) {
+                  let html = '';
+                  for (const [key, value] of Object.entries(msg.details)) {
+                      const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                      html += `<div><span class="text-blue-600">${label}:</span> ${value}</div>`;
+                  }
+                  const colorClass = msg.status === 'success' ? 'text-green-600' : 'text-red-600';
+                  const icon = msg.status === 'success' ? '✓' : '✗';
+                  html += `<div><span class="${colorClass}">Status:</span> ${icon} ${msg.status === 'success' ? 'Trusted' : 'Untrusted'}</div>`;
+                  content.innerHTML = html;
+              }
+          }
+      }
     });
 
     newSocket.on('mandatory_fields_verification', function(msg) {
@@ -145,6 +202,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
     newSocket.on('issuer_bbs_key_verification', function(msg) {
       updateVerificationStep('issuer_bbs_key_verification', msg.status === 'success' ? 'success' : 'error');
+      
+      // Update dynamic details if available (switching between BBS+ and SD-JWT)
+      if (msg.details) {
+        const keyElement = document.getElementById('code-bbs-key');
+        if (keyElement) {
+           // Update Title
+           if (msg.format === 'sd_jwt') {
+              const title = keyElement.querySelector('.font-semibold');
+              if (title) title.textContent = '🔐 ECDSA Public Key Validation';
+           }
+           
+           // Update Content
+           const content = keyElement.querySelector('.space-y-1');
+           if (content) {
+               let html = '';
+               for (const [key, value] of Object.entries(msg.details)) {
+                   const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                   html += `<div><span class="text-blue-600">${label}:</span> ${value}</div>`;
+               }
+               // Status line is usually part of details in my backend construction, but let's ensure it ends with status
+               if (!msg.details.status) {
+                    const colorClass = msg.status === 'success' ? 'text-green-600' : 'text-red-600';
+                    const icon = msg.status === 'success' ? '✓' : '✗';
+                    html += `<div><span class="${colorClass}">Status:</span> ${icon} ${msg.message}</div>`;
+               }
+               content.innerHTML = html;
+           }
+        }
+      }
     });
 
     newSocket.on('verification_result', function(msg) {

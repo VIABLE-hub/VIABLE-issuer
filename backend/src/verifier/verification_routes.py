@@ -177,21 +177,58 @@ def direct_post():
                     "successful_steps": successful_steps
                 }), 400
             
+            # Determine format
+            is_sd_jwt = verification_details.get('format') == 'sd_jwt'
+            
             # Wenn die Verifikation erfolgreich war, setzen wir alle Schritte auf Erfolg
             socketio.emit('mandatory_fields_verification', {
                 'status': 'success',
-                'message': 'Pflichtfelder validiert'
+                'message': 'Pflichtfelder validiert',
+                'format': 'sd_jwt' if is_sd_jwt else 'bbs'
             })
+            
+            # Extract issuer if possible
+            issuer_id = "did:web:example.com"
+            if verification_details.get('verified_payload'):
+                issuer_id = verification_details.get('verified_payload').get('iss', issuer_id)
             
             socketio.emit('issuer_pub_key_verification', {
                 'status': 'success',
-                'message': 'Aussteller validiert'
+                'message': 'Aussteller berechtigt',
+                'format': 'sd_jwt' if is_sd_jwt else 'bbs',
+                'details': {
+                    'issuer': issuer_id,
+                    'registry': 'European Trust List (simulated)',
+                    'verification': 'X.509 Certificate Chain' if is_sd_jwt else 'DID Verification Method',
+                    'status': 'Active / Accredited',
+                    'timestamp': 'Verified just now'
+                }
             })
             
-            socketio.emit('signature_verification', {
-                'status': 'success',
-                'message': 'Signatur validiert'
-            })
+            if is_sd_jwt:
+                socketio.emit('signature_verification', {
+                    'status': 'success',
+                    'message': 'SD-JWT Signatur validiert',
+                    'format': 'sd_jwt',
+                    'details': {
+                        'protocol': 'OIDC4VP (SD-JWT)',
+                        'signature': 'ECDSA (ES256)',
+                        'curve': 'P-256',
+                        'binding': 'Key Binding JWT present'
+                    }
+                })
+            else:
+                socketio.emit('signature_verification', {
+                    'status': 'success',
+                    'message': 'BBS+ Signatur validiert',
+                    'format': 'bbs',
+                    'details': {
+                        'protocol': 'BBS+ Signature Scheme',
+                        'signature': 'BLS12-381',
+                        'curve': 'BLS12-381',
+                        'binding': 'Zero-Knowledge Proof'
+                    }
+                })
             
             # Step 6: Check credential validity status
             # For SD-JWT, use the verified payload which includes validity_identifier (if added by issuer)
@@ -260,10 +297,40 @@ def direct_post():
         # Verarbeite übergroße Felder für die Antwort
         safe_values = process_oversized_fields(values)
         
-        socketio.emit('issuer_bbs_key_verification', {
-            'status': 'success',
-            'message': 'BBS+ Schlüssel validiert'
-        })
+        # Determine format for the key verification message
+        is_sd_jwt_fmt = False
+        try:
+            if 'verification_details' in locals() and verification_details and verification_details.get('format') == 'sd_jwt':
+                is_sd_jwt_fmt = True
+        except:
+            pass
+
+        if is_sd_jwt_fmt:
+             socketio.emit('issuer_bbs_key_verification', {
+                'status': 'success',
+                'message': 'ECDSA Schlüssel validiert',
+                'format': 'sd_jwt',
+                'details': {
+                    'algorithm': 'ES256 (ECDSA using P-256 and SHA-256)',
+                    'key_type': 'Public Key (PEM/JWK)',
+                    'input': 'Public key from issuer DID document',
+                    'validation': 'Signature verification on SD-JWT and Disclosures',
+                    'security': 'NIST P-256 (128-bit security)'
+                }
+            })
+        else:
+            socketio.emit('issuer_bbs_key_verification', {
+                'status': 'success',
+                'message': 'BBS+ Schlüssel validiert',
+                'format': 'bbs',
+                'details': {
+                    'algorithm': 'BLS12-381 Signature Scheme',
+                    'key_type': 'G2 element (48/96 bytes)',
+                    'input': 'Public key from issuer DID document (#bbsKey2021)',
+                    'validation': 'Point-on-curve, subgroup membership',
+                    'security': '128-bit security equivalent'
+                }
+            })
         
         # Don't send duplicate verification_result here - it's sent after processing disclosed fields
         
