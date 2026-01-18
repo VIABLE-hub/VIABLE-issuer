@@ -1,28 +1,28 @@
 import json
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.backends import default_backend
+from jwcrypto.jwk import JWK
 from flask import jsonify
 
 
 def pem_to_jwk(pem_key, key_type="public"):
-    # Load PEM key from string
+    # Load PEM key (ensure bytes)
     if isinstance(pem_key, str):
-        pem_key = serialization.load_pem_public_key(
-            pem_key.encode(), default_backend())
-    public_key = pem_key
+        pem_key = pem_key.encode('utf-8')
+    
+    try:
+        # Create JWK from PEM
+        key = JWK.from_pem(pem_key)
+        
+        # Export as dict
+        jwk_dict = key.export_public(as_dict=True)
+        
+        # Map 'public' to 'sig' (standard JWK 'use' values are 'sig' or 'enc')
+        # The caller 'issuer.py' passes "public", which is not standard.
+        if key_type == "public":
+            jwk_dict['use'] = "sig"
+        else:
+            jwk_dict['use'] = key_type
+        
+        return jwk_dict
 
-    if isinstance(public_key, ec.EllipticCurvePublicKey):
-        # Extract EC public key components (x, y)
-        numbers = public_key.public_numbers()
-        jwk = {
-            "kty": "EC",
-            "crv": "P-256",  # Assuming prime256v1 curve
-            "x": numbers.x,
-            "y": numbers.y,
-            "alg": "ES256",
-            "use": key_type,
-        }
-        return jwk
-    else:
-        raise ValueError("Unsupported key type")
+    except Exception as e:
+        raise ValueError(f"Failed to convert PEM to JWK: {str(e)}")

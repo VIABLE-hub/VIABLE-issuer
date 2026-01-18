@@ -350,8 +350,16 @@ def verify_access_token():
 def create_credential():
     logger.info("Received request to create a credential")
     auth_header = request.headers.get("Authorization")
-    logger.info(f"Received credential request with auth header: {auth_header}")
-    return generate_credential(auth_header, public_key, private_key, issuer_did, issuer_kid, bbs_dpk, bbs_secret)
+    
+    # Check for format in request body
+    try:
+        data = request.get_json(silent=True) or {}
+        credential_format = data.get("format", "bbs")
+    except Exception:
+        credential_format = "bbs"
+
+    logger.info(f"Received credential request with auth header: {auth_header} and format: {credential_format}")
+    return generate_credential(auth_header, public_key, private_key, issuer_did, issuer_kid, bbs_dpk, bbs_secret, format=credential_format)
 
 
 @issuer.route("/.well-known/openid-credential-issuer", methods=["GET"])

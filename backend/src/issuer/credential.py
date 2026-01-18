@@ -15,8 +15,8 @@ import base64
 from .utils import get_placeholders
 from ..models import VC_validity
 from .. import db
-
-logo, profile = get_placeholders()
+from .shared import get_credential_data
+from .sd_jwt_credential import generate_sd_jwt_credential
 
 bbs_core_path = os.path.join(os.path.dirname(
     __file__), "..", "..", "bbs_core.py")
@@ -28,7 +28,19 @@ spec.loader.exec_module(bbs_core)
 logger = logging.getLogger(__name__)
 
 
-def generate_credential(auth_header, public_key, private_key, issuer_did, issuer_kid, bbs_dpk, bbs_secret):
+def generate_credential(auth_header, public_key, private_key, issuer_did, issuer_kid, bbs_dpk, bbs_secret, format="bbs"):
+    logger.info(f"Generating credential with format: {format}")
+    if format == "sd_jwt":
+        return generate_sd_jwt_credential(
+            auth_header=auth_header,
+            private_key=private_key,
+            issuer_did=issuer_did,
+            issuer_kid=issuer_kid
+        )
+    else:
+        return generate_bbs_credential(auth_header, public_key, private_key, issuer_did, issuer_kid, bbs_dpk, bbs_secret)
+
+def generate_bbs_credential(auth_header, public_key, private_key, issuer_did, issuer_kid, bbs_dpk, bbs_secret):
     if not auth_header:
         return jsonify({"error": "Authorization header is missing"}), 401
 
@@ -153,36 +165,7 @@ def get_payload(issuer_did, decoded_token, credential_subject, uniqID):
     return payload
 
 
-def get_credential_data(credential_data):
-    logger.info(f"🔍 CREDENTIAL DEBUG - Input credential_data object: {credential_data}")
-    logger.info(f"🔍 CREDENTIAL DEBUG - Type of credential_data: {type(credential_data)}")
-    
-    actual_data = credential_data.credential_data if credential_data else None
-    logger.info(f"🔍 CREDENTIAL DEBUG - Extracted credential_data: {actual_data}")
-    logger.info(f"🔍 CREDENTIAL DEBUG - Type of extracted data: {type(actual_data)}")
-    
-    if not actual_data:
-        logger.warning(f"🔍 CREDENTIAL DEBUG - No credential data found, using defaults!")
-        logger.warning(f"🔍 CREDENTIAL DEBUG - This explains why user fields are missing!")
-        return {
-            "firstName": "Maxi" + f"{str(generate_nonce(5))}",
-            "lastName": "Musterfrau" + f"{str(generate_nonce(5))}",
-            "issuanceCount": "1",
-            "image": profile,
-            "studentId": f"{str(generate_nonce(5))}",
-            "studentIdPrefix": "654321",
-            "theme": {
-                "name": "Technische Universität Berlin",
-                "icon": logo,
-                "bgColorCard": "C40D1E",
-                "bgColorSectionTop": "C40D1E",
-                "bgColorSectionBot": "FFFFFF",
-                "fgColorTitle": "FFFFFF"
-            }
-        }
 
-    logger.info(f"🔍 CREDENTIAL DEBUG - Using actual credential data with keys: {list(actual_data.keys()) if isinstance(actual_data, dict) else 'Not a dict'}")
-    return actual_data
 
 
 def resolve_credential_offer(id):

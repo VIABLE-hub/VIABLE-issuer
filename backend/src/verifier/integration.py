@@ -16,7 +16,7 @@ from .constants import FIELD_MAPPINGS
 
 logger = getLogger("LOGGER")
 
-def safe_verify_presentation(decoded_vp, presentation_definition):
+def safe_verify_presentation(decoded_vp, presentation_definition, raw_token=None):
     """
     Führt eine robuste Verifikation einer Präsentation durch,
     mit umfassender Fehlerbehandlung und Debugging
@@ -24,6 +24,7 @@ def safe_verify_presentation(decoded_vp, presentation_definition):
     Args:
         decoded_vp: Das dekodierte VP-Objekt
         presentation_definition: Die Präsentationsdefinition mit Pflichtfeldern
+        raw_token: Das rohe Token (für SD-JWT erforderlich)
         
     Returns:
         (bool, dict): (Erfolgsstatus, Details der Verifikation)
@@ -93,34 +94,55 @@ def safe_verify_presentation(decoded_vp, presentation_definition):
             logger.warning(f"Exception in oversized field processing: {str(e)}")
             # Wir brechen hier nicht ab, da dies nur eine Optimierung ist
         
-        # SCHRITT 3: Führe die BBS+ Verifikation durch
+        # SCHRITT 3: Führe die kryptographische Verifikation durch
         try:
-            bbs_valid, bbs_msg = verify_bbs_proof(decoded_vp)
-            if bbs_valid:
-                verification_steps['bbs_verification'] = {
-                    'status': 'success',
-                    'message': 'BBS+ Signaturprüfung erfolgreich'
-                }
+            is_sd_jwt = raw_token and "~" in raw_token
+            
+            if is_sd_jwt:
+                from .sd_jwt_verification import verify_sd_jwt_presentation
+                sd_valid, sd_msg = verify_sd_jwt_presentation(raw_token)
+                if sd_valid:
+                    verification_steps['bbs_verification'] = {
+                        'status': 'success',
+                        'message': 'SD-JWT Signatur (ECDSA) erfolgreich verifiziert'
+                    }
+                else:
+                    verification_steps['bbs_verification'] = {
+                        'status': 'error',
+                        'message': f'SD-JWT Signaturprüfung fehlgeschlagen: {sd_msg}'
+                    }
+                    return False, {
+                        'steps': verification_steps,
+                        'error': sd_msg,
+                        'error_type': 'sd_jwt_verification_failed'
+                    }
             else:
-                verification_steps['bbs_verification'] = {
-                    'status': 'error',
-                    'message': f'BBS+ Signaturprüfung fehlgeschlagen: {bbs_msg}'
-                }
-                return False, {
-                    'steps': verification_steps,
-                    'error': bbs_msg,
-                    'error_type': 'bbs_verification_failed'
-                }
+                bbs_valid, bbs_msg = verify_bbs_proof(decoded_vp)
+                if bbs_valid:
+                    verification_steps['bbs_verification'] = {
+                        'status': 'success',
+                        'message': 'BBS+ Signaturprüfung erfolgreich'
+                    }
+                else:
+                    verification_steps['bbs_verification'] = {
+                        'status': 'error',
+                        'message': f'BBS+ Signaturprüfung fehlgeschlagen: {bbs_msg}'
+                    }
+                    return False, {
+                        'steps': verification_steps,
+                        'error': bbs_msg,
+                        'error_type': 'bbs_verification_failed'
+                    }
         except Exception as e:
             verification_steps['bbs_verification'] = {
                 'status': 'error',
-                'message': f'Fehler bei der BBS+ Verifikation: {str(e)}'
+                'message': f'Fehler bei der Verifikation: {str(e)}'
             }
-            logger.error(f"Exception in BBS+ verification: {traceback.format_exc()}")
+            logger.error(f"Exception in verification: {traceback.format_exc()}")
             return False, {
                 'steps': verification_steps,
-                'error': f'Fehler bei der BBS+ Verifikation: {str(e)}',
-                'error_type': 'bbs_verification_exception'
+                'error': f'Fehler bei der Verifikation: {str(e)}',
+                'error_type': 'verification_exception'
             }
         
         # SCHRITT 4: Feldnormalisierung und Mapping-Prüfung

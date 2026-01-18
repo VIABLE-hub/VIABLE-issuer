@@ -60,7 +60,12 @@ def direct_post():
             return jsonify({"error": "No vp_token parameter found", "valid": 0}), 400
         
         # Decode the JWT token
-        decoded_vp = decode_jwt_token(vp_token)
+        # SD-JWT Handling: Split off disclosures to decode the issuer JWT
+        if "~" in vp_token:
+             decoded_vp = decode_jwt_token(vp_token.split("~")[0])
+        else:
+             decoded_vp = decode_jwt_token(vp_token)
+
         if not decoded_vp:
             logger.error("Failed to decode VP token")
             return jsonify({"error": "Failed to decode VP token", "valid": 0}), 400
@@ -119,7 +124,7 @@ def direct_post():
         # 🩺 HERZCHIRURG-FIX: Verwende die neue robuste Integration
         if not demo_credential:
             # Step 3-5: Robuste Verifikation mit detaillierter Fehlerbehandlung
-            valid, verification_details = safe_verify_presentation(decoded_vp, presentation_def)
+            valid, verification_details = safe_verify_presentation(decoded_vp, presentation_def, raw_token=vp_token)
             if not valid:
                 logger.error(f"Advanced verification failed: {verification_details.get('error')}")
                 
