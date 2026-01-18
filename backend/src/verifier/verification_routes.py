@@ -242,15 +242,20 @@ def direct_post():
         # Step 7: Check user mandatory fields
         # Extract values from the credential
         values = {}
-        vc = decoded_vp.get("verifiable_credential", {})
-        if "values" in vc:
-            values = vc["values"]
+        
+        # FIX: For SD-JWT, use the verified payload for everything
+        if valid and verification_details.get('format') == 'sd_jwt' and verification_details.get('verified_payload'):
+             values = verification_details.get('verified_payload')
         else:
-            # Try to extract from other locations
-            for field in ALL_CREDENTIAL_FIELDS:
-                value = get_field_value(decoded_vp, field)
-                if value:
-                    values[field] = value
+            vc = decoded_vp.get("verifiable_credential", {})
+            if "values" in vc:
+                values = vc["values"]
+            else:
+                # Try to extract from other locations
+                for field in ALL_CREDENTIAL_FIELDS:
+                    value = get_field_value(decoded_vp, field)
+                    if value:
+                        values[field] = value
         
         # Verarbeite übergroße Felder für die Antwort
         safe_values = process_oversized_fields(values)
