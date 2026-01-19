@@ -334,7 +334,7 @@ class AuditLog(db.Model):
     request_id = db.Column(db.String(36), nullable=True)  # UUID für Korrelation mehrerer Logs
     
     def __repr__(self):
-        return f'<AuditLog {self.tenant_id}:{self.action}:{self.resource_type}>'
+        return f'<AuditLog {self.action}:{self.resource_type}>'
     
     @classmethod
     def log(cls, user_email, action, resource_type, 
@@ -345,7 +345,6 @@ class AuditLog(db.Model):
         Schreibt einen neuen Audit-Log-Eintrag.
         
         Args:
-            tenant_id: ID des Tenants
             user_email: Email des Benutzers
             action: Art der Aktion (create, update, delete, view, etc.)
             resource_type: Art der betroffenen Ressource
@@ -369,7 +368,7 @@ class AuditLog(db.Model):
             )
             db.session.add(log_entry)
             db.session.commit()
-            logging.info(f"Audit log created: {tenant_id}:{action}:{resource_type}")
+            logging.info(f"Audit log created: {action}:{resource_type}")
         except Exception as e:
             logging.error(f"Failed to create audit log: {e}")
             db.session.rollback()

@@ -2181,9 +2181,9 @@ document.addEventListener('alpine:init', () => {
         });
     },
     
-    // Load network data using the tenant-aware endpoint
+    // Load network data using the unified endpoint
     loadSimplifiedNetworkData() {
-      console.log('🌐 Loading network data for current tenant...');
+      console.log('🌐 Loading network data...');
       this.networkLoading = true;
       
       fetch('/api/network')
@@ -2194,32 +2194,27 @@ document.addEventListener('alpine:init', () => {
           return response.json();
         })
         .then(data => {
-          console.log('🌐 Tenant network data loaded:', data);
+          console.log('🌐 Network data loaded:', data);
           
           if (data && data.status === 'success') {
-            // Extract data from tenant-aware API response
-            const networkSettings = data.network_settings || {};
-            const computedUrls = data.computed_urls || {};
-            const networkInfo = data.network_info || {};
+            // Extract data from API response
+            const networkSettings = data.data || {};
             
-            // Update network data with tenant structure
+            // Update network data structure
             this.networkData = {
               ...this.networkData,
               local_ip: networkSettings.default_ip || 'Unknown',
               public_ip: 'Not available', // Will be loaded separately if needed
               hostname: 'Unknown', // Will be loaded separately if needed
-              default_port: networkSettings.default_port || '8080',
-              tenant_id: data.tenant_id,
-              tenant_name: data.tenant_name,
-              tenant_color: data.tenant_color
+              default_port: networkSettings.default_port || '8080'
             };
             
-            // 🚨 CRITICAL FIX: Set NGROK settings from tenant config
+            // 🚨 CRITICAL FIX: Set NGROK settings from config
             this.ngrokSettings = {
               useNgrok: !!networkSettings.use_ngrok,
-              ngrokDomain: networkSettings.ngrok_url || computedUrls.ngrok_url || '',
-              issuerUrl: computedUrls.issuer_url || '',
-              verifierUrl: computedUrls.verifier_url || ''
+              ngrokDomain: networkSettings.ngrok_url || '',
+              issuerUrl: '', // Will be calculated
+              verifierUrl: '' // Will be calculated
             };
             
             // 🚨 CRITICAL FIX: Determine connection mode and set ngrokDomain
@@ -2239,9 +2234,8 @@ document.addEventListener('alpine:init', () => {
             console.log('🌐 Connection mode:', this.connectionMode);
             console.log('🌐 NGROK domain:', this.ngrokDomain);
             console.log('🌐 Server port:', this.serverPort);
-            console.log('🌐 Tenant:', data.tenant_id, data.tenant_name);
           } else {
-            console.error('🌐 Invalid tenant network data format:', data);
+            console.error('🌐 Invalid network data format:', data);
             // Set defaults on error
             this.connectionMode = 'local';
             this.serverPort = 8080;
@@ -2249,7 +2243,7 @@ document.addEventListener('alpine:init', () => {
           }
         })
         .catch(error => {
-          console.error('🌐 Error loading tenant network data:', error);
+          console.error('🌐 Error loading network data:', error);
           // Set defaults on error
           this.connectionMode = 'local';
           this.serverPort = 8080;
@@ -3357,7 +3351,7 @@ document.addEventListener('alpine:init', () => {
   // API Diagnostics Component
   Alpine.data('apiDiagnostics', () => ({
     // State
-    tenantConfig: {},
+    systemConfig: {},
     configLoading: false,
     configLastUpdated: null,
     showTestResults: false,
@@ -3366,15 +3360,15 @@ document.addEventListener('alpine:init', () => {
     // Initialize
     init() {
       console.log('🔌 API Diagnostics initialized');
-      this.refreshTenantConfig();
+      this.refreshSystemConfig();
     },
     
-    // Load tenant configuration
-    async refreshTenantConfig() {
+    // Load system configuration
+    async refreshSystemConfig() {
       this.configLoading = true;
       
       try {
-        const response = await fetch('/api/tenant/config', {
+        const response = await fetch('/api/system/network', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json'
@@ -3389,15 +3383,15 @@ document.addEventListener('alpine:init', () => {
         const data = await response.json();
         
         if (data.status === 'success' && data.config) {
-          this.tenantConfig = data.config;
+          this.systemConfig = data.config;
           this.configLastUpdated = new Date().toLocaleString();
-          console.log('🔌 Tenant config loaded:', this.tenantConfig);
+          console.log('🔌 System config loaded:', this.systemConfig);
         } else {
           throw new Error(data.message || 'Invalid response format');
         }
       } catch (error) {
-        console.error('🔌 Error loading tenant config:', error);
-        this.showNotification(`Failed to load tenant configuration: ${error.message}`, 'error');
+        console.error('🔌 Error loading system config:', error);
+        this.showNotification(`Failed to load system configuration: ${error.message}`, 'error');
       } finally {
         this.configLoading = false;
       }
@@ -3405,7 +3399,7 @@ document.addEventListener('alpine:init', () => {
     
     // Generate endpoint URL based on current configuration
     generateEndpointUrl(path) {
-      const baseUrl = this.tenantConfig.ngrok_url || this.tenantConfig.server_url || 'https://localhost:8080';
+      const baseUrl = this.systemConfig.ngrok_url || this.systemConfig.server_url || 'https://localhost:8080';
       return `${baseUrl}${path}`;
     },
     
