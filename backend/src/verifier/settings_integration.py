@@ -17,7 +17,7 @@ def get_current_selective_disclosure_settings():
     try:
         # Import inside function to avoid circular imports
         from src.models import TenantSettings
-        from src.tenants import get_current_tenant_id
+        from src.settings.disclosure import get_current_tenant_id
         from .constants import TECHNICAL_FIELDS
         
         # Start with mandatory technical fields (always required)
@@ -118,7 +118,7 @@ def update_selective_disclosure_settings(mandatory_fields):
         
         # Import inside function to avoid circular imports
         from src.models import TenantSettings
-        from src.tenants import get_current_tenant_id
+        from src.settings.disclosure import get_current_tenant_id
         from src import db
         
         # Filter to only include selectable user fields (no technical fields)

@@ -20,6 +20,11 @@ from ..core import get_current_tenant
 
 class DummyTenantConfig:
     tenant_id = 'tub'
+    name = 'Technical University of Berlin'
+    
+    def __init__(self):
+        self.tenant_id = 'tub'
+        self.name = 'Technical University of Berlin'
 
 def get_current_tenant_config():
     return DummyTenantConfig()
@@ -103,34 +108,66 @@ def validate_network_settings(data):
         # Settings UI might send minimal data (just NGROK URL) or complete data
         
         # Validate use_https (boolean) if present
-        if "use_https" in data and not isinstance(data.get("use_https"), bool):
-            return {"valid": False, "message": "use_https must be a boolean"}
+        if "use_https" in data:
+            val = data.get("use_https")
+            if isinstance(val, str):
+                data["use_https"] = val.lower() == 'true'
+            elif not isinstance(val, bool):
+                logger.warning(f"Validation failed: use_https is not boolean: {type(val)} {val}")
+                return {"valid": False, "message": "use_https must be a boolean"}
 
         # Validate auto_discovery (boolean) if present
-        if "auto_discovery" in data and not isinstance(data.get("auto_discovery"), bool):
-            return {"valid": False, "message": "auto_discovery must be a boolean"}
+        if "auto_discovery" in data:
+            val = data.get("auto_discovery")
+            if isinstance(val, str):
+                data["auto_discovery"] = val.lower() == 'true'
+            elif not isinstance(val, bool):
+                logger.warning(f"Validation failed: auto_discovery is not boolean: {type(val)}")
+                return {"valid": False, "message": "auto_discovery must be a boolean"}
 
         # Validate timeout (integer) if present
         if "timeout" in data:
             timeout = data.get("timeout")
+            if isinstance(timeout, str):
+                try:
+                    timeout = int(timeout)
+                    data["timeout"] = timeout
+                except ValueError:
+                    pass # Let next check fail
+            
             if not isinstance(timeout, int) or timeout < 1 or timeout > 120:
+                logger.warning(f"Validation failed: timeout invalid: {timeout}")
                 return {"valid": False, "message": "timeout must be an integer between 1 and 120"}
 
         # Validate use_ngrok (boolean) if present
-        if "use_ngrok" in data and not isinstance(data.get("use_ngrok"), bool):
-            return {"valid": False, "message": "use_ngrok must be a boolean"}
+        if "use_ngrok" in data:
+            val = data.get("use_ngrok")
+            if isinstance(val, str):
+                data["use_ngrok"] = val.lower() == 'true'
+            elif not isinstance(val, bool):
+                logger.warning(f"Validation failed: use_ngrok is not boolean: {type(val)}")
+                return {"valid": False, "message": "use_ngrok must be a boolean"}
 
         # Validate ngrok_domain if use_ngrok is True
         if data.get("use_ngrok") and "ngrok_domain" in data:
             ngrok_domain = data.get("ngrok_domain", "")
+
+            # 🚨 FIX: Cleanup input to handle copy-paste errors (trailing slashes)
+            if isinstance(ngrok_domain, str):
+                ngrok_domain = ngrok_domain.strip().rstrip('/')
+                data["ngrok_domain"] = ngrok_domain
+
             if not ngrok_domain:
+                logger.warning("Validation failed: ngrok_domain empty")
                 return {"valid": False, "message": "ngrok_domain is required when use_ngrok is true"}
 
             # Check that ngrok_domain is a valid hostname or URL
             try:
                 parsed_url = urlparse(ngrok_domain)
-                if parsed_url.scheme not in ['http', 'https'] and not ngrok_domain.endswith(('.ngrok.io', '.ngrok.app', '.ngrok-free.app')):
-                    return {"valid": False, "message": "Invalid ngrok_domain format, must be a valid URL or ngrok domain"}
+                # 🚨 FIX: Added .ngrok-free.dev to allowed domains list
+                if parsed_url.scheme not in ['http', 'https'] and not ngrok_domain.endswith(('.ngrok.io', '.ngrok.app', '.ngrok-free.app', '.ngrok-free.dev')):
+                     logger.warning(f"Validation failed: Invalid ngrok_domain: {ngrok_domain}")
+                     return {"valid": False, "message": "Invalid ngrok_domain format, must be a valid URL or ngrok domain"}
             except Exception:
                 return {"valid": False, "message": "Invalid ngrok_domain format"}
 
@@ -156,9 +193,11 @@ def validate_network_settings(data):
                 try:
                     port = int(port)
                 except ValueError:
+                    logger.warning(f"Validation failed: default_port not int parsable: {port}")
                     return {"valid": False, "message": "default_port must be a valid integer"}
             
             if not isinstance(port, int) or port < 1 or port > 65535:
+                logger.warning(f"Validation failed: default_port range: {port}")
                 return {"valid": False, "message": "default_port must be an integer between 1 and 65535"}
 
         # All validations passed
@@ -211,6 +250,27 @@ def api_network_settings():
                     data["default_port"] = int(data["default_port"])
                 except ValueError:
                     pass  # Let validation catch this
+            
+            # 🚨 FIX: Generate ngrok_url if missing so it can be picked up by get_current_server_url
+            if data.get("use_ngrok") and data.get("ngrok_domain"):
+                domain = data.get("ngrok_domain", "").strip()
+                if domain:
+                    # Determine scheme
+                    scheme = "https"
+                    if "use_https" in data:
+                        if isinstance(data["use_https"], str):
+                            is_https = data["use_https"].lower() == 'true'
+                        else:
+                            is_https = bool(data["use_https"])
+                        scheme = "https" if is_https else "http"
+                    
+                    # Construct URL
+                    if not domain.startswith("http"):
+                        data["ngrok_url"] = f"{scheme}://{domain}"
+                    elif data.get("ngrok_url") is None: # Only set if header doesn't have it (though UI sends domain)
+                         # If domain has scheme, use it as url
+                        data["ngrok_url"] = domain
+                        # clean domain for storage if checks pass? No, maintain separation usually better but let's stick to generating url.
             
             merged_settings = {**existing_settings, **data}  # New data overrides existing
             
@@ -286,6 +346,25 @@ def update_network_config():
                 data["default_port"] = int(data["default_port"])
             except ValueError:
                 pass  # Let validation catch this
+
+        # 🚨 FIX: Generate ngrok_url if missing so it can be picked up by get_current_server_url
+        if data.get("use_ngrok") and data.get("ngrok_domain"):
+            domain = data.get("ngrok_domain", "").strip()
+            if domain:
+                # Determine scheme
+                scheme = "https"
+                if "use_https" in data:
+                    if isinstance(data["use_https"], str):
+                        is_https = data["use_https"].lower() == 'true'
+                    else:
+                        is_https = bool(data["use_https"])
+                    scheme = "https" if is_https else "http"
+                
+                # Construct URL
+                if not domain.startswith("http"):
+                    data["ngrok_url"] = f"{scheme}://{domain}"
+                elif data.get("ngrok_url") is None: 
+                    data["ngrok_url"] = domain
         
         merged_settings = {**existing_settings, **data}  # New data overrides existing
         
@@ -367,6 +446,11 @@ def update_flask_server_url(ngrok_domain, default_ip, default_port, use_https=Tr
 # Register routes with blueprint
 def register_routes(blueprint):
     """Register routes with the provided blueprint"""
+    @blueprint.route("/api/network", methods=["GET", "POST"])
+    def bp_api_network_alias():
+        """Alias for network settings API endpoint"""
+        return api_network_settings()
+
     @blueprint.route("/settings/api/network", methods=["GET", "POST"])
     def bp_api_network():
         """Main network settings API endpoint that frontend expects"""

@@ -75,10 +75,11 @@ def get_current_server_url():
         # Try to get tenant information with Flask context
         try:
             # Get current tenant
+            # 🚨 FIX: Force 'tub' as default tenant for single-tenant mode if no other tenant is specified
+            env_tenant = os.environ.get('RUNTIME_TENANT') or os.environ.get('TENANT_ID', '').lower()
             tenant_id = (current_app.config.get('CURRENT_TENANT') or 
-                         os.environ.get('RUNTIME_TENANT') or 
-                         os.environ.get('TENANT_ID', '').lower() or 
-                         'root')
+                         env_tenant or 
+                         'tub') # Changed default from 'root' to 'tub'
             
             logger.info(f"🔍 Getting server URL for tenant: {tenant_id}")
             

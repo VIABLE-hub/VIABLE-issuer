@@ -1,5 +1,6 @@
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.backends import default_backend
 import os
 from flask import current_app as app
 import logging
