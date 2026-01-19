@@ -32,91 +32,44 @@
 
 ```bash
 # 1. Clone repository
-cd /path/to/studentvc_backups/stvc_latest
+cd /path/to/studentvc/
 
 # 2. Setup virtual environment (if not exists)
 make setup
 
-# 3. Start development servers
-make dev-all
+# 3. Start development server
+make dev
 ```
 
 ---
 
 ## 🎯 Makefile Commands Explained
 
-### `make dev` (DEFAULT - NOT RECOMMENDED)
-
-**⚠️ DEPRECATED - Use `make dev-all` instead**
-
-- Starts ONLY ONE tenant (historically root)
-- Port: 8080
-- **NOT suitable for multi-tenant testing**
-
-### `make dev-all` ✅ **RECOMMENDED**
+### `make dev` ✅ **RECOMMENDED**
 
 **What it does:**
-- Starts ALL 4 tenants simultaneously
-- Each tenant runs on separate port
-- Background processes with logging
-
-**Ports:**
-```
-Veritas:  https://localhost:8080  (Port 8080)
-TUB:      https://localhost:8081  (Port 8081)
-FUB:      https://localhost:8082  (Port 8082)
-Root:     https://localhost:8083  (Port 8083)
-```
+- Starts the server
+- Port: 8080
+- Runs with debug mode enabled (if environment supports it)
 
 **Command:**
 ```bash
-make dev-all
+make dev
 ```
 
 **What happens:**
-1. Checks for existing servers and stops them
-2. Starts each tenant as background process
-3. Creates PID files in `logs/*.pid`
-4. Logs to `logs/*.log`
+1. Checks for existing server instances
+2. Starts Python process: `python main.py`
 
-**Process:**
-```
-scripts/start-all-tenants.sh
-    ↓
-Starts 4 separate Python processes:
-    1. TENANT_ID=veritas SERVER_PORT=8080 python main.py &
-    2. TENANT_ID=tub SERVER_PORT=8081 python main.py &
-    3. TENANT_ID=fub SERVER_PORT=8082 python main.py &
-    4. TENANT_ID=root SERVER_PORT=8083 python main.py &
-```
-
-### `make dev-veritas` / `make dev-tub` / `make dev-fub` / `make dev-root`
+### `make stop`
 
 **What it does:**
-- Starts SINGLE tenant in foreground
-- Useful for debugging specific tenant
-
-**Example:**
-```bash
-# Start only Veritas tenant
-make dev-veritas
-# Runs: TENANT_ID=veritas SERVER_PORT=8080 python main.py
-
-# Start only TUB tenant
-make dev-tub
-# Runs: TENANT_ID=tub SERVER_PORT=8081 python main.py
-```
-
-### `make stop-all`
-
-**What it does:**
-- Stops all running tenant servers
-- Kills processes on ports 8080-8083
-- Removes PID files
+- Stops the running server
+- Kills processes on port 8080
 
 **Command:**
 ```bash
-make stop-all
+make stop
 ```
 
 ---
@@ -130,7 +83,7 @@ The system uses this priority order for server URLs:
 ```
 1. EXTERNAL_SERVER_URL (production)
    ↓ (if not set)
-2. Tenant NGROK URL (development/testing)
+2. System NGROK URL (development/testing)
    ↓ (if not set)
 3. Local IP (fallback)
 ```
@@ -149,7 +102,7 @@ The system uses this priority order for server URLs:
 1. **Start ngrok manually:**
    ```bash
    # In separate terminal
-   ngrok http https://192.168.178.172:8080 --host-header=rewrite
+   ngrok http https://127.0.0.1:8080 --host-header=rewrite
    ```
 
 2. **Copy the ngrok URL:**
@@ -158,8 +111,7 @@ The system uses this priority order for server URLs:
    ```
 
 3. **Configure in StudentVC:**
-   - Open: `https://localhost:8080/veritas/login`
-   - Login with credentials
+   - Open: `https://localhost:8080/settings`
    - Navigate to: **Settings → Network**
    - Enter ngrok domain: `abc123def456.ngrok-free.app`
    - Click "Save Network Settings"
@@ -188,16 +140,16 @@ Then configure the URL in Settings UI as above.
 ```bash
 # Set before starting server
 export NGROK_URL=https://your-ngrok-url.ngrok-free.app
-make dev-all
+make dev
 ```
 
 ### **Ngrok Storage Location**
 
-Ngrok URLs are stored **per tenant** in database:
+Ngrok URL is stored in the system database:
 
 ```
-Database: backend/src/tenants/instances/{tenant}/database.db
-Table: tenant_settings
+Database: backend/instance/database.db
+Table: system_settings
 Column: network_settings
 JSON: { "use_ngrok": true, "ngrok_url": "https://..." }
 ```
@@ -223,14 +175,14 @@ curl -k https://localhost:8080/api/network/status | jq
 ### **Scenario 1: Testing on Same WiFi**
 
 ```bash
-# 1. Start all tenants
-make dev-all
+# 1. Start server
+make dev
 
 # 2. Find your local IP
 ifconfig | grep "inet " | grep -v 127.0.0.1
 
 # 3. Open on mobile device (same WiFi)
-https://192.168.178.156:8080/veritas/issuer
+https://192.168.178.156:8080/issuer
 ```
 
 **No ngrok needed!**
@@ -241,28 +193,15 @@ https://192.168.178.156:8080/veritas/issuer
 # 1. Start ngrok
 ngrok http 8080
 
-# 2. Start all tenants
-make dev-all
+# 2. Start server
+make dev
 
 # 3. Configure ngrok URL in Settings UI
-# Navigate to: https://localhost:8080/veritas/settings
+# Navigate to: https://localhost:8080/settings
 # Enter ngrok domain in Network section
 
 # 4. Use from anywhere
-https://abc123.ngrok-free.app/veritas/issuer
-```
-
-### **Scenario 3: Debugging Single Tenant**
-
-```bash
-# Stop all servers
-make stop-all
-
-# Start only one tenant in foreground
-make dev-veritas
-
-# See all logs in real-time
-# Press Ctrl+C to stop
+https://abc123.ngrok-free.app/issuer
 ```
 
 ---
@@ -301,14 +240,11 @@ source test_env/bin/activate
 pip install -r backend/requirements.txt
 
 # 4. Configure systemd services
-# Create: /etc/systemd/system/studentvc-{tenant}.service
-# See: deploy/configs/systemd/*.service
+# Create: /etc/systemd/system/studentvc.service
+# See: deploy/configs/systemd/studentvc.service
 
 # 5. Start services
-sudo systemctl start studentvc-veritas
-sudo systemctl start studentvc-tub
-sudo systemctl start studentvc-fub
-sudo systemctl start studentvc-root
+sudo systemctl start studentvc
 
 # 6. Configure Nginx reverse proxy
 # Copy: deploy/configs/nginx/studentvc.conf
@@ -328,7 +264,6 @@ USE_EXTERNAL_URL=true
 # Optional
 DOCKER_MODE=true              # If using Docker
 SERVER_PORT=8080              # Default port
-TENANT_ID=veritas             # Tenant to run
 ```
 
 ---
@@ -343,10 +278,10 @@ def get_current_server_url():
     if os.environ.get('USE_EXTERNAL_URL') == 'true':
         return os.environ.get('EXTERNAL_SERVER_URL')
     
-    # Priority 2: Tenant NGROK URL (development)
-    tenant_settings = TenantSettings.get_or_create_default(tenant_id)
-    if tenant_settings.network_settings.get('use_ngrok'):
-        return tenant_settings.network_settings['ngrok_url']
+    # Priority 2: System NGROK URL (development)
+    system_settings = SystemSettings.get_or_create_default()
+    if system_settings.network_settings.get('use_ngrok'):
+        return system_settings.network_settings['ngrok_url']
     
     # Priority 3: Local IP (fallback)
     return f"https://{get_local_ip()}:{port}"
@@ -373,8 +308,8 @@ def get_current_server_url():
 
 ### **Development Testing:**
 
-- [ ] All tenants start: `make dev-all`
-- [ ] Can access each tenant URL
+- [ ] Server starts: `make dev`
+- [ ] Can access server URL
 - [ ] Settings page loads
 - [ ] Can configure ngrok URL
 - [ ] QR codes generate correctly
@@ -397,11 +332,11 @@ def get_current_server_url():
 # Check what's using the port
 lsof -i :8080
 
-# Stop all servers
-make stop-all
+# Stop server
+make stop
 
 # Restart
-make dev-all
+make dev
 ```
 
 ### **Problem: "Ngrok URL not working"**
@@ -423,32 +358,23 @@ curl -k https://localhost:8080/api/network/status | jq
 # 1. Check database
 python3 scripts/check_selective_disclosure_db.py
 
-# 2. Restart servers
-make stop-all
-make dev-all
+# 2. Restart server
+make stop
+make dev
 
 # 3. Check logs
-tail -f logs/veritas.log | grep "SELECTIVE DISCLOSURE"
-```
-
-### **Problem: "Import error: get_current_tenant_id"**
-
-```bash
-# Fixed in: backend/src/tenants/__init__.py
-# Restart servers to apply fix
-make stop-all
-make dev-all
+tail -f logs/service.log | grep "SELECTIVE DISCLOSURE"
 ```
 
 ---
 
 ## 📊 Server Status Check
 
-### **Check Running Servers:**
+### **Check Running Server:**
 
 ```bash
-# List all processes
-lsof -i :8080 -i :8081 -i :8082 -i :8083 | grep LISTEN
+# List process
+lsof -i :8080 | grep LISTEN
 
 # Check logs
 tail -f logs/*.log
@@ -471,9 +397,8 @@ curl -k https://localhost:8080/api/network/status
 ### **Start Development:**
 
 ```bash
-make dev-all              # Start all tenants
-make dev-veritas          # Start single tenant
-make stop-all             # Stop all tenants
+make dev              # Start server
+make stop             # Stop server
 ```
 
 ### **Configure Ngrok:**
@@ -487,19 +412,16 @@ ngrok http 8080           # Start ngrok
 
 ```bash
 lsof -i :8080             # Check port
-tail -f logs/veritas.log  # Watch logs
+tail -f logs/service.log  # Watch logs
 python3 scripts/check_selective_disclosure_db.py  # Check DB
 ```
 
 ### **Access URLs:**
 
 ```
-Local:   https://localhost:8080/veritas/
-         https://localhost:8081/tub/
-         https://localhost:8082/fub/
-         https://localhost:8083/root/
+Local:   https://localhost:8080/
 
-Mobile:  https://your-ngrok.ngrok-free.app/veritas/
+Mobile:  https://your-ngrok.ngrok-free.app/
 ```
 
 ---
@@ -508,9 +430,9 @@ Mobile:  https://your-ngrok.ngrok-free.app/veritas/
 
 ### **To Run Development Environment:**
 
-1. **Start all servers:**
+1. **Start server:**
    ```bash
-   make dev-all
+   make dev
    ```
 
 2. **For local testing (same WiFi):**
@@ -528,7 +450,7 @@ Mobile:  https://your-ngrok.ngrok-free.app/veritas/
 
 4. **To stop:**
    ```bash
-   make stop-all
+   make stop
    ```
 
 ### **Ngrok is NOT Default:**
@@ -543,7 +465,6 @@ Mobile:  https://your-ngrok.ngrok-free.app/veritas/
 
 ---
 
-**Last Updated:** 2025-11-09  
-**Version:** 2.0  
+**Last Updated:** 2026-01-19  
+**Version:** 3.0  
 **Status:** ✅ Production Ready
-

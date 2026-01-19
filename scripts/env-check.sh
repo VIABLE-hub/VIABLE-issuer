@@ -110,9 +110,6 @@ check_env_var "NGROK_URL" "false"
 echo ""
 
 # Tenant Configuration
-echo -e "${BLUE}--- Tenant Configuration ---${NC}"
-check_env_var "TENANT_ID" "true"
-check_env_var "MULTI_TENANT_ENABLED" "false"
 echo ""
 
 # Authentication

@@ -3,14 +3,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-src/tenants/instances/fub/database.db
-src/tenants/instances/root/database.db
-#src/tenants/instances/tub/database.db
-src/tenants/instances/veritas/database.db
-src/tenants/instances/fub/keys/*
-src/tenants/instances/root/keys/*
-src/tenants/instances/tub/keys/*
-src/tenants/instances/veritas/keys/*
 
 # C extensions
 *.so

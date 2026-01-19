@@ -233,7 +233,7 @@ def create_app():
         if 'csrf_token' not in session:
             session['csrf_token'] = secrets.token_hex(16)
     
-    # Make csrf_token and tenant info accessible in templates
+    # Make csrf_token and system info accessible in templates
     @app.context_processor
     def inject_csrf_token():
         from flask import session
@@ -298,8 +298,8 @@ def create_app():
         write_rate_limit = dummy_decorator
         read_rate_limit = dummy_decorator
     
-    # Initialize single tenant system 
-    logger.info("Single-tenant system initialized successfully")
+    # Initialize system 
+    logger.info("System initialized successfully")
 
     # Register all blueprints using centralized function
     register_blueprints(app)
