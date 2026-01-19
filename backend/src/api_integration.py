@@ -13,8 +13,9 @@ import datetime
 import traceback
 from uuid import uuid4
 from . import db
-from .models import APIKey, AuditLog, VC_validity, VC_Offer, TenantSettings
-from .settings.settings import get_current_tenant, get_current_user_email
+from .models import APIKey, AuditLog, VC_validity, VC_Offer, SystemSettings
+from .settings.settings import get_current_user_email
+# from .settings.settings import get_current_tenant
 from .settings.api import API_KEYS
 
 # Create blueprint for API integration
@@ -121,7 +122,7 @@ def require_api_key(required_scope=None):
 def list_api_keys():
     """List all API keys for current tenant"""
     try:
-        tenant_id = get_current_tenant()
+        tenant_id = "default"
         api_keys = APIKey.query.filter_by(tenant_id=tenant_id).order_by(APIKey.created_at.desc()).all()
         
         return jsonify({

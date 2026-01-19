@@ -5,8 +5,8 @@ import os
 import datetime
 from werkzeug.utils import secure_filename
 from ... import db
-from ...models import TenantSettings
-from ..core import get_current_tenant
+from ...models import SystemSettings
+# from ..core import get_current_tenant
 from . import utils as db_utils
 
 logger = logging.getLogger(__name__)

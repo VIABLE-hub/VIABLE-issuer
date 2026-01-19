@@ -5,7 +5,7 @@ import time
 import re
 from urllib.parse import urlparse
 import json
-from ...models import TenantSettings
+from ...models import SystemSettings
 from .. import utils as common_utils
 
 logger = logging.getLogger(__name__)
@@ -106,14 +106,14 @@ def update_flask_server_url(ngrok_domain, default_ip, default_port, use_https=Tr
         # Return a default URL as fallback
         return f"{'https' if use_https else 'http'}://localhost:{default_port}"
 
-def get_network_config(tenant_id):
-    """Get network configuration for a tenant"""
+def get_network_config(tenant_id=None):
+    """Get network configuration"""
     try:
-        # Get tenant settings
-        tenant_settings = TenantSettings.get_or_create_default(tenant_id)
+        # Get system settings
+        system_settings = SystemSettings.get_or_create_default()
         
         # Get network settings
-        network_settings = tenant_settings.network_settings or {}
+        network_settings = system_settings.network_settings or {}
         
         # Extract network config
         network_config = network_settings.get("network", {})

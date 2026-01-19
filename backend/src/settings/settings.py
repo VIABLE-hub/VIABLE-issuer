@@ -11,8 +11,8 @@ import time
 import psutil
 import os
 from .. import db
-from ..models import TenantSettings
-from .core import settings, get_current_tenant, create_settings_backup, initialize_verifier_from_database
+from ..models import SystemSettings
+from .core import settings, create_settings_backup, initialize_verifier_from_database
 from . import utils
 
 logger = logging.getLogger(__name__)
@@ -25,12 +25,11 @@ APP_START_TIME = time.time()
 @settings.route("/settings/api/disclosure", methods=["GET", "POST"])
 def api_disclosure_settings():
     """API endpoint for selective disclosure settings"""
-    tenant_id = get_current_tenant()
-    tenant_settings = TenantSettings.get_or_create_default(tenant_id)
+    system_settings = SystemSettings.get_or_create_default()
     
     if request.method == "GET":
         # Return current settings
-        disclosure_settings = tenant_settings.disclosure_settings or {"selective_disclosure": {"mandatory_fields": []}}
+        disclosure_settings = system_settings.disclosure_settings or {"selective_disclosure": {"mandatory_fields": []}}
         return jsonify({"status": "success", "data": disclosure_settings})
     
     elif request.method == "POST":
@@ -44,10 +43,10 @@ def api_disclosure_settings():
                 return jsonify({"status": "error", "message": message}), 400
             
             # Create backup
-            create_settings_backup(tenant_id, "auto", "Before disclosure settings update")
+            create_settings_backup("auto", "Before disclosure settings update")
             
             # Update settings
-            tenant_settings.disclosure_settings = data
+            system_settings.disclosure_settings = data
             db.session.commit()
             
             # Update verifier
@@ -64,10 +63,9 @@ def save_settings():
     """Legacy route for saving settings"""
     try:
         data = request.json
-        tenant_id = get_current_tenant()
         
         # Create backup
-        create_settings_backup(tenant_id, "manual", "Settings update via legacy route")
+        create_settings_backup("manual", "Settings update via legacy route")
         
         # Process the settings update
         # This is a simplified version - specific modules handle their own settings

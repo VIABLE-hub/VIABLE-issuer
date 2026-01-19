@@ -2,10 +2,8 @@ from flask import request, jsonify, render_template
 import logging
 import json
 from .. import db
-from ..models import TenantSettings
+from ..models import SystemSettings
 from .core import create_settings_backup
-# from ..tenants import get_current_tenant as get_current_tenant_id
-def get_current_tenant_id(): return 'tub'
 
 logger = logging.getLogger(__name__)
 
@@ -42,17 +40,11 @@ def validate_disclosure_settings(data):
 
 def api_disclosure_settings():
     """API endpoint for selective disclosure settings"""
-    # Get tenant ID string
-    tenant_id = get_current_tenant_id()
-    if not tenant_id:
-        logger.error("Could not get current tenant")
-        return jsonify({"status": "error", "message": "Could not determine tenant"}), 500
-    
-    tenant_settings = TenantSettings.get_or_create_default(tenant_id)
+    system_settings = SystemSettings.get_or_create_default()
     
     if request.method == "GET":
         # Return current settings
-        disclosure_settings = tenant_settings.disclosure_settings or {"selective_disclosure": {"mandatory_fields": []}}
+        disclosure_settings = system_settings.disclosure_settings or {"selective_disclosure": {"mandatory_fields": []}}
         return jsonify({"status": "success", "data": disclosure_settings})
     
     elif request.method == "POST":
@@ -65,10 +57,10 @@ def api_disclosure_settings():
                 return jsonify({"status": "error", "message": message}), 400
             
             # Create backup
-            create_settings_backup(tenant_id, "auto", "Before disclosure settings update")
+            create_settings_backup("auto", "Before disclosure settings update")
             
             # Update settings
-            tenant_settings.disclosure_settings = data
+            system_settings.disclosure_settings = data
             db.session.commit()
             
             # Update verifier
@@ -88,18 +80,11 @@ def register_routes(blueprint):
     @blueprint.route("/settings/selective-disclosure", methods=["GET"])
     def disclosure_selective_disclosure_get():
         """Get current selective disclosure settings"""
-        # Get tenant ID string
-        tenant_id = get_current_tenant_id()
-        if not tenant_id:
-            logger.error("Could not get current tenant")
-            return jsonify({"status": "error", "message": "Could not determine tenant"}), 500
-        
-        # Now use the tenant_id string
-        tenant_settings = TenantSettings.get_or_create_default(tenant_id)
+        system_settings = SystemSettings.get_or_create_default()
         
         try:
             # Get current settings - return only user-selected fields, not technical fields
-            disclosure_settings = tenant_settings.disclosure_settings or {}
+            disclosure_settings = system_settings.disclosure_settings or {}
             selective_disclosure = disclosure_settings.get("selective_disclosure", {})
             stored_fields = selective_disclosure.get("mandatory_fields", [])
             
@@ -136,16 +121,10 @@ def register_routes(blueprint):
     def disclosure_selective_disclosure_post():
         """Update selective disclosure settings"""
         try:
-            # Get tenant ID string
-            tenant_id = get_current_tenant_id()
-            if not tenant_id:
-                logger.error("Could not get current tenant")
-                return jsonify({"status": "error", "message": "Could not determine tenant"}), 500
+            logger.info(f"POST selective disclosure")
             
-            logger.info(f"POST selective disclosure - tenant_id: {tenant_id}")
-            
-            tenant_settings = TenantSettings.get_or_create_default(tenant_id)
-            logger.info(f"POST selective disclosure - tenant_settings created/retrieved: {tenant_settings}")
+            system_settings = SystemSettings.get_or_create_default()
+            logger.info(f"POST selective disclosure - system_settings created/retrieved: {system_settings}")
             
             data = request.json
             logger.info(f"POST selective disclosure - received data: {data}")
@@ -193,16 +172,16 @@ def register_routes(blueprint):
             logger.info(f"POST selective disclosure - received: {selected_fields}, storing: {mandatory_fields}")
             
             # Create or update the disclosure settings
-            disclosure_settings = tenant_settings.disclosure_settings or {}
+            disclosure_settings = system_settings.disclosure_settings or {}
             if "selective_disclosure" not in disclosure_settings:
                 disclosure_settings["selective_disclosure"] = {}
             
             disclosure_settings["selective_disclosure"]["mandatory_fields"] = mandatory_fields
             
             # Save the settings - CRITICAL: Use flag_modified for JSON columns
-            tenant_settings.disclosure_settings = disclosure_settings
+            system_settings.disclosure_settings = disclosure_settings
             from sqlalchemy.orm.attributes import flag_modified
-            flag_modified(tenant_settings, 'disclosure_settings')
+            flag_modified(system_settings, 'disclosure_settings')
             logger.info(f"POST selective disclosure - updated disclosure_settings: {disclosure_settings}")
             
             # Commit to database
@@ -300,17 +279,12 @@ def register_routes(blueprint):
     @blueprint.route("/settings/selective-disclosure/debug", methods=["GET"])
     def disclosure_debug_selective_disclosure():
         """Debug endpoint for selective disclosure settings"""
-        # Get tenant ID string
-        tenant_id = get_current_tenant_id()
-        if not tenant_id:
-            logger.error("Could not get current tenant")
-            return jsonify({"status": "error", "message": "Could not determine tenant"}), 500
         
-        tenant_settings = TenantSettings.get_or_create_default(tenant_id)
+        system_settings = SystemSettings.get_or_create_default()
         
         try:
             # Get current settings
-            disclosure_settings = tenant_settings.disclosure_settings or {}
+            disclosure_settings = system_settings.disclosure_settings or {}
             
             # Get verifier settings
             from src.verifier import verifier as verifier_module

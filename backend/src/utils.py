@@ -5,7 +5,7 @@ allowed_list = script
 def valid_user_rerout(input) -> bool:
     return input in allowed_list
 
-from src.models import TenantSettings
+from src.models import SystemSettings
 from flask import current_app
 import socket
 import logging
@@ -72,26 +72,19 @@ def get_current_server_url():
             logger.info(f"🌍 Using EXTERNAL_SERVER_URL for production: {external_url}")
             return external_url.rstrip('/')
         
-        # Try to get tenant information with Flask context
+        # Try to get system information with Flask context
         try:
-            # Get current tenant
-            # 🚨 FIX: Force 'tub' as default tenant for single-tenant mode if no other tenant is specified
-            env_tenant = os.environ.get('RUNTIME_TENANT') or os.environ.get('TENANT_ID', '').lower()
-            tenant_id = (current_app.config.get('CURRENT_TENANT') or 
-                         env_tenant or 
-                         'tub') # Changed default from 'root' to 'tub'
+            logger.info("🔍 Getting server URL for system")
             
-            logger.info(f"🔍 Getting server URL for tenant: {tenant_id}")
-            
-            # Get tenant settings from database
-            tenant_settings = TenantSettings.get_or_create_default(tenant_id)
-            network_settings = tenant_settings.network_settings or {}
+            # Get system settings from database
+            system_settings = SystemSettings.get_or_create_default()
+            network_settings = system_settings.network_settings or {}
             
             # Check if NGROK is enabled and URL is configured
             if network_settings.get('use_ngrok') and network_settings.get('ngrok_url'):
                 ngrok_url = network_settings['ngrok_url'].strip()
                 if ngrok_url:
-                    logger.info(f"🌐 Using NGROK URL from tenant settings: {ngrok_url}")
+                    logger.info(f"🌐 Using NGROK URL from system settings: {ngrok_url}")
                     return ngrok_url.rstrip('/')
             
             # Check Flask config for SERVER_URL

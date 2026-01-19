@@ -6,8 +6,7 @@ import logging
 from urllib.parse import urlparse
 import json
 
-from ..core import get_current_tenant
-from ...models import TenantSettings
+from ...models import SystemSettings
 from .config import get_local_ip, get_public_ip, get_network_information
 
 # Initialize logger for diagnostics module
@@ -80,9 +79,8 @@ def api_test_connection():
     try:
         if request.method == "GET":
             # Get the URLs to test
-            tenant_id = get_current_tenant()
-            tenant_settings = TenantSettings.get_or_create_default(tenant_id)
-            network_settings = tenant_settings.network_settings or {}
+            system_settings = SystemSettings.get_or_create_default()
+            network_settings = system_settings.network_settings or {}
             
             # Get server URL
             server_url = current_app.config.get('SERVER_URL', 'https://localhost:8080')
@@ -119,7 +117,6 @@ def api_test_connection():
             
             # If no URLs provided, use default test URLs
             if not urls:
-                tenant_id = get_current_tenant()
                 server_url = current_app.config.get('SERVER_URL', 'https://localhost:8080')
                 urls = {
                     "issuer": f"{server_url}/issuer",

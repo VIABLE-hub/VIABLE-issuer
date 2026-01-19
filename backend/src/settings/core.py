@@ -4,7 +4,7 @@ import json
 import logging
 import time
 from .. import db
-from ..models import TenantSettings, TenantSettingsBackup, VC_validity
+from ..models import SystemSettings, SystemSettingsBackup, VC_validity
 from sqlalchemy.orm.attributes import flag_modified
 import traceback
 
@@ -85,21 +85,13 @@ def initialize_verifier_from_database():
         logger.error(f"Error initializing verifier from database: {e}")
         return False
 
-def get_current_tenant():
-    """Get current tenant object (Always tub)"""
-    tenant_id = 'tub'
-    
-    # Get or create tenant object
+def get_system_settings():
+    """Get system settings object"""
     try:
-        tenant = TenantSettings.query.filter_by(tenant_id=tenant_id).first()
-        if not tenant:
-            # Create default tenant if it doesn't exist
-            tenant = TenantSettings(tenant_id=tenant_id)
-            db.session.add(tenant)
-            db.session.commit()
-        return tenant
+        settings = SystemSettings.get_or_create_default()
+        return settings
     except Exception as e:
-        logger.error(f"Error getting tenant {tenant_id}: {e}")
+        logger.error(f"Error getting system settings: {e}")
         return None
 
 def get_current_user_email():
@@ -108,14 +100,13 @@ def get_current_user_email():
         return current_user.email
     return 'system@example.com'
 
-def create_settings_backup(tenant_id, backup_type='manual', notes=None):
+def create_settings_backup(backup_type='manual', notes=None):
     """Create a backup of the current settings"""
     try:
-        tenant_settings = TenantSettings.query.filter_by(tenant_id=tenant_id).first()
-        if tenant_settings:
-            backup = TenantSettingsBackup(
-                tenant_id=tenant_id,
-                settings_json=tenant_settings.to_json(),
+        system_settings = SystemSettings.get_or_create_default()
+        if system_settings:
+            backup = SystemSettingsBackup(
+                backup_data=system_settings.get_all_settings(),
                 backup_type=backup_type,
                 notes=notes
             )

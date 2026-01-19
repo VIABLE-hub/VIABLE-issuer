@@ -75,7 +75,7 @@ All blueprints are registered in `backend/src/__init__.py` via the `register_blu
 - `settings/network/` - Network configuration
 - `settings/health/` - Health checks
 - `settings/database/` - Database management
-- `settings/tenant_config.py` - Tenant configuration
+
 
 ---
 
@@ -94,9 +94,9 @@ All blueprints are registered in `backend/src/__init__.py` via the `register_blu
 
 | Component | Prefix | File | Routes | Description |
 |-----------|--------|------|--------|-------------|
-| `network_api` | `/api/settings/network/*` | `settings/network_api.py` | 6 | Network API (dynamic) |
+| - | - | - | - | (None currently) |
 
-**Note:** Network API uses dynamic registration via `register_network_api(app)` function.
+**Note:** Network API is now integrated into the `settings` blueprint.
 
 ---
 

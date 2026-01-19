@@ -8,8 +8,13 @@ import secrets
 from pathlib import Path
 from cryptography.hazmat.primitives import serialization
 from .. import db
-from ..models import TenantSettings, KeyRegistry, AuditLog
-from .core import get_current_tenant, get_current_user_email, create_settings_backup
+from ..models import SystemSettings, KeyRegistry, AuditLog
+from .core import create_settings_backup
+from sqlalchemy.orm.attributes import flag_modified
+
+# Legacy compatibility
+def get_current_user_email():
+    return "admin@localhost"
 from ..path_utils import get_instance_path
 
 logger = logging.getLogger(__name__)
@@ -118,8 +123,7 @@ def get_existing_keys():
                 "usage": "unknown",
                 "purpose": "Custom Generated Key",
                 "key_size": "Unknown",
-                "usage_count": 0,
-                "tenant": "tub"
+                "usage_count": 0
             })
     except Exception as e:
         logger.warning(f"Could not load API keys from registry: {e}")
@@ -458,45 +462,28 @@ def register_routes(blueprint):
     def api_selective_disclosure():
         """Get or save selective disclosure settings"""
         try:
+            system_settings = SystemSettings.get_or_create_default()
+            
             if request.method == "GET":
                 # Load existing settings
                 logger.info("📖 Loading selective disclosure settings")
                 
                 try:
-                    tenant = get_current_tenant()
-                    if tenant and tenant.disclosure_settings:
-                        # Read from the nested structure we now save to
-                        disclosure_data = tenant.disclosure_settings
-                        selected_fields = []
-                        
-                        if ('selective_disclosure' in disclosure_data and 
-                            'mandatory_fields' in disclosure_data['selective_disclosure']):
-                            selected_fields = disclosure_data['selective_disclosure']['mandatory_fields']
-                        
-                        # Convert from verifier format to frontend format
-                        settings = {
-                            "field_first_name": "firstName" in selected_fields,
-                            "field_last_name": "lastName" in selected_fields,
-                            "field_student_id": "studentId" in selected_fields,
-                            "field_student_id_prefix": "studentIdPrefix" in selected_fields
-                        }
-                        logger.info(f"✅ Loaded settings from database: {settings}")
-                        logger.info(f"✅ Selected fields from verifier format: {selected_fields}")
-                    else:
-                        # Fallback: try to read from file
-                        settings_file = get_instance_path('selective_disclosure_settings.json')
-                        if settings_file.exists():
-                            settings = json.loads(settings_file.read_text())
-                            logger.info(f"✅ Loaded settings from file: {settings}")
-                        else:
-                            # Default settings if nothing found - empty selection as user requested
-                            settings = {
-                                "field_first_name": False,
-                                "field_last_name": False,
-                                "field_student_id": False,
-                                "field_student_id_prefix": False
-                            }
-                            logger.info(f"✅ Using default settings (no fields selected): {settings}")
+                    disclosure_data = system_settings.disclosure_settings or {}
+                    selected_fields = []
+                    
+                    if ('selective_disclosure' in disclosure_data and 
+                        'mandatory_fields' in disclosure_data['selective_disclosure']):
+                        selected_fields = disclosure_data['selective_disclosure']['mandatory_fields']
+                    
+                    # Convert from verifier format to frontend format
+                    settings = {
+                        "field_first_name": "firstName" in selected_fields,
+                        "field_last_name": "lastName" in selected_fields,
+                        "field_student_id": "studentId" in selected_fields,
+                        "field_student_id_prefix": "studentIdPrefix" in selected_fields
+                    }
+                    logger.info(f"✅ Loaded settings from database: {settings}")
                 except Exception as load_error:
                     logger.warning(f"⚠️ Failed to load settings, using defaults: {load_error}")
                     settings = {
@@ -523,7 +510,7 @@ def register_routes(blueprint):
                 # Log the settings being saved
                 logger.info(f"💾 Saving selective disclosure settings: {data}")
                 
-                # Convert from frontend format to model format
+                 # Convert from frontend format to model format
                 frontend_settings = {
                     "field_first_name": data.get("field_first_name", True),
                     "field_last_name": data.get("field_last_name", True),
@@ -532,7 +519,6 @@ def register_routes(blueprint):
                 }
                 
                 # Convert to the format the verifier expects (nested structure)
-                # Only include fields that are selected (True)
                 selected_fields = []
                 field_mapping = {
                     "field_first_name": "firstName",
@@ -554,26 +540,16 @@ def register_routes(blueprint):
                 
                 # Implement actual database storage
                 try:
-                    tenant = get_current_tenant()
-                    if tenant:
-                        # Update the disclosure_settings field with verifier-compatible format
-                        tenant.update_settings('disclosure', verifier_format, updated_by=get_current_user_email())
-                        logger.info(f"✅ Selective disclosure settings saved to database for tenant: {tenant.tenant_id}")
-                        logger.info(f"✅ Saved selected fields: {selected_fields}")
-                        logger.info(f"✅ Saved in verifier format: {verifier_format}")
-                    else:
-                        # Fallback: save to a simple JSON file if no tenant system
-                        settings_file = get_instance_path('selective_disclosure_settings.json')
-                        settings_file.parent.mkdir(parents=True, exist_ok=True)
-                        settings_file.write_text(json.dumps(frontend_settings, indent=2))
-                        logger.info(f"✅ Selective disclosure settings saved to file: {settings_file}")
+                    system_settings.disclosure_settings = verifier_format
+                    system_settings.updated_by = get_current_user_email()
+                    flag_modified(system_settings, "disclosure_settings")
+                    db.session.commit()
+                    
+                    logger.info(f"✅ Selective disclosure settings saved to database")
+                    
                 except Exception as storage_error:
-                    logger.warning(f"⚠️ Database storage failed, using file fallback: {storage_error}")
-                    # Fallback to file storage
-                    settings_file = get_instance_path('selective_disclosure_settings.json')
-                    settings_file.parent.mkdir(parents=True, exist_ok=True)
-                    settings_file.write_text(json.dumps(frontend_settings, indent=2))
-                    logger.info(f"✅ Selective disclosure settings saved to fallback file: {settings_file}")
+                    logger.error(f"⚠️ Database storage failed: {storage_error}")
+                    return jsonify({"status": "error", "message": f"Database storage failed: {storage_error}"}), 500
                 
                 return jsonify({
                     "status": "success",

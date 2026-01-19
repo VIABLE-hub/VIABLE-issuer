@@ -14,20 +14,19 @@ from urllib.parse import urlparse
 from sqlalchemy.orm.attributes import flag_modified
 
 from ... import db
-from ...models import TenantSettings
-from ..core import get_current_tenant
-# from ...tenants.registry import get_current_tenant_config
+from ...models import SystemSettings
+# from ..core import get_current_tenant
 
-class DummyTenantConfig:
-    tenant_id = 'tub'
-    name = 'Technical University of Berlin'
+class SystemTenantConfig:
+    tenant_id = 'system'
+    name = 'System'
     
     def __init__(self):
-        self.tenant_id = 'tub'
-        self.name = 'Technical University of Berlin'
+        self.tenant_id = 'system'
+        self.name = 'System'
 
 def get_current_tenant_config():
-    return DummyTenantConfig()
+    return SystemTenantConfig()
 
 # Initialize logger for network module
 logger = logging.getLogger(__name__)
@@ -217,11 +216,11 @@ def api_network_settings():
         else:
             tenant_id = 'root'  # fallback to root tenant
             
-        tenant_settings = TenantSettings.get_or_create_default(tenant_id)
+        system_settings = SystemSettings.get_or_create_default()
         
         if request.method == "GET":
             # Return current network settings
-            network_settings = tenant_settings.network_settings or {}
+            network_settings = system_settings.network_settings or {}
             return jsonify({
                 "status": "success",
                 "data": network_settings
@@ -242,7 +241,7 @@ def api_network_settings():
             # create_settings_backup(tenant_id, backup_type='auto', notes='Auto backup before updating network settings')
             
             # 🚨 SMART MERGE: Merge new data with existing settings instead of replacing
-            existing_settings = tenant_settings.network_settings or {}
+            existing_settings = system_settings.network_settings or {}
             
             # Convert string ports to integers for consistency
             if "default_port" in data and isinstance(data["default_port"], str):
@@ -275,8 +274,8 @@ def api_network_settings():
             merged_settings = {**existing_settings, **data}  # New data overrides existing
             
             # Update settings using flag_modified for JSON columns
-            tenant_settings.network_settings = merged_settings
-            flag_modified(tenant_settings, 'network_settings')
+            system_settings.network_settings = merged_settings
+            flag_modified(system_settings, 'network_settings')
             db.session.commit()
             
             logger.info(f"✅ Updated network settings for tenant {tenant_id}: {data}")
@@ -301,8 +300,8 @@ def api_network_info():
         else:
             tenant_id = 'root'
             
-        tenant_settings = TenantSettings.get_or_create_default(tenant_id)
-        network_config = tenant_settings.network_settings or {}
+        system_settings = SystemSettings.get_or_create_default()
+        network_config = system_settings.network_settings or {}
         
         return jsonify({
             "network_info": network_info,
@@ -328,7 +327,7 @@ def update_network_config():
         else:
             tenant_id = 'root'
             
-        tenant_settings = TenantSettings.get_or_create_default(tenant_id)
+        system_settings = SystemSettings.get_or_create_default()
         
         validation_result = validate_network_settings(data)
         if not validation_result["valid"]:
@@ -338,7 +337,7 @@ def update_network_config():
         # create_settings_backup(tenant_id, backup_type='auto', notes='Auto backup before updating network configuration')
         
         # 🚨 SMART MERGE: Merge new data with existing settings instead of replacing
-        existing_settings = tenant_settings.network_settings or {}
+        existing_settings = system_settings.network_settings or {}
         
         # Convert string ports to integers for consistency
         if "default_port" in data and isinstance(data["default_port"], str):
@@ -369,8 +368,8 @@ def update_network_config():
         merged_settings = {**existing_settings, **data}  # New data overrides existing
         
         # Update settings using flag_modified for JSON columns
-        tenant_settings.network_settings = merged_settings
-        flag_modified(tenant_settings, 'network_settings')
+        system_settings.network_settings = merged_settings
+        flag_modified(system_settings, 'network_settings')
         db.session.commit()
         
         return jsonify({
@@ -478,8 +477,8 @@ def register_routes(blueprint):
                 logger.info("🌐 Network API - No tenant config found, using root")
                 
             # Get tenant settings
-            tenant_settings = TenantSettings.get_or_create_default(tenant_id)
-            network_settings = tenant_settings.network_settings or {}
+            system_settings = SystemSettings.get_or_create_default()
+            network_settings = system_settings.network_settings or {}
             
             # Get network information
             network_info = get_network_information()
@@ -567,8 +566,8 @@ def register_routes(blueprint):
                 tenant_id = 'root'
                 logger.warning("🔍 Network debug - No tenant config found, using root")
                 
-            tenant_settings = TenantSettings.get_or_create_default(tenant_id)
-            network_settings = tenant_settings.network_settings or {}
+            system_settings = SystemSettings.get_or_create_default()
+            network_settings = system_settings.network_settings or {}
             
             # Get Flask configuration
             flask_config = {

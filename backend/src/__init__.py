@@ -246,7 +246,6 @@ def create_app():
             'main_logo': Config.MAIN_LOGO_FILENAME,
             'tenant_color': Config.PRIMARY_COLOR.lstrip('#'),
             # Adding other potentially used variables
-            'current_tenant_id': 'tub', # Keep for compatibility if templates use it
         }
         
         return context
@@ -268,28 +267,6 @@ def create_app():
     @app.route('/favicon.ico')
     def favicon():
         return app.send_static_file('studentVC-logo-sora-cropped.png')
-    
-    # Route for tenant-specific static files
-    @app.route('/tenant-static/<path:filename>')
-    def tenant_static(filename):
-        """Serve tenant-specific static files"""
-        try:
-            from .tenants.registry import get_current_tenant_config
-            tenant_config = get_current_tenant_config()
-            
-            if tenant_config:
-                # Check if file exists in tenant static directory
-                tenant_file_path = os.path.join(tenant_config.static_path, filename)
-                if os.path.exists(tenant_file_path):
-                    return send_from_directory(tenant_config.static_path, filename)
-            
-            # Fallback to default static directory
-            return app.send_static_file(filename)
-            
-        except Exception as e:
-            logger.error(f"Error serving tenant static file {filename}: {e}")
-            # Fallback to default static directory
-            return app.send_static_file(filename)
     
     db.init_app(app)
     migrate.init_app(app, db)

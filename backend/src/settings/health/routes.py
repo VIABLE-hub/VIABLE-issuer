@@ -8,8 +8,8 @@ import datetime
 import os
 import sqlite3
 from ... import db
-from ...models import TenantSettings, VC_validity
-from ..core import get_current_tenant, APP_START_TIME
+from ...models import SystemSettings, VC_validity
+from ..core import APP_START_TIME
 from .. import utils as common_utils
 
 logger = logging.getLogger(__name__)
@@ -184,7 +184,7 @@ def get_database_health():
             try:
                 # Count rows in major tables
                 credential_count = VC_validity.query.count()
-                settings_count = TenantSettings.query.count()
+                settings_count = SystemSettings.query.count()
                 
                 # Rough estimate: 1KB per row
                 estimated_size = (credential_count + settings_count) * 1024

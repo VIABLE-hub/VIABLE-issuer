@@ -7,8 +7,7 @@ import socket
 import time
 
 from .. import settings
-from ..core import get_current_tenant
-from ...models import TenantSettings
+from ...models import SystemSettings
 from .config import get_local_ip, update_flask_server_url
 from .. import utils as settings_utils
 
@@ -118,18 +117,17 @@ def api_system_network_ngrok():
         except Exception:
             return jsonify({"status": "error", "message": "Invalid ngrok_domain format"}), 400
         
-        # Get tenant settings
-        tenant_id = get_current_tenant()
-        tenant_settings = TenantSettings.get_or_create_default(tenant_id)
+        # Get system settings
+        system_settings = SystemSettings.get_or_create_default()
         
         # Update network settings
-        network_settings = tenant_settings.network_settings or {}
+        network_settings = system_settings.network_settings or {}
         network_settings["use_ngrok"] = True
         network_settings["ngrok_domain"] = ngrok_domain
         network_settings["use_https"] = use_https
         
         # Save settings
-        tenant_settings.network_settings = network_settings
+        system_settings.network_settings = network_settings
         from ... import db
         db.session.commit()
         

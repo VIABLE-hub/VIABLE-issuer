@@ -16,35 +16,27 @@ def get_current_selective_disclosure_settings():
     """
     try:
         # Import inside function to avoid circular imports
-        from src.models import TenantSettings
-        from src.settings.disclosure import get_current_tenant_id
+        from src.models import SystemSettings
         from .constants import TECHNICAL_FIELDS
         
         # Start with mandatory technical fields (always required)
         mandatory_fields = TECHNICAL_FIELDS.copy()
         
-        # Get current tenant ID using the proper tenant detection system
-        tenant_id = get_current_tenant_id()
         logger.info("="*80)
         logger.info("🔍 STEP 1: get_current_selective_disclosure_settings() CALLED")
         logger.info("="*80)
-        logger.info(f"🏢 Current tenant_id: {tenant_id}")
         logger.info(f"📋 Starting with technical fields: {TECHNICAL_FIELDS}")
-        
-        if not tenant_id:
-            logger.warning("⚠️  No tenant ID detected, using technical fields only")
-            return mandatory_fields
             
-        # Get tenant settings for the detected tenant
-        tenant_settings = TenantSettings.get_or_create_default(tenant_id)
-        logger.info(f"📂 Tenant settings loaded for: {tenant_id}")
-        logger.info(f"📂 Disclosure settings structure: {tenant_settings.disclosure_settings}")
+        # Get settings
+        system_settings = SystemSettings.get_or_create_default()
+        logger.info(f"📂 System settings loaded")
+        logger.info(f"📂 Disclosure settings structure: {system_settings.disclosure_settings}")
         
-        if (tenant_settings.disclosure_settings and 
-            'selective_disclosure' in tenant_settings.disclosure_settings and
-            'mandatory_fields' in tenant_settings.disclosure_settings['selective_disclosure']):
+        if (system_settings.disclosure_settings and 
+            'selective_disclosure' in system_settings.disclosure_settings and
+            'mandatory_fields' in system_settings.disclosure_settings['selective_disclosure']):
             
-            stored_fields = tenant_settings.disclosure_settings['selective_disclosure']['mandatory_fields']
+            stored_fields = system_settings.disclosure_settings['selective_disclosure']['mandatory_fields']
             logger.info(f"✅ Found user-selected fields in database: {stored_fields}")
             logger.info(f"✅ Number of user-selected fields: {len(stored_fields)}")
             
@@ -117,8 +109,7 @@ def update_selective_disclosure_settings(mandatory_fields):
         logger.info(f"📥 Number of fields received: {len(mandatory_fields)}")
         
         # Import inside function to avoid circular imports
-        from src.models import TenantSettings
-        from src.settings.disclosure import get_current_tenant_id
+        from src.models import SystemSettings
         from src import db
         
         # Filter to only include selectable user fields (no technical fields)
@@ -149,33 +140,25 @@ def update_selective_disclosure_settings(mandatory_fields):
         logger.info(f"📤 Filtered fields to save: {filtered_fields}")
         logger.info(f"📤 Number of filtered fields: {len(filtered_fields)}")
         
-        # Get current tenant ID using the proper tenant detection system
-        tenant_id = get_current_tenant_id()
-        logger.info(f"🏢 Target tenant: {tenant_id}")
-        
-        if not tenant_id:
-            logger.error("❌ No tenant ID detected, cannot update settings")
-            return False
-            
-        # Get tenant settings for the detected tenant
-        tenant_settings = TenantSettings.get_or_create_default(tenant_id)
-        logger.info(f"📂 Loaded tenant settings for: {tenant_id}")
+        # Get settings
+        system_settings = SystemSettings.get_or_create_default()
+        logger.info(f"📂 Loaded system settings")
         
         # Initialize disclosure_settings if not exists
-        if not tenant_settings.disclosure_settings:
-            tenant_settings.disclosure_settings = {}
+        if not system_settings.disclosure_settings:
+            system_settings.disclosure_settings = {}
             logger.info("📝 Initialized empty disclosure_settings")
         
-        if 'selective_disclosure' not in tenant_settings.disclosure_settings:
-            tenant_settings.disclosure_settings['selective_disclosure'] = {}
+        if 'selective_disclosure' not in system_settings.disclosure_settings:
+            system_settings.disclosure_settings['selective_disclosure'] = {}
             logger.info("📝 Initialized empty selective_disclosure section")
         
         # Update the mandatory fields (only user-selectable fields)
-        tenant_settings.disclosure_settings['selective_disclosure']['mandatory_fields'] = filtered_fields
+        system_settings.disclosure_settings['selective_disclosure']['mandatory_fields'] = filtered_fields
         logger.info(f"💾 Set mandatory_fields to: {filtered_fields}")
         
         # Mark as modified for SQLAlchemy
-        tenant_settings.disclosure_settings = tenant_settings.disclosure_settings.copy()
+        system_settings.disclosure_settings = system_settings.disclosure_settings.copy()
         logger.info("🔄 Marked disclosure_settings as modified for SQLAlchemy")
         
         # Save to database

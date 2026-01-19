@@ -105,11 +105,11 @@ class VC_validity(db.Model):
         }
 
 
-class TenantSettings(db.Model):
-    __tablename__ = 'tenant_settings'
+class SystemSettings(db.Model):
+    __tablename__ = 'system_settings'
     
     id = db.Column(db.Integer, primary_key=True)
-    tenant_id = db.Column(db.String(255), unique=True, nullable=False, index=True)
+    # Single tenant system - no tenant_id needed
     
     # Settings categories stored as JSONB for flexibility
     disclosure_settings = db.Column(JSON, nullable=False, default=dict)
@@ -128,12 +128,12 @@ class TenantSettings(db.Model):
     version = db.Column(db.Integer, default=1)
     
     def __repr__(self):
-        return f'<TenantSettings {self.tenant_id}>'
+        return '<SystemSettings>'
     
     @classmethod
-    def get_or_create_default(cls, tenant_id):
-        """Get tenant settings or create with default values"""
-        settings = cls.query.filter_by(tenant_id=tenant_id).first()
+    def get_or_create_default(cls):
+        """Get system settings or create with default values"""
+        settings = cls.query.first()
         
         if not settings:
             # Create default settings
@@ -221,7 +221,6 @@ class TenantSettings(db.Model):
             }
             
             settings = cls(
-                tenant_id=tenant_id,
                 disclosure_settings=default_disclosure,
                 network_settings=default_network,
                 key_settings=default_keys,
@@ -284,7 +283,6 @@ class TenantSettings(db.Model):
             'notifications': self.notification_settings,
             'advanced': self.advanced_settings,
             '_meta': {
-                'tenant_id': self.tenant_id,
                 'created_at': self.created_at.isoformat() if self.created_at else None,
                 'updated_at': self.updated_at.isoformat() if self.updated_at else None,
                 'created_by': self.created_by,
@@ -294,11 +292,10 @@ class TenantSettings(db.Model):
         }
 
 
-class TenantSettingsBackup(db.Model):
-    __tablename__ = 'tenant_settings_backup'
+class SystemSettingsBackup(db.Model):
+    __tablename__ = 'system_settings_backup'
     
     id = db.Column(db.Integer, primary_key=True)
-    tenant_id = db.Column(db.String(255), nullable=False, index=True)
     backup_data = db.Column(JSON, nullable=False)
     backup_type = db.Column(db.String(50), default='manual')  # manual, automatic, pre_update
     created_at = db.Column(db.DateTime(timezone=True), default=func.now())
@@ -306,7 +303,7 @@ class TenantSettingsBackup(db.Model):
     notes = db.Column(db.Text, nullable=True)
     
     def __repr__(self):
-        return f'<TenantSettingsBackup {self.tenant_id} {self.created_at}>'
+        return f'<SystemSettingsBackup {self.created_at}>'
         
         
 class AuditLog(db.Model):
@@ -316,7 +313,6 @@ class AuditLog(db.Model):
     __tablename__ = 'audit_log'
     
     id = db.Column(db.Integer, primary_key=True)
-    tenant_id = db.Column(db.String(255), nullable=False, index=True)
     user_email = db.Column(db.String(255), nullable=False, index=True)
     timestamp = db.Column(db.DateTime(timezone=True), default=func.now(), index=True)
     
@@ -710,9 +706,4 @@ class KeyRegistry(db.Model):
         }
 
 
-def get_current_tenant():
-    """
-    Get the current tenant ID - for now, we only support a single tenant
-    This function is used by settings.py to get the current tenant ID
-    """
-    return "default"
+

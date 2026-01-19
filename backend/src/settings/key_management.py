@@ -13,8 +13,8 @@ from typing import Optional, Dict, List, Tuple
 from flask import current_app
 
 from .. import db
-from ..models import KeyRegistry, TenantSettings, AuditLog
-from .core import get_current_tenant
+from ..models import KeyRegistry, SystemSettings, AuditLog
+# from .core import get_current_tenant
 
 # Import existing key generation modules
 from ..issuer.key_generator import load_or_generate_keys, load_or_generate_bbs_keys, generate_did, generate_kid
@@ -30,9 +30,7 @@ class KeyManagementService:
 
     @property
     def tenant_id(self):
-        if self._tenant_id is None:
-            self._tenant_id = get_current_tenant()
-        return self._tenant_id
+        return "system"
 
     
     def get_key_fingerprint(self, key_data: str) -> str:
@@ -200,7 +198,7 @@ class KeyManagementService:
     def _calculate_next_rotation(self, key: KeyRegistry) -> Optional[str]:
         """Calculate next rotation date based on settings"""
         try:
-            settings = TenantSettings.get_or_create_default(self.tenant_id)
+            settings = SystemSettings.get_or_create_default()
             key_settings = settings.key_settings or {}
             
             if key_settings.get('auto_rotate', False):

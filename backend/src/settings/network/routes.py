@@ -2,8 +2,7 @@ from flask import request, jsonify, render_template
 import logging
 import json
 from ... import db
-from ...models import TenantSettings
-from ...models import get_current_tenant as get_tenant_id
+from ...models import SystemSettings
 from ..core import create_settings_backup
 from . import utils as network_utils
 from .. import utils as common_utils
@@ -121,17 +120,16 @@ def register_routes(blueprint):
             # Get network information
             network_info = common_utils.get_network_information()
             
-            # Get tenant settings
-            tenant_id = get_tenant_id()
-            network_config = network_utils.get_network_config(tenant_id)
+            # Get network configuration
+            network_config = network_utils.get_network_config()
             
             # Update local IP in config if auto-discovery is enabled
             if network_config.get("auto_discovery"):
                 local_ip = network_info.get("local_ip")
                 if local_ip:
-                    # Get tenant settings
-                    tenant_settings = TenantSettings.get_or_create_default(tenant_id)
-                    network_settings = tenant_settings.network_settings or {"network": {}}
+                    # Get system settings
+                    system_settings = SystemSettings.get_or_create_default()
+                    network_settings = system_settings.network_settings or {"network": {}}
                     
                     # Update local IP
                     if "network" not in network_settings:
@@ -140,7 +138,7 @@ def register_routes(blueprint):
                     network_settings["network"]["local_ip"] = local_ip
                     
                     # Save settings
-                    tenant_settings.network_settings = network_settings
+                    system_settings.network_settings = network_settings
                     db.session.commit()
             
             return jsonify({
