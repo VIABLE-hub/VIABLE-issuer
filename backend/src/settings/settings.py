@@ -132,4 +132,4 @@ def get_network_information():
 # Legacy compatibility functions
 def get_current_user_email():
     """Get current user email - legacy function"""
-    return "admin@localhost"  # Default for single-tenant setup
+    return "admin@localhost"  # Default for setup

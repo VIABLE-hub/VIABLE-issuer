@@ -2335,7 +2335,7 @@ document.addEventListener('alpine:init', () => {
         timeout: 30
       };
       
-      // Save network settings using tenant-aware API
+      // Save network settings using system-aware API
       fetch('/api/network', {
         method: 'POST',
         headers: {
@@ -2425,7 +2425,7 @@ document.addEventListener('alpine:init', () => {
         success: false
       };
       
-      // Use the new unified network test endpoint for tenant-aware testing
+      // Use the new unified network test endpoint for system-aware testing
       fetch('/api/network/test', {
         method: 'POST',
         headers: {

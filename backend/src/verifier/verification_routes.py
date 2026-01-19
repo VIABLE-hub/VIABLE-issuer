@@ -465,7 +465,7 @@ def direct_post():
         from flask import current_app
         issuer_info = current_app.config.get('UNIVERSITY_NAME', 'Technische Universität Berlin')
         
-        # 🔧 DEBUG: Log tenant detection details (Fixed for single tenant)
+        # 🔧 DEBUG: Log system detection details
         logger.info(f"🔧 VERIFICATION DEBUG: Issuer info = '{issuer_info}'")
         
         socketio.emit('verification_result', {

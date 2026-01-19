@@ -602,7 +602,6 @@ def api_system_health():
             },
             'api': {
                 'version': 'v1',
-                'tenant': "system",
                 'rate_limit_remaining': request.api_key.rate_limit_per_hour - request.api_key.usage_count_today
             }
         }

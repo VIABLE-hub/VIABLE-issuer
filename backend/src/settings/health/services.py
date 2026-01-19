@@ -9,7 +9,7 @@ import ssl
 from datetime import datetime
 
 from .. import settings
-# from ...models import TenantSettings
+# from ...models import Settings
 
 # Initialize logger for services health module
 logger = logging.getLogger(__name__)

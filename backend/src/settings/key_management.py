@@ -14,7 +14,6 @@ from flask import current_app
 
 from .. import db
 from ..models import KeyRegistry, SystemSettings, AuditLog
-# from .core import get_current_tenant
 
 # Import existing key generation modules
 from ..issuer.key_generator import load_or_generate_keys, load_or_generate_bbs_keys, generate_did, generate_kid

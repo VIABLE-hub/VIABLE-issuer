@@ -570,7 +570,7 @@ def register_routes(blueprint):
                 'is_ngrok_active': is_ngrok_url
             }
             
-            logger.info(f"🔍 Network debug - Tenant ID: {system_id}")
+            logger.info(f"🔍 Network debug - System ID: {system_id}")
             logger.info(f"🔍 Network debug - SERVER_URL: {actual_server_url}")
             logger.info(f"🔍 Network debug - Is NGROK URL: {is_ngrok_url}")
             

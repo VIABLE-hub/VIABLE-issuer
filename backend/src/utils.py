@@ -53,11 +53,10 @@ def get_server_url_no_context():
 
 def get_current_server_url():
     """
-    🌐 Get current server URL using unified tenant configuration system
+    🌐 Get current server URL using unified system configuration
     
     Priority order:
     1. EXTERNAL_SERVER_URL (for production Docker deployment)
-    2. Tenant NGROK URL (for development/testing)
     3. Flask SERVER_URL config
     4. Local IP fallback
     

@@ -1,9 +1,6 @@
 import os
 
 class Config:
-    """
-    Single-tenant configuration based on TU Berlin (TUB) settings.
-    """
     # Branding
     UNIVERSITY_NAME = "Technische Universität Berlin"
     UNIVERSITY_SHORT_NAME = "TU Berlin"

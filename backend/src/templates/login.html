@@ -139,15 +139,15 @@
                 </div>
                 <div style="display: flex; align-items: center; color: #4b5563; font-size: 0.925rem;">
                     <i class="fas fa-university" style="margin-right: 0.75rem; color: {{ '#' + primary_color if primary_color else '#3b82f6' }};"></i>
-                    <span>Multi-Tenant Architecture</span>
+                    <span>Multi-System Architecture</span>
                 </div>
             </div>
             
-            <!-- Tenant Badge - CENTERED at bottom -->
+            <!-- Badge - CENTERED at bottom -->
             <div style="margin-top: 2rem;">
                 <div style="display: inline-block; background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(10px); border-radius: 0.5rem; padding: 0.5rem 1.25rem; font-size: 0.875rem; font-weight: 500; color: #374151; border: 1px solid rgba(0,0,0,0.05);">
                     <i class="fas fa-building" style="margin-right: 0.5rem;"></i>
-                    Tenant: {% if university_name %}{{ university_name }}{% else %}Root{% endif %}
+                    System: {% if university_name %}{{ university_name }}{% else %}Root{% endif %}
                 </div>
             </div>
             
@@ -189,10 +189,10 @@
                         <!-- CSRF Token -->
                         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                         
-                        <!-- Tenant Field - COMPACT -->
+                        <!-- Field - COMPACT -->
                         <div style="margin-bottom: 1rem;">
                             <label style="display: block; font-size: 0.8125rem; font-weight: 600; color: #374151; margin-bottom: 0.375rem;">
-                                Tenant
+                                System
                             </label>
                             <input 
                                 type="text" 
@@ -202,7 +202,7 @@
                             />
                             <p style="margin-top: 0.375rem; font-size: 0.6875rem; color: #9ca3af; display: flex; align-items: center;">
                                 <i class="fas fa-lock" style="margin-right: 0.25rem; font-size: 0.625rem;"></i>
-                                Tenant is automatically selected and cannot be changed
+                                System is automatically selected and cannot be changed
                             </p>
                         </div>
                         
@@ -436,7 +436,7 @@
                     <p style="font-weight: 500; color: #374151; font-size: 0.875rem; margin-bottom: 0.25rem;">
                         {% if university_name %}{{ university_name }}{% else %}StudentVC{% endif %}
                     </p>
-                    <p style="font-size: 0.75rem; color: #9ca3af;">Secure Tenant-Specific Access</p>
+                    <p style="font-size: 0.75rem; color: #9ca3af;">Secure System-Specific Access</p>
                     <p style="font-size: 0.75rem; color: #d1d5db; margin-top: 0.25rem;">Session expires after 12 hours</p>
                 </div>
                 
@@ -444,10 +444,10 @@
             
             <!-- Platform Footer -->
             <div style="margin-top: 1.5rem; text-align: center; font-size: 0.75rem; color: #6b7280;">
-                <p>Multi-Tenant Platform</p>
+                <p>Multi Platform</p>
                 <p style="margin-top: 0.25rem;">
                     <i class="fas fa-shield-alt" style="margin-right: 0.25rem;"></i>
-                    Tenant-Enforced Authentication System
+                    Enforced Authentication System
                 </p>
             </div>
             

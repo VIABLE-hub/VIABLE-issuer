@@ -141,7 +141,7 @@ def index():
     except Exception as e:
         # Fallback to original logic if system fails
         default_logo = credential_data.get('default_logo', 'studentVC-logo-sora-cropped-darkmode.png')
-        logger.info(f"🎓 TENANT ERROR - Fallback to default logo: {default_logo}, Error: {e}")
+        logger.info(f"🎓 ERROR - Fallback to default logo: {default_logo}, Error: {e}")
     
     default_profile = 'student.png'  # Immer student.png als Standard
     
@@ -226,7 +226,7 @@ def index():
     logger.info(f"Generated QR code link: {link}")
     img = generate_qr_code(link)
     
-    # 🩺 HERZCHIRURG FIX: Erweitere form_data um Bild-Informationen mit Tenant-Branding
+    # 🩺 HERZCHIRURG FIX: Erweitere form_data um Bild-Informationen mit Branding
     form_data = {
         'firstName': credential_data.get('firstName', ''),
         'lastName': credential_data.get('lastName', ''),

@@ -109,7 +109,6 @@ class SystemSettings(db.Model):
     __tablename__ = 'system_settings'
     
     id = db.Column(db.Integer, primary_key=True)
-    # Single tenant system - no tenant_id needed
     
     # Settings categories stored as JSONB for flexibility
     disclosure_settings = db.Column(JSON, nullable=False, default=dict)
