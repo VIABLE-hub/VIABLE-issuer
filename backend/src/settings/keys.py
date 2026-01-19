@@ -29,178 +29,100 @@ def get_existing_keys():
     keys = []
     
     try:
-        # Import tenant-aware key generator
-        from ..issuer import tenant_key_generator
+        from ..issuer import key_generator
         
-        # Get current tenant for context
+        # Load keys
+        bbs_private, bbs_public = key_generator.load_or_generate_bbs_keys()
+        jwt_private, jwt_public = key_generator.load_or_generate_keys()
+        
+        # Generate DID
+        did = key_generator.generate_did(jwt_public)
+
+        # Usage count (from db)
+        usage_count = 0
         try:
-            from ..tenants import get_current_tenant as get_current_tenant_id
-            current_tenant = get_current_tenant_id()
+            from ..models import VC_Offer
+            usage_count = VC_Offer.query.count()
         except:
-            current_tenant = "root"
+            pass
+
+        # Add BBS+ key
+        if bbs_private and bbs_public:
+            public_key_preview = str(bbs_public)[:50] + "..." if len(str(bbs_public)) > 50 else str(bbs_public)
+            
+            keys.append({
+                "id": "bbs_issuer_key",
+                "type": "BBS+",
+                "algorithm": "BBS+",
+                "status": "active",
+                "created": datetime.datetime.now().isoformat(),
+                "expires": (datetime.datetime.now() + datetime.timedelta(days=365)).isoformat(),
+                "usage": "credential_signing",
+                "purpose": "BBS+ Credential Signing",
+                "key_size": "Variable",
+                "usage_count": usage_count,
+                "public_key_preview": public_key_preview,
+                "has_private_key": True,
+                "has_public_key": True,
+                "detailed_usage": {
+                    "primary_function": "Signiert alle Credential-Felder für Selective Disclosure",
+                    "capabilities": ["Zero-Knowledge Proofs", "Selective Disclosure", "Unlinkability"],
+                    "process": "Issuer → BBS+ Signatur → Wallet → ZK-Beweis → Verifier",
+                    "fields_signed": "30+ Felder (firstName, lastName, studentId, etc.)"
+                }
+            })
         
-        # Get all keys for current tenant
-        try:
-            tenant_keys = tenant_key_generator.get_tenant_keys(current_tenant)
+        # Add JWT signing key with DID
+        if jwt_private and jwt_public:
+            public_key_preview = jwt_public[:50] + "..." if len(jwt_public) > 50 else jwt_public
             
-            # Add BBS+ key
-            if tenant_keys.get('bbs_private') and tenant_keys.get('bbs_public'):
-                public_key_preview = str(tenant_keys['bbs_public'])[:50] + "..." if len(str(tenant_keys['bbs_public'])) > 50 else str(tenant_keys['bbs_public'])
-                # Get usage statistics from database
-                usage_count = 0
-                try:
-                    from ..models import VC_offer
-                    usage_count = VC_offer.query.filter_by(tenant_id=current_tenant).count()
-                except:
-                    pass
-                    
-                keys.append({
-                    "id": "bbs_issuer_key",
-                    "type": "BBS+",
-                    "algorithm": "BBS+",
-                    "status": "active",
-                    "created": datetime.datetime.now().isoformat(),
-                    "expires": (datetime.datetime.now() + datetime.timedelta(days=365)).isoformat(),
-                    "usage": "credential_signing",
-                    "purpose": f"BBS+ Credential Signing ({current_tenant})",
-                    "key_size": "Variable",
-                    "usage_count": usage_count,
-                    "public_key_preview": public_key_preview,
-                    "has_private_key": True,
-                    "has_public_key": True,
-                    "tenant": current_tenant,
-                    "detailed_usage": {
-                        "primary_function": "Signiert alle Credential-Felder für Selective Disclosure",
-                        "capabilities": ["Zero-Knowledge Proofs", "Selective Disclosure", "Unlinkability"],
-                        "process": "Issuer → BBS+ Signatur → Wallet → ZK-Beweis → Verifier",
-                        "fields_signed": "30+ Felder (firstName, lastName, studentId, etc.)"
-                    }
-                })
-            
-            # Add JWT signing key with DID
-            if tenant_keys.get('jwt_private') and tenant_keys.get('jwt_public'):
-                public_key_preview = tenant_keys['jwt_public'][:50] + "..." if len(tenant_keys['jwt_public']) > 50 else tenant_keys['jwt_public']
-                # Get JWT usage statistics
-                jwt_usage_count = usage_count  # Same as BBS+ since each credential has both
+            keys.append({
+                "id": "jwt_signing_key",
+                "type": "Ed25519", # Kept label for consistency or should update? Updating to ES256 (P-256) which is accurate.
+                "algorithm": "ES256 (P-256)", 
+                "status": "active",
+                "created": datetime.datetime.now().isoformat(),
+                "expires": (datetime.datetime.now() + datetime.timedelta(days=365)).isoformat(),
+                "usage": "jwt_signing",
+                "purpose": "JWT Envelope Signing",
+                "key_size": "256-bit",
+                "usage_count": usage_count,
+                "did": did,
+                "issuer_id": did,
+                "public_key_preview": public_key_preview,
+                "has_private_key": True,
+                "has_public_key": True,
+                "detailed_usage": {
+                    "primary_function": "Signiert JWT-Envelope für Transport-Sicherheit",
+                    "capabilities": ["Issuer-Authentifizierung", "Integrität", "OpenID4VC Kompatibilität"],
+                    "process": "VC → JWT Wrapper → ES256 Signatur → DID im Header",
+                    "verification": "DID auflösen → Public Key extrahieren → JWT validieren"
+                }
+            })
                 
-                keys.append({
-                    "id": "jwt_signing_key",
-                    "type": "Ed25519",
-                    "algorithm": "EdDSA",
-                    "status": "active",
-                    "created": datetime.datetime.now().isoformat(),
-                    "expires": (datetime.datetime.now() + datetime.timedelta(days=365)).isoformat(),
-                    "usage": "jwt_signing",
-                    "purpose": f"JWT Envelope Signing ({current_tenant})",
-                    "key_size": "256-bit",
-                    "usage_count": jwt_usage_count,
-                    "did": tenant_keys.get('did'),
-                    "issuer_id": tenant_keys.get('did'),  # Include as issuer_id too
-                    "public_key_preview": public_key_preview,
-                    "has_private_key": True,
-                    "has_public_key": True,
-                    "tenant": current_tenant,
-                    "detailed_usage": {
-                        "primary_function": "Signiert JWT-Envelope für Transport-Sicherheit",
-                        "capabilities": ["Issuer-Authentifizierung", "Integrität", "OpenID4VC Kompatibilität"],
-                        "process": "VC → JWT Wrapper → Ed25519 Signatur → DID im Header",
-                        "verification": "DID auflösen → Public Key extrahieren → JWT validieren"
-                    }
-                })
-                
-        except Exception as e:
-            logger.warning(f"Could not load tenant keys: {e}")
-            # Fallback to old system if tenant keys fail
-            from ..issuer import key_generator
-            
-            # Get BBS+ keys if they exist (old system)
-            try:
-                bbs_private, bbs_public = key_generator.load_or_generate_bbs_keys()
-                if bbs_private and bbs_public:
-                    public_key_preview = str(bbs_public)[:50] + "..." if len(str(bbs_public)) > 50 else str(bbs_public)
-                    keys.append({
-                        "id": "bbs_issuer_key_legacy",
-                        "type": "BBS+",
-                        "algorithm": "BBS+",
-                        "status": "active",
-                        "created": datetime.datetime.now().isoformat(),
-                        "expires": (datetime.datetime.now() + datetime.timedelta(days=365)).isoformat(),
-                        "usage": "credential_signing",
-                        "purpose": f"BBS+ Credential Signing (LEGACY - {current_tenant})",
-                        "key_size": "Variable",
-                        "usage_count": 0,
-                        "public_key_preview": public_key_preview,
-                        "has_private_key": True,
-                        "has_public_key": True,
-                        "tenant": current_tenant
-                    })
-            except Exception as e:
-                logger.warning(f"Could not load legacy BBS+ keys: {e}")
-            
-            # Get JWT signing keys if they exist (old system)
-            try:
-                jwt_private, jwt_public = key_generator.load_or_generate_keys()
-                if jwt_private and jwt_public:
-                    # Generate DID for this key
-                    try:
-                        if isinstance(jwt_public, str):
-                            public_key_pem = jwt_public
-                        else:
-                            public_key_pem = jwt_public.public_bytes(
-                                encoding=serialization.Encoding.PEM,
-                                format=serialization.PublicFormat.SubjectPublicKeyInfo
-                            ).decode('utf-8')
-                        issuer_did = key_generator.generate_did(public_key_pem)
-                    except Exception as e:
-                        logger.warning(f"Could not generate DID: {e}")
-                        issuer_did = f"did:key:legacy_{current_tenant}"
-                        
-                    public_key_preview = public_key_pem[:50] + "..." if len(public_key_pem) > 50 else public_key_pem
-                    
-                    keys.append({
-                        "id": "jwt_signing_key_legacy",
-                        "type": "Ed25519",
-                        "algorithm": "EdDSA",
-                        "status": "active",
-                        "created": datetime.datetime.now().isoformat(),
-                        "expires": (datetime.datetime.now() + datetime.timedelta(days=365)).isoformat(),
-                        "usage": "jwt_signing",
-                        "purpose": f"JWT Envelope Signing (LEGACY - {current_tenant})",
-                        "key_size": "256-bit",
-                        "usage_count": 0,
-                        "did": issuer_did,
-                        "issuer_id": issuer_did,
-                        "public_key_preview": public_key_preview,
-                        "has_private_key": True,
-                        "has_public_key": True,
-                        "tenant": current_tenant
-                    })
-            except Exception as e:
-                logger.warning(f"Could not load legacy JWT keys: {e}")
-        
-        # Get previously generated API keys from registry
-        try:
-            from ..models import KeyRegistry
-            api_keys = KeyRegistry.query.filter_by(tenant_id=current_tenant).all()
-            for api_key in api_keys:
-                keys.append({
-                    "id": api_key.key_identifier,
-                    "type": "Custom",
-                    "algorithm": "Unknown",
-                    "status": api_key.status,
-                    "created": api_key.created_at.isoformat() if api_key.created_at else datetime.datetime.now().isoformat(),
-                    "expires": (datetime.datetime.now() + datetime.timedelta(days=365)).isoformat(),
-                    "usage": "unknown",
-                    "purpose": "Custom Generated Key",
-                    "key_size": "Unknown",
-                    "usage_count": 0,
-                    "tenant": current_tenant
-                })
-        except Exception as e:
-            logger.warning(f"Could not load API keys from registry: {e}")
-        
     except Exception as e:
-        logger.error(f"Error loading keys: {e}")
+        logger.warning(f"Could not load keys: {e}")
+        
+    # Get previously generated API keys from registry
+    try:
+        from ..models import KeyRegistry
+        api_keys = KeyRegistry.query.all()
+        for api_key in api_keys:
+            keys.append({
+                "id": api_key.key_identifier,
+                "type": "Custom",
+                "algorithm": "Unknown",
+                "status": api_key.status,
+                "created": api_key.created_at.isoformat() if api_key.created_at else datetime.datetime.now().isoformat(),
+                "expires": (datetime.datetime.now() + datetime.timedelta(days=365)).isoformat(),
+                "usage": "unknown",
+                "purpose": "Custom Generated Key",
+                "key_size": "Unknown",
+                "usage_count": 0,
+                "tenant": "tub"
+            })
+    except Exception as e:
+        logger.warning(f"Could not load API keys from registry: {e}")
         
     return keys
 

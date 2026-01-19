@@ -4,10 +4,11 @@ from .offer import generate_nonce
 
 logger = logging.getLogger(__name__)
 
-logo, profile = get_placeholders()
-
 def get_credential_data(credential_data):
+    logo, profile = get_placeholders()
+
     logger.info(f"🔍 CREDENTIAL DEBUG - Input credential_data object: {credential_data}")
+
     logger.info(f"🔍 CREDENTIAL DEBUG - Type of credential_data: {type(credential_data)}")
     
     actual_data = credential_data.credential_data if credential_data else None

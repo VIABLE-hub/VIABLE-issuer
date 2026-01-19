@@ -157,63 +157,31 @@ def preprocess_theme_icon(path, resolution, keep_aspect_ratio=False):
 
 
 def get_placeholders(logo_filename="studentVC-logo-sora-cropped-darkmode.png", profile_filename="student.png"):
-    # Try to get tenant-specific logo first
-    try:
-        from ..tenants.registry import get_current_tenant_config
-        tenant_config = get_current_tenant_config()
-        if tenant_config:
-            # Check if this is a tenant-specific logo
-            tenant_static_path = tenant_config.static_path
-            tenant_logo_path = os.path.join(tenant_static_path, logo_filename)
-            
-            logger.info(f"🎓 TENANT LOGO - Checking tenant static path: {tenant_static_path}")
-            logger.info(f"🎓 TENANT LOGO - Looking for logo at: {tenant_logo_path}")
-            
-            if os.path.exists(tenant_logo_path):
-                logger.info(f"🎓 TENANT LOGO - Found tenant-specific logo: {tenant_logo_path}")
-                logo_path = tenant_logo_path
-            else:
-                # Fall back to main static directory
-                placeholder_path = os.path.join(os.path.dirname(__file__), "..", "static")
-                logo_path = os.path.join(placeholder_path, logo_filename)
-                logger.info(f"🎓 TENANT LOGO - Tenant logo not found, falling back to: {logo_path}")
-        else:
-            # No tenant config, use main static directory
-            placeholder_path = os.path.join(os.path.dirname(__file__), "..", "static")
-            logo_path = os.path.join(placeholder_path, logo_filename)
-            logger.info(f"🎓 NO TENANT - Using main static logo: {logo_path}")
-    except Exception as e:
-        # Error accessing tenant system, fall back to main static directory
-        logger.info(f"🎓 TENANT ERROR - Falling back to main static: {e}")
-        placeholder_path = os.path.join(os.path.dirname(__file__), "..", "static")
-        logo_path = os.path.join(placeholder_path, logo_filename)
+    from flask import current_app, has_app_context
+    import os
     
-    # Profile image always from main static directory (for now)
-    placeholder_path = os.path.join(os.path.dirname(__file__), "..", "static")
-    profile_path = os.path.join(placeholder_path, profile_filename)
+    if not has_app_context():
+        # Fallback if called outside application context (e.g. during import)
+        return None, None
     
-    logger.info(f"🩺 HERZCHIRURG DEBUG - get_placeholders called:")
-    logger.info(f"🩺 Logo filename: {logo_filename}")
-    logger.info(f"🩺 Profile filename: {profile_filename}")
-    logger.info(f"🩺 Logo path: {logo_path}")
-    logger.info(f"🩺 Profile path: {profile_path}")
+    # Construct base paths
+    # Note: Flask's static_folder is absolute
+    static_folder = current_app.static_folder 
+    img_folder = os.path.join(static_folder, 'img')
     
-    # Fallback auf logo.png, wenn die angegebene Datei nicht existiert
+    # Check img folder first
+    logo_path = os.path.join(img_folder, logo_filename)
     if not os.path.exists(logo_path):
-        fallback_placeholder_path = os.path.join(os.path.dirname(__file__), "..", "static")
-        logo_path = os.path.join(fallback_placeholder_path, "logo.png")
-        logger.info(f"🩺 Logo fallback to: {logo_path}")
-    
-    # Fallback auf student.png, wenn die angegebene Datei nicht existiert
-    if not os.path.exists(profile_path):
-        profile_path = os.path.join(placeholder_path, "student.png")
-        logger.info(f"🩺 Profile fallback to: {profile_path}")
+        logo_path = os.path.join(static_folder, logo_filename)
         
-    # Note: Removed hardcoded macOS path fallback for cross-platform compatibility
-    # If profile_path still doesn't exist, preprocess_image will handle it with a placeholder
+    profile_path = os.path.join(img_folder, profile_filename)
+    if not os.path.exists(profile_path):
+        profile_path = os.path.join(static_folder, profile_filename)
+
+    logger.info(f"🩺 get_placeholders: Logo path={logo_path}, Profile path={profile_path}")
 
     logo = preprocess_image(logo_path, (400, 300), keep_aspect_ratio=True)
-    profile = preprocess_image(profile_path, (400, 400), keep_aspect_ratio=True)  # 🩺 HERZCHIRURG FIX: Quadratisches Format + Aspect Ratio
+    profile = preprocess_image(profile_path, (400, 400), keep_aspect_ratio=True)
     
     logger.info(f"🩺 Final logo base64 length: {len(logo) if logo else 'None'}")
     logger.info(f"🩺 Final profile base64 length: {len(profile) if profile else 'None'}")

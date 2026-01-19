@@ -1,3 +1,0 @@
-"""
-Root Tenant Configuration Package
-""" 

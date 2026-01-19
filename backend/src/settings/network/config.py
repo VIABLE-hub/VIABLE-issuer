@@ -16,7 +16,13 @@ from sqlalchemy.orm.attributes import flag_modified
 from ... import db
 from ...models import TenantSettings
 from ..core import get_current_tenant
-from ...tenants.registry import get_current_tenant_config
+# from ...tenants.registry import get_current_tenant_config
+
+class DummyTenantConfig:
+    tenant_id = 'tub'
+
+def get_current_tenant_config():
+    return DummyTenantConfig()
 
 # Initialize logger for network module
 logger = logging.getLogger(__name__)

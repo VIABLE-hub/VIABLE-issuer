@@ -161,84 +161,33 @@ def load_existing_keys():
     return private_key, public_key
 
 
-def generate_did(tenant_id='root'):
-    """Generate a DID for the issuer"""
-    if BBS_CORE_AVAILABLE:
-        try:
-            # Use BBS+ core for DID generation
-            kp = bbs_core.GenerateKeyPair().generate_key_pair()
-            
-            # Use cross-platform compatible attribute names
-            if hasattr(kp, 'dpub_key_bytes'):
-                public_key_bytes = kp.dpub_key_bytes
-            elif hasattr(kp, 'public_key'):
-                public_key_bytes = kp.public_key
-            else:
-                # Try to find any attribute that might be the public key
-                potential_attrs = [attr for attr in dir(kp) if 'pub' in attr.lower() and not attr.startswith('__')]
-                if potential_attrs:
-                    public_key_bytes = getattr(kp, potential_attrs[0])
-                else:
-                    raise AttributeError("Cannot determine BBS+ public key attribute")
-                
-            public_key_base64 = base64.b64encode(public_key_bytes).decode('utf-8')
-            
-            # Create did:key from public key
-            did = f"did:key:{public_key_base64}"
-            logger.info(f"✅ Generated BBS+ DID for tenant {tenant_id}: {did}")
-            return did
-        except Exception as e:
-            logger.warning(f"⚠️ BBS+ DID generation failed: {e}, using fallback")
-    
-    # Fallback RSA key generation
-    from cryptography.hazmat.primitives.asymmetric import rsa
-    from cryptography.hazmat.primitives import serialization
-    
-    private_key = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=2048,
+def generate_did(public_key_pem):
+    """Generate a DID for the issuer public key (single tenant)"""
+    if isinstance(public_key_pem, str):
+         public_key_pem = public_key_pem.encode("utf-8")
+         
+    # Load the public key from PEM
+    public_key = serialization.load_pem_public_key(
+        public_key_pem, backend=default_backend())
+
+    # Get the raw public key bytes (in uncompressed form)
+    raw_key_material = public_key.public_bytes(
+        encoding=serialization.Encoding.X962,
+        format=serialization.PublicFormat.UncompressedPoint
     )
-    
-    public_key = private_key.public_key()
-    public_key_bytes = public_key.public_bytes(
-        encoding=serialization.Encoding.DER,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo
-    )
-    
-    public_key_base64 = base64.b64encode(public_key_bytes).decode('utf-8')
-    did = f"did:key:rsa:{public_key_base64}"
-    logger.info(f"✅ Generated RSA fallback DID for tenant {tenant_id}: {did}")
+
+    # Prepend the multicodec prefix for P-256 keys (0x1200)
+    multicodec_prefix = b'\x12\x00'
+    multicodec_key = multicodec_prefix + raw_key_material
+
+    # Encode the multicodec key in base58
+    encoded_key = base58.b58encode(multicodec_key)
+
+    # Construct the DID key
+    did = f'did:key:z{encoded_key.decode()}'
     return did
 
 
-def generate_kid(tenant_id='root'):
-    """Generate a key identifier (kid) for the issuer"""
-    if BBS_CORE_AVAILABLE:
-        try:
-            # Use BBS+ core for kid generation
-            kp = bbs_core.GenerateKeyPair().generate_key_pair()
-            
-            # Use cross-platform compatible attribute names
-            if hasattr(kp, 'dpub_key_bytes'):
-                public_key_bytes = kp.dpub_key_bytes
-            elif hasattr(kp, 'public_key'):
-                public_key_bytes = kp.public_key
-            else:
-                # Try to find any attribute that might be the public key
-                potential_attrs = [attr for attr in dir(kp) if 'pub' in attr.lower() and not attr.startswith('__')]
-                if potential_attrs:
-                    public_key_bytes = getattr(kp, potential_attrs[0])
-                else:
-                    raise AttributeError("Cannot determine BBS+ public key attribute")
-                
-            kid = base64.b64encode(public_key_bytes).decode('utf-8')[:16]  # First 16 chars
-            logger.info(f"✅ Generated BBS+ kid for tenant {tenant_id}: {kid}")
-            return kid
-        except Exception as e:
-            logger.warning(f"⚠️ BBS+ kid generation failed: {e}, using fallback")
-    
-    # Fallback - generate random kid
-    import secrets
-    kid = secrets.token_urlsafe(16)
-    logger.info(f"✅ Generated fallback kid for tenant {tenant_id}: {kid}")
-    return kid
+def generate_kid(did):
+    """Generate a Key ID for the issuer DID"""
+    return f"{did}#key-1"

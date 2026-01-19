@@ -1,37 +1,30 @@
 version: '3.8'
 
 services:
-  # TU Berlin (TUB) Tenant Service
-  studentvc-tub:
+  studentvc:
     build:
       context: ../../backend
       dockerfile: Dockerfile
       target: app
-    container_name: studentvc-tub
+    container_name: studentvc
     ports:
       - "8080:8080"
     environment:
-      - TENANT_ID=tub
       - SERVER_HOST=0.0.0.0
       - SERVER_PORT=8080
       - DOCKER_MODE=true
       - ACCEPT_SELF_SIGNED_CERTS=true
-      - NGROK_URL=${TUB_NGROK_URL:-}
-      - DATABASE_PATH=/app/data
-      - STATIC_PATH=/app/static
       - PYTHONPATH=/app
       # 🚀 PRODUCTION SERVER URL: Override Docker internal IP with external server address
-      - EXTERNAL_SERVER_URL=${TUB_EXTERNAL_SERVER_URL:-https://localhost:8080}
-      - PUBLIC_DOMAIN=${TUB_PUBLIC_DOMAIN:-localhost}
-      - PUBLIC_PORT=${TUB_PUBLIC_PORT:-8080}
+      - EXTERNAL_SERVER_URL=${EXTERNAL_SERVER_URL:-https://localhost:8080}
+      - PUBLIC_DOMAIN=${PUBLIC_DOMAIN:-localhost}
+      - PUBLIC_PORT=${PUBLIC_PORT:-8080}
       - USE_EXTERNAL_URL=${USE_EXTERNAL_URL:-false}
       # 🚀 SOCKET.IO FIX: Allow Socket.IO to work in Docker with external access
-      - SOCKET_IO_URL=${TUB_SOCKET_IO_URL:-https://localhost:8080}
+      - SOCKET_IO_URL=${SOCKET_IO_URL:-https://localhost:8080}
       - CORS_ORIGINS=*
     volumes:
-      - tub_data:/app/data
-      - tub_static:/app/static
-      - ../../backend/src/tenants/instances/tub:/app/tenants/tub:ro
+      - studentvc_data:/app/instance
     restart: unless-stopped
     healthcheck:
       # 🚀 HEALTH CHECK FIX: Use HTTP for internal health checks, HTTPS is handled at container level
@@ -41,196 +34,10 @@ services:
       retries: 3
     networks:
       - studentvc-network
-    labels:
-      - "tenant=tub"
-      - "university=tu-berlin"
-      - "external_url=https://localhost:8080"
-
-  # Freie Universität Berlin (FUB) Tenant Service  
-  studentvc-fub:
-    build:
-      context: ../../backend
-      dockerfile: Dockerfile
-      target: app
-    container_name: studentvc-fub
-    ports:
-      - "8081:8080"
-    environment:
-      - TENANT_ID=fub
-      - SERVER_HOST=0.0.0.0
-      - SERVER_PORT=8080
-      - DOCKER_MODE=true
-      - ACCEPT_SELF_SIGNED_CERTS=true
-      - NGROK_URL=${FUB_NGROK_URL:-}
-      - DATABASE_PATH=/app/data
-      - STATIC_PATH=/app/static
-      - PYTHONPATH=/app
-      # 🚀 PRODUCTION SERVER URL: Override Docker internal IP with external server address
-      - EXTERNAL_SERVER_URL=${FUB_EXTERNAL_SERVER_URL:-https://localhost:8081}
-      - PUBLIC_DOMAIN=${FUB_PUBLIC_DOMAIN:-localhost}
-      - PUBLIC_PORT=${FUB_PUBLIC_PORT:-8081}
-      - USE_EXTERNAL_URL=${USE_EXTERNAL_URL:-false}
-      # 🚀 SOCKET.IO FIX: Allow Socket.IO to work in Docker with external access
-      - SOCKET_IO_URL=${FUB_SOCKET_IO_URL:-https://localhost:8081}
-      - CORS_ORIGINS=*
-    volumes:
-      - fub_data:/app/data
-      - fub_static:/app/static
-      - ../../backend/src/tenants/instances/fub:/app/tenants/fub:ro
-    restart: unless-stopped
-    healthcheck:
-      # 🚀 HEALTH CHECK FIX: Use HTTP for internal health checks, HTTPS is handled at container level
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - studentvc-network
-    labels:
-      - "tenant=fub"
-      - "university=fu-berlin"
-      - "external_url=https://localhost:8081"
-
-  # Root/Default Tenant Service
-  studentvc-root:
-    build:
-      context: ../../backend
-      dockerfile: Dockerfile
-      target: app
-    container_name: studentvc-root
-    ports:
-      - "8082:8080"
-    environment:
-      - TENANT_ID=root
-      - SERVER_HOST=0.0.0.0
-      - SERVER_PORT=8080
-      - DOCKER_MODE=true
-      - ACCEPT_SELF_SIGNED_CERTS=true
-      - NGROK_URL=${ROOT_NGROK_URL:-}
-      - DATABASE_PATH=/app/data
-      - STATIC_PATH=/app/static
-      - PYTHONPATH=/app
-      # 🚀 PRODUCTION SERVER URL: Override Docker internal IP with external server address
-      - EXTERNAL_SERVER_URL=${ROOT_EXTERNAL_SERVER_URL:-https://localhost:8082}
-      - PUBLIC_DOMAIN=${ROOT_PUBLIC_DOMAIN:-localhost}
-      - PUBLIC_PORT=${ROOT_PUBLIC_PORT:-8082}
-      - USE_EXTERNAL_URL=${USE_EXTERNAL_URL:-false}
-      # 🚀 SOCKET.IO FIX: Allow Socket.IO to work in Docker with external access
-      - SOCKET_IO_URL=${ROOT_SOCKET_IO_URL:-https://localhost:8082}
-      - CORS_ORIGINS=*
-    volumes:
-      - root_data:/app/data
-      - root_static:/app/static
-      - ../../backend/src/tenants/instances/root:/app/tenants/root:ro
-    restart: unless-stopped
-    healthcheck:
-      # 🚀 HEALTH CHECK FIX: Use HTTP for internal health checks, HTTPS is handled at container level
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - studentvc-network
-    labels:
-      - "tenant=root"
-      - "university=default"
-      - "external_url=https://localhost:8082"
-
-  # BBS+ core verification service
-  bbs-core-test:
-    build:
-      context: ../../backend
-      dockerfile: Dockerfile
-      target: bbs-test
-    container_name: studentvc-bbs-test
-    networks:
-      - studentvc-network
-    profiles:
-      - bbs-test
-
-  # NGINX Reverse Proxy (Optional - for production)
-  nginx:
-    image: nginx:alpine
-    container_name: studentvc-nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro
-    depends_on:
-      - studentvc-tub
-      - studentvc-fub
-      - studentvc-root
-    restart: unless-stopped
-    networks:
-      - studentvc-network
-    labels:
-      - "component=reverse-proxy"
-
-  # Redis for session storage (Optional - for production)
-  redis:
-    image: redis:alpine
-    container_name: studentvc-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    restart: unless-stopped
-    networks:
-      - studentvc-network
-    labels:
-      - "component=cache"
-
-volumes:
-  tub_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./data/tub
-  
-  fub_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./data/fub
-  
-  root_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./static/root
-  
-  tub_static:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./static/tub
-  
-  fub_static:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./static/fub
-  
-  root_static:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./static/root
-  
-  redis_data:
-    driver: local
 
 networks:
   studentvc-network:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16 
+
+volumes:
+  studentvc_data:

@@ -119,8 +119,8 @@ def register_blueprints(app):
     app.register_blueprint(monitoring)
     
     # Network API - Dynamic registration (kept separate for backward compatibility)
-    from .settings.network_api import register_network_api
-    register_network_api(app)
+    # from .settings.network_api import register_network_api
+    # register_network_api(app)
     
     logger.info(f"Registered {len(app.blueprints)} blueprints")
 
@@ -184,29 +184,10 @@ def create_app():
     # Don't set SERVER_NAME as it causes redirects to fail
     app.config['PREFERRED_URL_SCHEME'] = os.environ.get('PREFERRED_URL_SCHEME', 'https')
     
-    # Initialize tenant middleware EARLY (before database config for optimal performance)
-    # This ensures tenant context is available for all subsequent operations
-    try:
-        from .tenants.middleware import TenantMiddleware
-        tenant_middleware = TenantMiddleware(app)
-        logger.debug("Tenant middleware initialized early")
-    except Exception as e:
-        logger.warning(f"Tenant middleware initialization failed: {e}")
-    
-    # 🚨 CRITICAL: Configure tenant-specific database BEFORE setting default URI
-    try:
-        from .tenants.database import configure_tenant_database, get_current_tenant_from_environment
-        current_tenant = get_current_tenant_from_environment()
-        if current_tenant:
-            tenant_db_uri = configure_tenant_database(app, current_tenant)
-            logger.info(f"Tenant database configured: {tenant_db_uri}")
-        else:
-            app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
-            logger.info(f"Using default database URI: {SQLALCHEMY_DATABASE_URI}")
-    except Exception as e:
-        logger.error(f"Failed to configure tenant database: {e}")
-        app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
-        logger.info(f"Falling back to default database URI: {SQLALCHEMY_DATABASE_URI}")
+    # Load configuration
+    from .config import Config
+    app.config.from_object(Config)
+    logger.info(f"Using database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
     
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1000 * 1000
     app.config['INSTANCE_FOLDER_PATH'] = INSTANCE_PATH
@@ -256,32 +237,17 @@ def create_app():
     @app.context_processor
     def inject_csrf_token():
         from flask import session
+        from .config import Config
         
         context = {
             'csrf_token': session.get('csrf_token', ''),
+            'university_name': Config.UNIVERSITY_NAME,
+            'university_logo': Config.LOGO_FILENAME,
+            'main_logo': Config.MAIN_LOGO_FILENAME,
+            'tenant_color': Config.PRIMARY_COLOR.lstrip('#'),
+            # Adding other potentially used variables
+            'current_tenant_id': 'tub', # Keep for compatibility if templates use it
         }
-        
-        # Add tenant/university information using new tenant system with fallback
-        try:
-            # Try new tenant system first
-            from .tenants.registry import get_current_tenant_logos
-            tenant_logos = get_current_tenant_logos()
-            context.update(tenant_logos)
-        except Exception as e:
-            # Fallback to legacy tenant_utils.py for compatibility
-            try:
-                from .tenant_utils import get_tenant_logos
-                tenant_logos = get_tenant_logos()
-                context.update(tenant_logos)
-            except Exception as fallback_error:
-                # Ultimate fallback if both systems fail
-                context.update({
-                    'main_logo': 'studentVC-logo-sora-cropped.png',
-                    'university_logo': None,
-                    'university_name': None,
-                    'tenant_color': '#003f7f'
-                })
-                logger.warning(f"Tenant detection failed - using default: {e}, fallback: {fallback_error}")
         
         return context
 
@@ -355,17 +321,8 @@ def create_app():
         write_rate_limit = dummy_decorator
         read_rate_limit = dummy_decorator
     
-    # Initialize multi-tenant system (database already configured above)
-    try:
-        from .tenants.setup import initialize_tenant_system
-        
-        # Initialize tenant system (registry, config loading)
-        initialize_tenant_system()
-        logger.info("Multi-tenant system registry initialized successfully")
-        
-    except Exception as e:
-        logger.warning(f"Multi-tenant system initialization failed: {e}")
-        logger.info("Falling back to legacy tenant system")
+    # Initialize single tenant system 
+    logger.info("Single-tenant system initialized successfully")
 
     # Register all blueprints using centralized function
     register_blueprints(app)

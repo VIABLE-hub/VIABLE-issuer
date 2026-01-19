@@ -461,18 +461,12 @@ def direct_post():
             logger.warning("This may indicate a field categorization problem")
         
         # Send the final success SocketIO event with enhanced issuer information
-        # Get dynamic issuer info based on current tenant
-        from ..tenants.detection import get_current_tenant_id
-        from ..tenants.config_manager import get_tenant_config
+        # Get issuer info from config
+        from flask import current_app
+        issuer_info = current_app.config.get('UNIVERSITY_NAME', 'Technische Universität Berlin')
         
-        current_tenant = get_current_tenant_id()
-        tenant_config = get_tenant_config(current_tenant)
-        issuer_info = tenant_config.get('displayName', current_tenant) if tenant_config else current_tenant
-        
-        # 🔧 DEBUG: Log tenant detection details
-        logger.info(f"🔧 VERIFICATION DEBUG: Detected tenant = '{current_tenant}'")
-        logger.info(f"🔧 VERIFICATION DEBUG: Tenant config = {tenant_config}")
-        logger.info(f"🔧 VERIFICATION DEBUG: Final issuer_info = '{issuer_info}'")
+        # 🔧 DEBUG: Log tenant detection details (Fixed for single tenant)
+        logger.info(f"🔧 VERIFICATION DEBUG: Issuer info = '{issuer_info}'")
         
         socketio.emit('verification_result', {
             'status': 'success',
@@ -550,13 +544,12 @@ def direct_post():
             try:
                 from flask import redirect, url_for, flash, session
                 from flask_login import login_user
-                from ..tenants import get_current_tenant_id
                 from ..models import User, db
                 from werkzeug.security import generate_password_hash
                 import secrets
                 
-                # Check tenant matches
-                current_tenant = get_current_tenant_id()
+                # Check tenant matches (Hardcoded to tub for single tenant)
+                current_tenant = 'tub'
                 if user_tenant and user_tenant.lower() != current_tenant.lower():
                     logger.warning(f"Tenant mismatch: credential tenant={user_tenant}, current tenant={current_tenant}")
                     # Still allow login but log the mismatch

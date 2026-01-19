@@ -4,7 +4,8 @@ import json
 from .. import db
 from ..models import TenantSettings
 from .core import create_settings_backup
-from ..tenants import get_current_tenant as get_current_tenant_id
+# from ..tenants import get_current_tenant as get_current_tenant_id
+def get_current_tenant_id(): return 'tub'
 
 logger = logging.getLogger(__name__)
 

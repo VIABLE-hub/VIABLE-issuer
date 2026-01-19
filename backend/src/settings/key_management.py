@@ -26,7 +26,14 @@ class KeyManagementService:
     """Central service for all key management operations"""
     
     def __init__(self):
-        self.tenant_id = get_current_tenant()
+        self._tenant_id = None
+
+    @property
+    def tenant_id(self):
+        if self._tenant_id is None:
+            self._tenant_id = get_current_tenant()
+        return self._tenant_id
+
     
     def get_key_fingerprint(self, key_data: str) -> str:
         """Generate SHA256 fingerprint for a key"""

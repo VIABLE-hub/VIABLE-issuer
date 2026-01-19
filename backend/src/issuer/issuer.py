@@ -2,8 +2,7 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for,
 from flask_login import login_required
 from logging import getLogger
 from flask_login import login_required
-from .key_generator import generate_did, generate_kid
-from .tenant_key_generator import get_current_tenant_keys
+from .key_generator import generate_did, generate_kid, load_or_generate_bbs_keys, load_or_generate_keys
 from .offer import get_offer_url
 from .token import authenticate_token, verify_token, verify_and_generate_token
 from .credential import generate_credential, resolve_credential_offer
@@ -59,50 +58,44 @@ bbs_secret = None
 def index():
     initialize_keys()
     if request.method == "GET":
-        # Pre-populate form with tenant-specific defaults for GET requests
+        # Pre-populate form with config defaults for GET requests
         try:
-            from ..tenants.registry import get_current_tenant_config
-            tenant_config = get_current_tenant_config()
-            if tenant_config:
-                vc_template = tenant_config.get_credential_template()
-                branding = vc_template.get("credentialSubject", {}).get("credentialBranding", {})
-                
-                # Get tenant logo and colors
-                tenant_logo = branding.get("vcLogo", 'studentVC-logo-sora-cropped-darkmode.png')
-                tenant_bg_card = branding.get("bgColorCard", "").lstrip('#') or '18206C'
-                tenant_bg_top = branding.get("bgColorSectionTop", "").lstrip('#') or '18206C'
-                tenant_bg_bot = branding.get("bgColorSectionBot", "").lstrip('#') or ''
-                tenant_fg_title = branding.get("fgColorTitle", "").lstrip('#') or ''
-                
-                logger.info(f"🎓 GET REQUEST - Using tenant: {tenant_config.name}")
-                logger.info(f"🎓 GET REQUEST - Tenant logo: {tenant_logo}")
-                logger.info(f"🎨 GET REQUEST - Colors Card: {tenant_bg_card}, Top: {tenant_bg_top}")
-                
-                # Load tenant-specific logo as base64 if it exists
-                tenant_logo_base64 = None
-                tenant_logo_url = None
-                try:
-                    if tenant_logo and tenant_logo != 'studentVC-logo-sora-cropped-darkmode.png':
-                        # Try to load from tenant static folder
-                        tenant_logo_path = os.path.join(tenant_config.static_path, tenant_logo)
-                        if os.path.exists(tenant_logo_path):
-                            with open(tenant_logo_path, 'rb') as f:
-                                tenant_logo_base64 = base64.b64encode(f.read()).decode('utf-8')
-                                logger.info(f"🎓 LOGO LOADED - Tenant logo converted to base64: {len(tenant_logo_base64)} chars")
-                            # Also set the URL for direct access
-                            tenant_logo_url = f"/tenant-static/{tenant_logo}"
-                        else:
-                            logger.warning(f"🎓 LOGO WARNING - Tenant logo not found at: {tenant_logo_path}")
-                except Exception as e:
-                    logger.error(f"🎓 LOGO ERROR - Failed to load tenant logo: {e}")
-                
-                # Create initial form data with tenant defaults
-                form_data = {
+            vc_template = current_app.config.get('CREDENTIAL_TEMPLATE', {})
+            branding = vc_template.get("credentialSubject", {}).get("credentialBranding", {})
+            
+            # Get values
+            tenant_logo = branding.get("vcLogo", 'studentVC-logo-sora-cropped-darkmode.png')
+            tenant_bg_card = branding.get("bgColorCard", "").lstrip('#') or '18206C'
+            tenant_bg_top = branding.get("bgColorSectionTop", "").lstrip('#') or '18206C'
+            tenant_bg_bot = branding.get("bgColorSectionBot", "").lstrip('#') or ''
+            tenant_fg_title = branding.get("fgColorTitle", "").lstrip('#') or ''
+            
+            logger.info(f"🎓 GET REQUEST - Using single tenant config")
+            
+            # Load specific logo as base64 if it exists
+            tenant_logo_base64 = None
+            tenant_logo_url = None
+            try:
+                # Assuming logos are in static/img/
+                if tenant_logo and tenant_logo != 'studentVC-logo-sora-cropped-darkmode.png':
+                    tenant_logo_path = os.path.join(current_app.static_folder, 'img', tenant_logo)
+                    if os.path.exists(tenant_logo_path):
+                        with open(tenant_logo_path, 'rb') as f:
+                            tenant_logo_base64 = base64.b64encode(f.read()).decode('utf-8')
+                        tenant_logo_url = url_for('static', filename=f'img/{tenant_logo}')
+                    else:
+                        logger.warning(f"🎓 LOGO WARNING - Logo not found at: {tenant_logo_path}")
+            except Exception as e:
+                logger.error(f"🎓 LOGO ERROR - Failed to load logo: {e}")
+
+            # Create initial form data
+            from ..config import Config
+            form_data = {
                     'firstName': '',
                     'lastName': '',
                     'studentId': '',
                     'studentIdPrefix': '',
-                    'theme_name': tenant_config.name,
+                    'theme_name': Config.UNIVERSITY_NAME,
                     'theme_bgColorCard': tenant_bg_card,
                     'theme_bgColorSectionTop': tenant_bg_top,
                     'theme_bgColorSectionBot': tenant_bg_bot,
@@ -113,13 +106,12 @@ def index():
                     'theme_icon_url': tenant_logo_url  # URL for direct access
                 }
                 
-                return render_template("issuer.html", img_data=None, form_data=form_data)
-            else:
-                logger.info(f"🎓 GET REQUEST - No tenant config, using defaults")
+            return render_template("issuer.html", img_data=None, form_data=form_data)
+
         except Exception as e:
             logger.info(f"🎓 GET REQUEST ERROR - Using defaults: {e}")
         
-        # Fallback to original behavior if tenant system fails
+        # Fallback to original behavior
         return render_template("issuer.html", img_data=None)
 
     # Process the form data
@@ -136,23 +128,16 @@ def index():
     
     # Get tenant-specific VC branding configuration
     try:
-        from ..tenants.registry import get_current_tenant_config
-        tenant_config = get_current_tenant_config()
-        if tenant_config:
-            vc_template = tenant_config.get_credential_template()
-            branding = vc_template.get("credentialSubject", {}).get("credentialBranding", {})
-            
-            # Use tenant-specific logo, fallback to form data, then to default
-            tenant_logo = branding.get("vcLogo")
-            default_logo = credential_data.get('default_logo', tenant_logo or 'studentVC-logo-sora-cropped-darkmode.png')
-            
-            logger.info(f"🎓 TENANT VC BRANDING - Using tenant: {tenant_config.name}")
-            logger.info(f"🎓 TENANT VC BRANDING - Tenant logo: {tenant_logo}")
-            logger.info(f"🎓 TENANT VC BRANDING - Final logo: {default_logo}")
-        else:
-            # Fallback to original logic if no tenant
-            default_logo = credential_data.get('default_logo', 'studentVC-logo-sora-cropped-darkmode.png')
-            logger.info(f"🎓 NO TENANT - Using default logo: {default_logo}")
+        vc_template = current_app.config.get('CREDENTIAL_TEMPLATE', {})
+        branding = vc_template.get("credentialSubject", {}).get("credentialBranding", {})
+        
+        # Use tenant-specific logo, fallback to form data, then to default
+        tenant_logo = branding.get("vcLogo")
+        default_logo = credential_data.get('default_logo', tenant_logo or 'studentVC-logo-sora-cropped-darkmode.png')
+        
+        logger.info(f"🎓 VC BRANDING - Using config")
+        logger.info(f"🎓 VC BRANDING - Logo: {tenant_logo}")
+        logger.info(f"🎓 VC BRANDING - Final logo: {default_logo}")
     except Exception as e:
         # Fallback to original logic if tenant system fails
         default_logo = credential_data.get('default_logo', 'studentVC-logo-sora-cropped-darkmode.png')
@@ -188,36 +173,28 @@ def index():
             credential_data['theme[icon]'] = placeholder_logo
             logger.info(f"🩺 No theme icon provided - using default logo: {default_logo}")
 
-    # Get tenant-specific colors for theme defaults
+    # Get config colors for theme defaults
     try:
-        from ..tenants.registry import get_current_tenant_config
-        tenant_config = get_current_tenant_config()
-        if tenant_config:
-            vc_template = tenant_config.get_credential_template()
-            branding = vc_template.get("credentialSubject", {}).get("credentialBranding", {})
-            
-            # Extract tenant colors (remove # prefix for the form)
-            tenant_bg_card = branding.get("bgColorCard", "").lstrip('#')
-            tenant_bg_top = branding.get("bgColorSectionTop", "").lstrip('#')
-            tenant_bg_bot = branding.get("bgColorSectionBot", "").lstrip('#')
-            tenant_fg_title = branding.get("fgColorTitle", "").lstrip('#')
-            
-            logger.info(f"🎨 TENANT COLORS - Card: {tenant_bg_card}, Top: {tenant_bg_top}")
-            
-            # Use tenant colors as defaults
-            default_bg_card = tenant_bg_card or '18206C'
-            default_bg_top = tenant_bg_top or '18206C'
-            default_bg_bot = tenant_bg_bot or ''
-            default_fg_title = tenant_fg_title or ''
-        else:
-            # Original defaults if no tenant
-            default_bg_card = '18206C'
-            default_bg_top = '18206C'
-            default_bg_bot = ''
-            default_fg_title = ''
+        vc_template = current_app.config.get('CREDENTIAL_TEMPLATE', {})
+        branding = vc_template.get("credentialSubject", {}).get("credentialBranding", {})
+        
+        # Extract tenant colors (remove # prefix for the form)
+        tenant_bg_card = branding.get("bgColorCard", "").lstrip('#')
+        tenant_bg_top = branding.get("bgColorSectionTop", "").lstrip('#')
+        tenant_bg_bot = branding.get("bgColorSectionBot", "").lstrip('#')
+        tenant_fg_title = branding.get("fgColorTitle", "").lstrip('#')
+        
+        logger.info(f"🎨 COLORS - Card: {tenant_bg_card}, Top: {tenant_bg_top}")
+        
+        # Use tenant colors as defaults
+        default_bg_card = tenant_bg_card or '18206C'
+        default_bg_top = tenant_bg_top or '18206C'
+        default_bg_bot = tenant_bg_bot or ''
+        default_fg_title = tenant_fg_title or ''
+
     except Exception as e:
         # Fallback defaults if tenant system fails
-        logger.info(f"🎨 TENANT COLORS ERROR - Using defaults: {e}")
+        logger.info(f"🎨 COLORS ERROR - Using defaults: {e}")
         default_bg_card = '18206C'
         default_bg_top = '18206C'
         default_bg_bot = ''
@@ -266,26 +243,24 @@ def index():
         'theme_icon_url': credential_data.get('theme_icon_url')  # Übertrage auch die URL für direkten Zugriff
     }
     
-    # Load tenant-specific logo as base64 for form display if no custom icon was uploaded
+    # Load config logo as base64 for form display if no custom icon was uploaded
     if not credential_data.get('theme[icon]'):
         try:
-            from ..tenants.registry import get_current_tenant_config
-            tenant_config = get_current_tenant_config()
-            if tenant_config:
-                vc_template = tenant_config.get_credential_template()
-                branding = vc_template.get("credentialSubject", {}).get("credentialBranding", {})
-                tenant_logo = branding.get("vcLogo")
-                
-                if tenant_logo and tenant_logo != 'studentVC-logo-sora-cropped-darkmode.png':
-                    tenant_logo_path = os.path.join(tenant_config.static_path, tenant_logo)
-                    if os.path.exists(tenant_logo_path):
-                        with open(tenant_logo_path, 'rb') as f:
-                            tenant_logo_base64 = base64.b64encode(f.read()).decode('utf-8')
-                            form_data['theme_icon'] = tenant_logo_base64
-                            form_data['theme_icon_url'] = f"/tenant-static/{tenant_logo}"
-                            logger.info(f"🎓 POST - Loaded tenant logo as base64: {len(tenant_logo_base64)} chars")
+            vc_template = current_app.config.get('CREDENTIAL_TEMPLATE', {})
+            branding = vc_template.get("credentialSubject", {}).get("credentialBranding", {})
+            tenant_logo = branding.get("vcLogo")
+            
+            if tenant_logo and tenant_logo != 'studentVC-logo-sora-cropped-darkmode.png':
+                # Assuming static/img/
+                logo_path = os.path.join(current_app.static_folder, 'img', tenant_logo)
+                if os.path.exists(logo_path):
+                    with open(logo_path, 'rb') as f:
+                        tenant_logo_base64 = base64.b64encode(f.read()).decode('utf-8')
+                        form_data['theme_icon'] = tenant_logo_base64
+                        form_data['theme_icon_url'] = url_for('static', filename=f'img/{tenant_logo}')
+                        logger.info(f"🎓 POST - Loaded logo as base64: {len(tenant_logo_base64)} chars")
         except Exception as e:
-            logger.error(f"🎓 POST LOGO ERROR - Failed to load tenant logo: {e}")
+            logger.error(f"🎓 POST LOGO ERROR - Failed to load logo: {e}")
     
     logger.info(f"🩺 Sending form data back to template: {list(form_data.keys())}")
     logger.info(f"🩺 QR code generated, credential link: {link}")
@@ -320,18 +295,14 @@ def offer():
 def initialize_keys():
     global private_key, public_key, jwks, issuer_did, issuer_kid, bbs_dpk, bbs_secret
     if not private_key or not public_key or not bbs_dpk or not bbs_secret:
-        # Get tenant-specific keys
-        tenant_keys = get_current_tenant_keys()
+        # Load keys
+        private_key, public_key = load_or_generate_keys()
+        bbs_secret, bbs_dpk = load_or_generate_bbs_keys()
         
-        # Extract individual keys
-        bbs_secret = tenant_keys['bbs_private']
-        bbs_dpk = tenant_keys['bbs_public']
-        private_key = tenant_keys['jwt_private']
-        public_key = tenant_keys['jwt_public']
+        # Generate DID and KID
+        issuer_did = generate_did(public_key)
+        issuer_kid = generate_kid(issuer_did)
         
-        # Use tenant-generated DID and KID
-        issuer_did = tenant_keys['did']
-        issuer_kid = tenant_keys['kid']
     if not jwks:
         jwks = pem_to_jwk(public_key, "public")
     # return jsonify({"credential_offer": credential_offer_uri}), 200

@@ -86,12 +86,8 @@ def initialize_verifier_from_database():
         return False
 
 def get_current_tenant():
-    """Get current tenant object, with fallback to default tenant"""
-    # Get tenant ID
-    if current_user and current_user.is_authenticated and hasattr(current_user, 'tenant_id'):
-        tenant_id = current_user.tenant_id
-    else:
-        tenant_id = 'default'
+    """Get current tenant object (Always tub)"""
+    tenant_id = 'tub'
     
     # Get or create tenant object
     try:

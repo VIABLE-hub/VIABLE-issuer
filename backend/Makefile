@@ -8,7 +8,8 @@ all: dev
 .PHONY: dev
 dev:
 	@echo "🩺 Starting StudentVC development server using venv..."
-	@cd .. && source venv/bin/activate && cd backend && python -m src.main
+	@cd .. && . .venv/bin/activate && cd backend && python main.py
+
 
 # Create a backup of the database
 .PHONY: backup
