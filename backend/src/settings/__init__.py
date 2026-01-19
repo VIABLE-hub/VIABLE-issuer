@@ -24,7 +24,6 @@ from . import trust
 from . import network
 from . import health
 from . import database
-# from . import tenant_config
 
 # Keep backward compatibility
 from .api import api_settings
@@ -39,7 +38,6 @@ def register_all_routes():
     network.register_routes(settings)
     health.register_routes(settings)
     database.register_routes(settings)
-    # tenant_config.register_routes(settings)
 
 # Initialize routes when all modules are loaded
 register_all_routes()

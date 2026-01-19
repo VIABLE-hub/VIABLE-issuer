@@ -15,18 +15,7 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from ... import db
 from ...models import SystemSettings
-# from ..core import get_current_tenant
 
-class SystemTenantConfig:
-    tenant_id = 'system'
-    name = 'System'
-    
-    def __init__(self):
-        self.tenant_id = 'system'
-        self.name = 'System'
-
-def get_current_tenant_config():
-    return SystemTenantConfig()
 
 # Initialize logger for network module
 logger = logging.getLogger(__name__)
@@ -210,11 +199,7 @@ def api_network_settings():
     Handle network settings API endpoint
     """
     try:
-        tenant_config = get_current_tenant_config()
-        if tenant_config:
-            tenant_id = tenant_config.tenant_id
-        else:
-            tenant_id = 'root'  # fallback to root tenant
+        system_id = "system"
             
         system_settings = SystemSettings.get_or_create_default()
         
@@ -238,7 +223,7 @@ def api_network_settings():
                 return jsonify({"status": "error", "message": validation_result["message"]}), 400
             
             # Create backup before saving (temporarily disabled for NGROK fix)
-            # create_settings_backup(tenant_id, backup_type='auto', notes='Auto backup before updating network settings')
+            # create_settings_backup(system_id, backup_type='auto', notes='Auto backup before updating network settings')
             
             # 🚨 SMART MERGE: Merge new data with existing settings instead of replacing
             existing_settings = system_settings.network_settings or {}
@@ -278,7 +263,7 @@ def api_network_settings():
             flag_modified(system_settings, 'network_settings')
             db.session.commit()
             
-            logger.info(f"✅ Updated network settings for tenant {tenant_id}: {data}")
+            logger.info(f"✅ Updated network settings for system {system_id}: {data}")
             logger.info(f"📊 Merged settings: {merged_settings}")
             return jsonify({"status": "success", "message": "Network settings updated", "data": merged_settings}), 200
     except Exception as e:
@@ -294,11 +279,8 @@ def api_network_info():
     """
     try:
         network_info = get_network_information()
-        tenant_config = get_current_tenant_config()
-        if tenant_config:
-            tenant_id = tenant_config.tenant_id
-        else:
-            tenant_id = 'root'
+        
+        system_id = "system"
             
         system_settings = SystemSettings.get_or_create_default()
         network_config = system_settings.network_settings or {}
@@ -321,11 +303,8 @@ def update_network_config():
             return jsonify({"status": "error", "message": "Invalid request format, expected JSON"}), 400
             
         data = request.get_json()
-        tenant_config = get_current_tenant_config()
-        if tenant_config:
-            tenant_id = tenant_config.tenant_id
-        else:
-            tenant_id = 'root'
+        
+        system_id = "system"
             
         system_settings = SystemSettings.get_or_create_default()
         
@@ -334,7 +313,7 @@ def update_network_config():
             return jsonify({"status": "error", "message": validation_result["message"]}), 400
         
         # Create backup before saving (temporarily disabled for NGROK fix)
-        # create_settings_backup(tenant_id, backup_type='auto', notes='Auto backup before updating network configuration')
+        # create_settings_backup(system_id, backup_type='auto', notes='Auto backup before updating network configuration')
         
         # 🚨 SMART MERGE: Merge new data with existing settings instead of replacing
         existing_settings = system_settings.network_settings or {}
@@ -467,16 +446,11 @@ def register_routes(blueprint):
     def bp_api_system_network():
         """🔧 FIXED: Main network endpoint for settings page"""
         try:
-            # Get current tenant configuration
-            tenant_config = get_current_tenant_config()
-            if tenant_config:
-                tenant_id = tenant_config.tenant_id
-                logger.info(f"🌐 Network API - Current tenant: {tenant_id} ({tenant_config.name})")
-            else:
-                tenant_id = 'root'
-                logger.info("🌐 Network API - No tenant config found, using root")
+            # Get current system configuration
+            system_id = "system"
+            logger.info(f"🌐 Network API - Current system: {system_id}")
                 
-            # Get tenant settings
+            # Get system settings
             system_settings = SystemSettings.get_or_create_default()
             network_settings = system_settings.network_settings or {}
             
@@ -507,13 +481,13 @@ def register_routes(blueprint):
                     "is_ngrok_active": is_ngrok_active
                 },
                 "network_config": network_settings,
-                "tenant_info": {
-                    "tenant_id": tenant_id,
-                    "tenant_name": tenant_config.name if tenant_config else "Default"
+                "system_info": {
+                    "system_id": system_id,
+                    "system_name": "System" if system_config else "Default"
                 }
             }
             
-            logger.info(f"🌐 Network API - Returning data for tenant {tenant_id}")
+            logger.info(f"🌐 Network API - Returning data for system {system_id}")
             return jsonify(response_data)
             
         except Exception as e:
@@ -534,9 +508,9 @@ def register_routes(blueprint):
                     "is_ngrok_active": False
                 },
                 "network_config": {},
-                "tenant_info": {
-                    "tenant_id": "root",
-                    "tenant_name": "Default"
+                "system_info": {
+                    "system_id": "root",
+                    "system_name": "System"
                 }
             }
             return jsonify(fallback_data)
@@ -557,14 +531,9 @@ def register_routes(blueprint):
     def api_system_network_debug():
         """🚨 FIXED: Debug endpoint for network configuration"""
         try:
-            # Get current configuration using tenant registry
-            tenant_config = get_current_tenant_config()
-            if tenant_config:
-                tenant_id = tenant_config.tenant_id
-                logger.info(f"🔍 Network debug - Current tenant: {tenant_id} ({tenant_config.name})")
-            else:
-                tenant_id = 'root'
-                logger.warning("🔍 Network debug - No tenant config found, using root")
+            # Get current configuration using system registry
+            system_id = "system"
+            logger.info(f"🔍 Network debug - Current system: {system_id}")
                 
             system_settings = SystemSettings.get_or_create_default()
             network_settings = system_settings.network_settings or {}
@@ -601,14 +570,14 @@ def register_routes(blueprint):
                 'is_ngrok_active': is_ngrok_url
             }
             
-            logger.info(f"🔍 Network debug - Tenant ID: {tenant_id}")
+            logger.info(f"🔍 Network debug - Tenant ID: {system_id}")
             logger.info(f"🔍 Network debug - SERVER_URL: {actual_server_url}")
             logger.info(f"🔍 Network debug - Is NGROK URL: {is_ngrok_url}")
             
             return jsonify({
                 "status": "success",
-                "tenant_id": tenant_id,
-                "tenant_name": tenant_config.name if tenant_config else "Unknown",
+                "system_id": system_id,
+                "system_name": "System" if system_config else "Unknown",
                 "network_settings": enhanced_network_settings,
                 "flask_config": flask_config,
                 "network_info": network_info,

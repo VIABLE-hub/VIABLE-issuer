@@ -15,7 +15,6 @@ from uuid import uuid4
 from . import db
 from .models import APIKey, AuditLog, VC_validity, VC_Offer, SystemSettings
 from .settings.settings import get_current_user_email
-# from .settings.settings import get_current_tenant
 from .settings.api import API_KEYS
 
 # Create blueprint for API integration
@@ -59,7 +58,6 @@ def require_api_key(required_scope=None):
                         # Create a mock APIKey object with the necessary methods
                         class MockAPIKey:
                             def __init__(self, key_data):
-                                self.tenant_id = "default"
                                 self.name = key_data.get('name', 'API Key')
                                 self.key_id = key_data.get('id', '')
                                 # Map permissions to scopes for compatibility
@@ -120,10 +118,10 @@ def require_api_key(required_scope=None):
 
 @api_integration.route('/settings/api/integration/keys', methods=['GET'])
 def list_api_keys():
-    """List all API keys for current tenant"""
+    """List all API keys """
     try:
-        tenant_id = "default"
-        api_keys = APIKey.query.filter_by(tenant_id=tenant_id).order_by(APIKey.created_at.desc()).all()
+        
+        api_keys = APIKey.query.order_by(APIKey.created_at.desc()).all()
         
         return jsonify({
             'success': True,
@@ -157,11 +155,11 @@ def create_api_key():
         allowed_ips = data.get('allowed_ips', [])
         
         # Generate new API key
-        tenant_id = "default"  # Use default tenant
+          
         user_email = "system"   # Use system as creator
         
         api_key, raw_key = APIKey.generate_new_key(
-            tenant_id=tenant_id,
+            
             name=name,
             description=description,
             scopes=scopes,
@@ -190,11 +188,10 @@ def revoke_api_key(key_id):
         data = request.get_json() or {}
         reason = data.get('reason', 'Revoked by admin')
         
-        # Get default tenant since login is not required
-        tenant_id = "default"
+        
         user_email = "system"
         
-        api_key = APIKey.query.filter_by(key_id=key_id, tenant_id=tenant_id).first()
+        api_key = APIKey.query.filter_by(key_id=key_id).first()
         if not api_key:
             return jsonify({'error': 'API key not found'}), 404
         
@@ -267,7 +264,7 @@ def api_issue_credential():
                 'university': subject_data.get('university', subject_data.get('issued_by', 'University')),
                 'graduationDate': subject_data.get('graduationDate', datetime.datetime.now().isoformat()[:10])
             },
-            'issuer': request.api_key.tenant_id,
+            'issuer': "system",
             'issuanceDate': datetime.datetime.now().isoformat()
         }
         
@@ -289,7 +286,7 @@ def api_issue_credential():
             validity=True,
             credential_data=credential_data,
             created_at=datetime.datetime.now(),
-            issuer_did=f"did:web:{request.api_key.tenant_id}",
+            issuer_did="did:web:system",
             subject_did=credential_data['credentialSubject']['id']
         )
         db.session.add(validity_record)
@@ -297,7 +294,7 @@ def api_issue_credential():
         
         # Log the API request
         AuditLog.log(
-            tenant_id=request.api_key.tenant_id,
+            
             user_email=f"api_key:{request.api_key.name}",
             action='issue_credential',
             resource_type='credential',
@@ -321,7 +318,7 @@ def api_issue_credential():
                 'credential_type': credential_data['type'],
                 'subject': credential_data['credentialSubject'],
                 'issued_at': datetime.datetime.now().isoformat(),
-                'issuer': request.api_key.tenant_id,
+                'issuer': "system",
                 'validity_check_url': f"/api/v1/credentials/status/{credential_id}",
                 'instructions': {
                     'wallet_scanning': 'Scan the QR code with a compatible wallet app',
@@ -356,7 +353,7 @@ def api_verify_credential():
         
         # Log the API request
         AuditLog.log(
-            tenant_id=request.api_key.tenant_id,
+            
             user_email=f"api_key:{request.api_key.name}",
             action='verify_credential',
             resource_type='verification'
@@ -462,7 +459,7 @@ def api_verify_credential():
             'data': {
                 'verification_result': overall_result,
                 'verified_at': verification_start_time.isoformat(),
-                'verifier': request.api_key.tenant_id,
+                'verifier': "system",
                 'total_duration_ms': 1200,
                 'steps_completed': len(verification_steps),
                 'steps_passed': len([s for s in verification_steps.values() if s['status'] == 'success']),
@@ -518,7 +515,7 @@ def api_revoke_credential():
         
         # Log the API request
         AuditLog.log(
-            tenant_id=request.api_key.tenant_id,
+            
             user_email=f"api_key:{request.api_key.name}",
             action='revoke_credential',
             resource_type='credential',
@@ -563,7 +560,7 @@ def api_credential_status(credential_id):
         
         # Log the API request
         AuditLog.log(
-            tenant_id=request.api_key.tenant_id,
+            
             user_email=f"api_key:{request.api_key.name}",
             action='check_status',
             resource_type='credential',
@@ -605,7 +602,7 @@ def api_system_health():
             },
             'api': {
                 'version': 'v1',
-                'tenant': request.api_key.tenant_id,
+                'tenant': "system",
                 'rate_limit_remaining': request.api_key.rate_limit_per_hour - request.api_key.usage_count_today
             }
         }

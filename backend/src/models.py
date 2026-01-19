@@ -337,7 +337,7 @@ class AuditLog(db.Model):
         return f'<AuditLog {self.tenant_id}:{self.action}:{self.resource_type}>'
     
     @classmethod
-    def log(cls, tenant_id, user_email, action, resource_type, 
+    def log(cls, user_email, action, resource_type, 
             resource_category=None, resource_id=None,
             prev_value=None, new_value=None, 
             ip_address=None, user_agent=None, request_id=None):
@@ -356,7 +356,6 @@ class AuditLog(db.Model):
         """
         try:
             log_entry = cls(
-                tenant_id=tenant_id,
                 user_email=user_email,
                 action=action,
                 resource_type=resource_type,
@@ -379,12 +378,11 @@ class AuditLog(db.Model):
 class APIKey(db.Model):
     """
     API Keys for external university system integration
-    Secure storage with tenant isolation and usage tracking
+    Secure storage with usage tracking
     """
     __tablename__ = 'api_keys'
     
     id = db.Column(db.Integer, primary_key=True)
-    tenant_id = db.Column(db.String(255), nullable=False, index=True)
     
     # Key identification
     key_id = db.Column(db.String(36), unique=True, nullable=False, index=True)  # UUID for external reference
@@ -422,7 +420,7 @@ class APIKey(db.Model):
         return f'<APIKey {self.key_prefix}... ({self.name})>'
     
     @classmethod
-    def generate_new_key(cls, tenant_id, name, description, scopes, created_by, 
+    def generate_new_key(cls, name, description, scopes, created_by, 
                         expires_days=None, rate_limit_per_hour=1000, allowed_ips=None):
         """
         Generate a new API key with secure random generation
@@ -445,7 +443,6 @@ class APIKey(db.Model):
         
         # Create API key record
         api_key = cls(
-            tenant_id=tenant_id,
             key_id=key_id,
             key_hash=key_hash,
             key_prefix=key_prefix,
@@ -463,7 +460,6 @@ class APIKey(db.Model):
         
         # Log the creation for audit
         AuditLog.log(
-            tenant_id=tenant_id,
             user_email=created_by,
             action='create',
             resource_type='api_key',
@@ -521,7 +517,6 @@ class APIKey(db.Model):
         
         # Log the revocation
         AuditLog.log(
-            tenant_id=self.tenant_id,
             user_email=revoked_by,
             action='revoke',
             resource_type='api_key',
@@ -573,7 +568,6 @@ class KeyRegistry(db.Model):
     __tablename__ = 'key_registry'
     
     id = db.Column(db.Integer, primary_key=True)
-    tenant_id = db.Column(db.String(255), nullable=False, index=True)
     
     # Key identification and type
     key_type = db.Column(db.String(50), nullable=False, index=True)  # 'bbs_issuer', 'jwt_signing', 'domain_cert'
@@ -612,27 +606,25 @@ class KeyRegistry(db.Model):
         return f'<KeyRegistry {self.key_type}:{self.key_fingerprint[:12]}... status={self.status}>'
     
     @classmethod
-    def get_active_key(cls, tenant_id, key_type):
+    def get_active_key(cls, key_type):
         """Get the currently active key for a specific type"""
         return cls.query.filter_by(
-            tenant_id=tenant_id,
             key_type=key_type,
             status='active'
         ).first()
     
     @classmethod
-    def get_key_history(cls, tenant_id, key_type):
+    def get_key_history(cls, key_type):
         """Get all keys for a specific type (active and historical)"""
         return cls.query.filter_by(
-            tenant_id=tenant_id,
             key_type=key_type
         ).order_by(cls.created_at.desc()).all()
     
     @classmethod
-    def get_public_keys_for_verification(cls, tenant_id, key_type):
+    def get_public_keys_for_verification(cls, key_type):
         """Get all public keys that can be used for verification (active + retired)"""
         return cls.query.filter(
-            cls.tenant_id == tenant_id,
+            
             cls.key_type == key_type,
             cls.status.in_(['active', 'retired'])
         ).order_by(cls.created_at.desc()).all()
@@ -641,7 +633,6 @@ class KeyRegistry(db.Model):
         """Activate this key and deactivate others of the same type"""
         # Deactivate other active keys of the same type
         active_keys = KeyRegistry.query.filter_by(
-            tenant_id=self.tenant_id,
             key_type=self.key_type,
             status='active'
         ).all()

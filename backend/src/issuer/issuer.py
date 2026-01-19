@@ -64,27 +64,27 @@ def index():
             branding = vc_template.get("credentialSubject", {}).get("credentialBranding", {})
             
             # Get values
-            tenant_logo = branding.get("vcLogo", 'studentVC-logo-sora-cropped-darkmode.png')
-            tenant_bg_card = branding.get("bgColorCard", "").lstrip('#') or '18206C'
-            tenant_bg_top = branding.get("bgColorSectionTop", "").lstrip('#') or '18206C'
-            tenant_bg_bot = branding.get("bgColorSectionBot", "").lstrip('#') or ''
-            tenant_fg_title = branding.get("fgColorTitle", "").lstrip('#') or ''
+            system_logo = branding.get("vcLogo", 'studentVC-logo-sora-cropped-darkmode.png')
+            branding_bg_card = branding.get("bgColorCard", "").lstrip('#') or '18206C'
+            branding_bg_top = branding.get("bgColorSectionTop", "").lstrip('#') or '18206C'
+            branding_bg_bot = branding.get("bgColorSectionBot", "").lstrip('#') or ''
+            branding_fg_title = branding.get("fgColorTitle", "").lstrip('#') or ''
             
-            logger.info(f"🎓 GET REQUEST - Using single tenant config")
+            logger.info(f"🎓 GET REQUEST - Using system config")
             
             # Load specific logo as base64 if it exists
-            tenant_logo_base64 = None
-            tenant_logo_url = None
+            system_logo_base64 = None
+            system_logo_url = None
             try:
                 # Assuming logos are in static/img/
-                if tenant_logo and tenant_logo != 'studentVC-logo-sora-cropped-darkmode.png':
-                    tenant_logo_path = os.path.join(current_app.static_folder, 'img', tenant_logo)
-                    if os.path.exists(tenant_logo_path):
-                        with open(tenant_logo_path, 'rb') as f:
-                            tenant_logo_base64 = base64.b64encode(f.read()).decode('utf-8')
-                        tenant_logo_url = url_for('static', filename=f'img/{tenant_logo}')
+                if system_logo and system_logo != 'studentVC-logo-sora-cropped-darkmode.png':
+                    system_logo_path = os.path.join(current_app.static_folder, 'img', system_logo)
+                    if os.path.exists(system_logo_path):
+                        with open(system_logo_path, 'rb') as f:
+                            system_logo_base64 = base64.b64encode(f.read()).decode('utf-8')
+                        system_logo_url = url_for('static', filename=f'img/{system_logo}')
                     else:
-                        logger.warning(f"🎓 LOGO WARNING - Logo not found at: {tenant_logo_path}")
+                        logger.warning(f"🎓 LOGO WARNING - Logo not found at: {system_logo_path}")
             except Exception as e:
                 logger.error(f"🎓 LOGO ERROR - Failed to load logo: {e}")
 
@@ -96,14 +96,14 @@ def index():
                     'studentId': '',
                     'studentIdPrefix': '',
                     'theme_name': Config.UNIVERSITY_NAME,
-                    'theme_bgColorCard': tenant_bg_card,
-                    'theme_bgColorSectionTop': tenant_bg_top,
-                    'theme_bgColorSectionBot': tenant_bg_bot,
-                    'theme_fgColorTitle': tenant_fg_title,
-                    'default_logo': tenant_logo,
+                    'theme_bgColorCard': branding_bg_card,
+                    'theme_bgColorSectionTop': branding_bg_top,
+                    'theme_bgColorSectionBot': branding_bg_bot,
+                    'theme_fgColorTitle': branding_fg_title,
+                    'default_logo': system_logo,
                     'profile_image': None,
-                    'theme_icon': tenant_logo_base64 if tenant_logo_base64 else None,  # Use base64 content or None
-                    'theme_icon_url': tenant_logo_url  # URL for direct access
+                    'theme_icon': system_logo_base64 if system_logo_base64 else None,  # Use base64 content or None
+                    'theme_icon_url': system_logo_url  # URL for direct access
                 }
                 
             return render_template("issuer.html", img_data=None, form_data=form_data)
@@ -126,20 +126,20 @@ def index():
     logger.info(f"🎨   bgColorSectionBot: {credential_data.get('theme[bgColorSectionBot]')}")
     logger.info(f"🎨   fgColorTitle: {credential_data.get('theme[fgColorTitle]')}")
     
-    # Get tenant-specific VC branding configuration
+    # Get system VC branding configuration
     try:
         vc_template = current_app.config.get('CREDENTIAL_TEMPLATE', {})
         branding = vc_template.get("credentialSubject", {}).get("credentialBranding", {})
         
-        # Use tenant-specific logo, fallback to form data, then to default
-        tenant_logo = branding.get("vcLogo")
-        default_logo = credential_data.get('default_logo', tenant_logo or 'studentVC-logo-sora-cropped-darkmode.png')
+        # Use system logo, fallback to form data, then to default
+        system_logo = branding.get("vcLogo")
+        default_logo = credential_data.get('default_logo', system_logo or 'studentVC-logo-sora-cropped-darkmode.png')
         
         logger.info(f"🎓 VC BRANDING - Using config")
-        logger.info(f"🎓 VC BRANDING - Logo: {tenant_logo}")
+        logger.info(f"🎓 VC BRANDING - Logo: {system_logo}")
         logger.info(f"🎓 VC BRANDING - Final logo: {default_logo}")
     except Exception as e:
-        # Fallback to original logic if tenant system fails
+        # Fallback to original logic if system fails
         default_logo = credential_data.get('default_logo', 'studentVC-logo-sora-cropped-darkmode.png')
         logger.info(f"🎓 TENANT ERROR - Fallback to default logo: {default_logo}, Error: {e}")
     
@@ -178,22 +178,22 @@ def index():
         vc_template = current_app.config.get('CREDENTIAL_TEMPLATE', {})
         branding = vc_template.get("credentialSubject", {}).get("credentialBranding", {})
         
-        # Extract tenant colors (remove # prefix for the form)
-        tenant_bg_card = branding.get("bgColorCard", "").lstrip('#')
-        tenant_bg_top = branding.get("bgColorSectionTop", "").lstrip('#')
-        tenant_bg_bot = branding.get("bgColorSectionBot", "").lstrip('#')
-        tenant_fg_title = branding.get("fgColorTitle", "").lstrip('#')
+        # Extract system colors (remove # prefix for the form)
+        branding_bg_card = branding.get("bgColorCard", "").lstrip('#')
+        branding_bg_top = branding.get("bgColorSectionTop", "").lstrip('#')
+        branding_bg_bot = branding.get("bgColorSectionBot", "").lstrip('#')
+        branding_fg_title = branding.get("fgColorTitle", "").lstrip('#')
         
-        logger.info(f"🎨 COLORS - Card: {tenant_bg_card}, Top: {tenant_bg_top}")
+        logger.info(f"🎨 COLORS - Card: {branding_bg_card}, Top: {branding_bg_top}")
         
-        # Use tenant colors as defaults
-        default_bg_card = tenant_bg_card or '18206C'
-        default_bg_top = tenant_bg_top or '18206C'
-        default_bg_bot = tenant_bg_bot or ''
-        default_fg_title = tenant_fg_title or ''
+        # Use system colors as defaults
+        default_bg_card = branding_bg_card or '18206C'
+        default_bg_top = branding_bg_top or '18206C'
+        default_bg_bot = branding_bg_bot or ''
+        default_fg_title = branding_fg_title or ''
 
     except Exception as e:
-        # Fallback defaults if tenant system fails
+        # Fallback defaults if system fails
         logger.info(f"🎨 COLORS ERROR - Using defaults: {e}")
         default_bg_card = '18206C'
         default_bg_top = '18206C'
@@ -248,17 +248,17 @@ def index():
         try:
             vc_template = current_app.config.get('CREDENTIAL_TEMPLATE', {})
             branding = vc_template.get("credentialSubject", {}).get("credentialBranding", {})
-            tenant_logo = branding.get("vcLogo")
+            system_logo = branding.get("vcLogo")
             
-            if tenant_logo and tenant_logo != 'studentVC-logo-sora-cropped-darkmode.png':
+            if system_logo and system_logo != 'studentVC-logo-sora-cropped-darkmode.png':
                 # Assuming static/img/
-                logo_path = os.path.join(current_app.static_folder, 'img', tenant_logo)
+                logo_path = os.path.join(current_app.static_folder, 'img', system_logo)
                 if os.path.exists(logo_path):
                     with open(logo_path, 'rb') as f:
-                        tenant_logo_base64 = base64.b64encode(f.read()).decode('utf-8')
-                        form_data['theme_icon'] = tenant_logo_base64
-                        form_data['theme_icon_url'] = url_for('static', filename=f'img/{tenant_logo}')
-                        logger.info(f"🎓 POST - Loaded logo as base64: {len(tenant_logo_base64)} chars")
+                        system_logo_base64 = base64.b64encode(f.read()).decode('utf-8')
+                        form_data['theme_icon'] = system_logo_base64
+                        form_data['theme_icon_url'] = url_for('static', filename=f'img/{system_logo}')
+                        logger.info(f"🎓 POST - Loaded logo as base64: {len(system_logo_base64)} chars")
         except Exception as e:
             logger.error(f"🎓 POST LOGO ERROR - Failed to load logo: {e}")
     

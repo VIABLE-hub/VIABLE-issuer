@@ -163,7 +163,7 @@ def load_existing_keys():
 
 
 def generate_did(public_key_pem):
-    """Generate a DID for the issuer public key (single tenant)"""
+    """Generate a DID for the issuer public key """
     if isinstance(public_key_pem, str):
          public_key_pem = public_key_pem.encode("utf-8")
          

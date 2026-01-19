@@ -484,7 +484,6 @@ def direct_post():
         # Extract credential type to check if it's a LoginCredential
         is_login_credential = False
         user_email = None
-        user_tenant = None
         
         try:
             # Try to extract credential type from the VP
@@ -527,15 +526,13 @@ def direct_post():
                         credential_subject = vc_data.get("credentialSubject", {})
                     
                     user_email = credential_subject.get("email")
-                    user_tenant = credential_subject.get("tenant")
                     
                     # Also try to extract from values if available
                     if not user_email and "values" in vc:
                         values = vc.get("values", {})
                         user_email = values.get("email")
-                        user_tenant = values.get("tenant")
                     
-                    logger.info(f"🔐 Extracted login info: email={user_email}, tenant={user_tenant}")
+                    logger.info(f"🔐 Extracted login info: email={user_email}")
         except Exception as e:
             logger.debug(f"Could not check for LoginCredential: {e}")
         
@@ -548,10 +545,6 @@ def direct_post():
                 from werkzeug.security import generate_password_hash
                 import secrets
                 
-                # Check tenant matches (Hardcoded to tub for single tenant)
-                current_tenant = 'tub'
-                if user_tenant and user_tenant.lower() != current_tenant.lower():
-                    logger.warning(f"Tenant mismatch: credential tenant={user_tenant}, current tenant={current_tenant}")
                     # Still allow login but log the mismatch
                 
                 # Get or create user
@@ -572,7 +565,6 @@ def direct_post():
                 # Store VC login info in session
                 session['vc_login'] = True
                 session['vc_login_email'] = user_email
-                session['vc_login_tenant'] = user_tenant or current_tenant
                 
                 logger.info(f"✅ VC login successful for {user_email}")
                 

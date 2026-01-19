@@ -32,7 +32,7 @@ def authenticate_token(f):
 
         # Verify the token with the current server endpoint
         try:
-            # Use dynamic server URL from tenant configuration
+            # Use dynamic server URL from configuration
             from ..utils import get_current_server_url
             server_url = get_current_server_url()
             logger.info(f"Verifying token with server URL: {server_url}")

@@ -217,7 +217,7 @@ By Category:
   - Network configuration
   - Health checks
   - Database management
-  - Tenant configuration
+  - Server configuration
 
 #### `api_settings` Blueprint
 - **File:** `backend/src/settings/api.py`

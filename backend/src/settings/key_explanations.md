@@ -39,7 +39,7 @@ Verifier → Verifies proof with BBS+ public key
 ```
 did:key:zXwpQjZaoASZf1Q9mhhx4o...
 ```
-- **Globally Unique**: Each tenant has a different DID
+- **Globally Unique**: Each system has a different DID
 - **Self-Describing**: Contains the public key within the identifier
 - **Resolvable**: Verifiers can extract the public key from the DID
 
@@ -70,15 +70,15 @@ did:key:zXwpQjZaoASZf1Q9mhhx4o...
 ## 🔑 Security Benefits
 
 1. **Privacy-Preserving**: Students reveal only necessary information
-2. **Multi-University**: Each tenant (TUB, FUB, ROOT) has unique keys
+2. **Single-University**: Each system  has unique keys
 3. **Cryptographically Secure**: Can't forge credentials or proofs
 4. **Future-Proof**: BBS+ is a cutting-edge privacy technology
 
 ## 📊 Key Lifecycle
 
-- **Created**: When tenant first needs to issue credentials
+- **Created**: When system first needs to issue credentials
 - **Expires**: After 1 year (configurable)
 - **Rotation**: Old credentials remain verifiable with old public keys
-- **Backup**: Keys stored in `backend/src/tenants/instances/{tenant}/keys/`
+- **Backup**: Keys stored in `backend/src/systems/instances/{system}/keys/`
 
-Each tenant's keys are completely isolated, ensuring that a compromise of one university's keys doesn't affect others. 
+Each system's keys are completely isolated, ensuring that a compromise of one university's keys doesn't affect others. 

@@ -116,7 +116,7 @@
               <!-- University Logo (if present and different from main logo) -->
               {% if university_logo and university_logo != main_logo %}
                 <div class="p-1 bg-white dark:bg-gray-800 rounded-lg shadow-sm group-hover:shadow-md transition-all duration-200" 
-                     style="border-left: 3px solid {{ '#' + tenant_color if tenant_color else '#003f7f' }};">
+                     style="border-left: 3px solid {{ '#' + primary_color if primary_color else '#003f7f' }};">
                   <img src="{{ url_for('static',filename=university_logo) }}" 
                        alt="{{ university_name }} Logo" 
                        class="h-8 w-auto object-contain" 
@@ -133,7 +133,7 @@
               <div class="flex flex-col">
                 <span class="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">StudentVC</span>
                 {% if university_name %}
-                  <span class="text-xs text-gray-600 dark:text-gray-400 -mt-1" style="color: {{ '#' + tenant_color if tenant_color else '#003f7f' }};">{{ university_name }}</span>
+                  <span class="text-xs text-gray-600 dark:text-gray-400 -mt-1" style="color: {{ '#' + primary_color if primary_color else '#003f7f' }};">{{ university_name }}</span>
                 {% endif %}
               </div>
             </a>
@@ -402,7 +402,6 @@
     <script src="{{ url_for('static', filename='js/herzchirurg_image_fix.js') }}"></script>
 
     <!-- 🚀 PERFECT TENANT INTEGRATION -->
-    <script src="{{ url_for('static', filename='js/perfect-tenant-integration.js') }}"></script>
 
     {% block javascript %} {% endblock %}
   </body>

@@ -26,11 +26,7 @@ class KeyManagementService:
     """Central service for all key management operations"""
     
     def __init__(self):
-        self._tenant_id = None
 
-    @property
-    def tenant_id(self):
-        return "system"
 
     
     def get_key_fingerprint(self, key_data: str) -> str:
@@ -50,13 +46,13 @@ class KeyManagementService:
                 
                 # Check if already registered
                 existing = KeyRegistry.query.filter_by(
-                    tenant_id=self.tenant_id,
+                    
                     key_fingerprint=fingerprint
                 ).first()
                 
                 if not existing:
                     bbs_key = KeyRegistry(
-                        tenant_id=self.tenant_id,
+                        
                         key_type='bbs_issuer',
                         key_fingerprint=fingerprint,
                         key_identifier='bbs-issuer-key',
@@ -85,7 +81,7 @@ class KeyManagementService:
                 
                 # Check if already registered
                 existing = KeyRegistry.query.filter_by(
-                    tenant_id=self.tenant_id,
+                    
                     key_fingerprint=fingerprint
                 ).first()
                 
@@ -95,7 +91,7 @@ class KeyManagementService:
                     issuer_kid = generate_kid(issuer_did)
                     
                     jwt_key = KeyRegistry(
-                        tenant_id=self.tenant_id,
+                        
                         key_type='jwt_signing',
                         key_fingerprint=fingerprint,
                         key_identifier=issuer_did,
@@ -148,13 +144,13 @@ class KeyManagementService:
     
     def _get_key_type_info(self, key_type: str) -> Dict:
         """Get detailed information for a specific key type"""
-        active_key = KeyRegistry.get_active_key(self.tenant_id, key_type)
-        key_history = KeyRegistry.get_key_history(self.tenant_id, key_type)
+        active_key = KeyRegistry.get_active_key(key_type)
+        key_history = KeyRegistry.get_key_history(key_type)
         
         if not active_key and key_type in ["bbs_issuer", "jwt_signing"]:
             # Try to register existing keys if no active key found
             self.register_existing_keys()
-            active_key = KeyRegistry.get_active_key(self.tenant_id, key_type)
+            active_key = KeyRegistry.get_active_key(key_type)
         
         info = {
             "active_key": active_key.get_status_info() if active_key else None,
@@ -170,7 +166,7 @@ class KeyManagementService:
     def _get_verification_registry_info(self) -> Dict:
         """Get information about verification registry"""
         all_verification_keys = KeyRegistry.query.filter(
-            KeyRegistry.tenant_id == self.tenant_id,
+            
             KeyRegistry.status.in_(['active', 'retired'])
         ).all()
         
@@ -184,7 +180,7 @@ class KeyManagementService:
     
     def _get_summary_stats(self) -> Dict:
         """Get summary statistics"""
-        all_keys = KeyRegistry.query.filter_by(tenant_id=self.tenant_id).all()
+        all_keys = KeyRegistry.query.filter_by().all()
         
         return {
             "total_keys": len(all_keys),
@@ -216,7 +212,7 @@ class KeyManagementService:
             logger.info(f"Starting key rotation for type: {key_type}")
             
             # Get current active key
-            current_key = KeyRegistry.get_active_key(self.tenant_id, key_type)
+            current_key = KeyRegistry.get_active_key(key_type)
             
             if key_type == "bbs_issuer":
                 return self._rotate_bbs_key(current_key, rotated_by)
@@ -243,7 +239,7 @@ class KeyManagementService:
             fingerprint = self.get_key_fingerprint(public_b64)
             
             new_key = KeyRegistry(
-                tenant_id=self.tenant_id,
+                
                 key_type='bbs_issuer',
                 key_fingerprint=fingerprint,
                 key_identifier='bbs-issuer-key',
@@ -271,7 +267,7 @@ class KeyManagementService:
             
             # Log audit
             AuditLog.log(
-                tenant_id=self.tenant_id,
+                
                 user_email=rotated_by,
                 action='rotate',
                 resource_type='key',
@@ -306,7 +302,7 @@ class KeyManagementService:
             fingerprint = self.get_key_fingerprint(new_public)
             
             new_key = KeyRegistry(
-                tenant_id=self.tenant_id,
+                
                 key_type='jwt_signing',
                 key_fingerprint=fingerprint,
                 key_identifier=issuer_did,
@@ -335,7 +331,7 @@ class KeyManagementService:
             
             # Log audit
             AuditLog.log(
-                tenant_id=self.tenant_id,
+                
                 user_email=rotated_by,
                 action='rotate',
                 resource_type='key',
@@ -365,7 +361,7 @@ class KeyManagementService:
     def get_verification_registry(self) -> List[Dict]:
         """Get all public keys available for verification"""
         verification_keys = KeyRegistry.query.filter(
-            KeyRegistry.tenant_id == self.tenant_id,
+            
             KeyRegistry.status.in_(['active', 'retired'])
         ).order_by(KeyRegistry.created_at.desc()).all()
         
@@ -376,11 +372,11 @@ class KeyManagementService:
         try:
             if key_fingerprint:
                 key = KeyRegistry.query.filter_by(
-                    tenant_id=self.tenant_id,
+                    
                     key_fingerprint=key_fingerprint
                 ).first()
             else:
-                key = KeyRegistry.get_active_key(self.tenant_id, key_type)
+                key = KeyRegistry.get_active_key(key_type)
             
             if key:
                 key.increment_usage()
@@ -417,7 +413,7 @@ class KeyRotationService:
                 
                 # Log emergency rotation
                 AuditLog.log(
-                    tenant_id=self.key_mgmt.tenant_id,
+                    
                     user_email=rotated_by,
                     action='emergency_rotate',
                     resource_type='key',

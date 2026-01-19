@@ -4,7 +4,7 @@ Centralized validation for all API endpoints
 
 This module provides:
 - Schema-based validation using Marshmallow
-- Common validators (URLs, tenant IDs, identifiers)
+- Common validators (URLs, identifiers)
 - Validation decorator for easy route protection
 - Consistent error responses
 
@@ -24,13 +24,6 @@ from functools import wraps
 from flask import request, jsonify
 
 # Common validators
-class TenantIDField(fields.String):
-    """Validates tenant IDs"""
-    def _deserialize(self, value, attr, data, **kwargs):
-        value = super()._deserialize(value, attr, data, **kwargs)
-        if value not in ['root', 'tub', 'fub', 'veritas']:
-            raise ValidationError(f"Invalid tenant ID: {value}. Must be one of: root, tub, fub, veritas")
-        return value
 
 
 class URLField(fields.String):
@@ -69,7 +62,6 @@ class NetworkConfigSchema(Schema):
     """Schema for network configuration updates"""
     ngrok_url = URLField(required=False, allow_none=True)
     local_url = URLField(required=False, allow_none=True)
-    tenant_id = TenantIDField(required=False)
 
 
 class CredentialIdentifierSchema(Schema):
