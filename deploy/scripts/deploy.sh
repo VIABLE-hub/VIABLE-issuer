@@ -2,30 +2,23 @@
 
 # StudentVC Production Deployment Script
 # =====================================
-# This script automates the deployment of StudentVC multi-tenant application
+# This script automates the deployment of StudentVC application
 #
 # WHAT THIS SCRIPT DOES:
 # ----------------------
 # 1. Checks prerequisites (Docker, Docker Compose, kubectl)
-# 2. Creates necessary data directories for each tenant
+# 2. Creates necessary data directories
 # 3. Offers two deployment options:
-#    - Docker Compose: Multi-tenant deployment with 3 services
+#    - Docker Compose: Single container deployment
 #    - Kubernetes: Production-grade deployment with auto-scaling
 # 4. Builds Docker images with all dependencies
-# 5. Starts containers with proper tenant isolation
+# 5. Starts containers
 # 6. Verifies deployment health
 # 7. Displays access URLs and monitoring instructions
 #
 # DEPLOYMENT MODES:
 # -----------------
-# Multi-Tenant (Default): Runs 3 separate containers
-#   - TUB tenant on port 8080
-#   - FUB tenant on port 8081  
-#   - ROOT tenant on port 8082
-#
-# Single Tenant: Run only one specific tenant
-#   - Set SINGLE_TENANT=tub|fub|root before running
-#   - Example: SINGLE_TENANT=tub ./deploy.sh
+# Default: Runs the application on port 8080
 
 set -e  # Exit on any error
 
@@ -82,12 +75,12 @@ check_prerequisites() {
 
 # Create data directories
 create_data_directories() {
-    log_info "Creating data directories for tenants..."
+    log_info "Creating data directories..."
     
     # Create deployment directories if they don't exist
-    mkdir -p ../configs/data/{tub,fub,root}
-mkdir -p ../configs/static/{tub,fub,root}
-mkdir -p ../configs/ssl
+    mkdir -p ../configs/data
+    mkdir -p ../configs/static
+    mkdir -p ../configs/ssl
     
     log_success "Data directories created"
 }
@@ -101,7 +94,6 @@ check_environment() {
             log_warning "No .env file found. Copying from deployment.env template..."
             cp deployment.env .env
             log_warning "Please edit .env file with your configuration before proceeding"
-            log_warning "Especially update NGROK URLs for each tenant"
             read -p "Press Enter to continue after editing .env file..."
         else
             log_error "No .env or deployment.env file found"
@@ -118,36 +110,11 @@ deploy_docker_compose() {
     
     cd ../configs
     
-    # Check for single tenant mode
-    if [ ! -z "$SINGLE_TENANT" ]; then
-        log_info "SINGLE TENANT MODE: Deploying only $SINGLE_TENANT tenant"
-        
-        # Create temporary docker-compose file for single tenant
-        case $SINGLE_TENANT in
-            tub)
-                docker compose up -d studentvc-tub redis
-                log_success "TUB tenant deployed on port 8080"
-                ;;
-            fub)
-                docker compose up -d studentvc-fub redis
-                log_success "FUB tenant deployed on port 8081"
-                ;;
-            root)
-                docker compose up -d studentvc-root redis
-                log_success "ROOT tenant deployed on port 8082"
-                ;;
-            *)
-                log_error "Invalid tenant: $SINGLE_TENANT. Must be tub, fub, or root"
-                exit 1
-                ;;
-        esac
-    else
-        # Multi-tenant deployment
-        log_info "Starting multi-tenant deployment..."
-        docker compose up -d --build
-        
-        log_success "All services started"
-    fi
+    # Single tenant deployment
+    log_info "Starting deployment..."
+    docker compose up -d --build
+    
+    log_success "All services started"
     
     cd ..
 }

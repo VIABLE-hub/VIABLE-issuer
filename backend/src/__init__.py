@@ -244,7 +244,7 @@ def create_app():
             'university_name': Config.UNIVERSITY_NAME,
             'university_logo': Config.LOGO_FILENAME,
             'main_logo': Config.MAIN_LOGO_FILENAME,
-            'tenant_color': Config.PRIMARY_COLOR.lstrip('#'),
+            'primary_color': Config.PRIMARY_COLOR.lstrip('#'),
             # Adding other potentially used variables
         }
         

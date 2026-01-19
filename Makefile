@@ -35,20 +35,6 @@ else
 	cd $(BACKEND_DIR) && SERVER_PORT=8080 ../$(VENV_DIR)/bin/python main.py
 endif
 
-# Legacy aliases
-dev-root:
-	@echo "⚠️ Multi-tenancy removed. Starting single tenant instance..."
-	@make dev
-dev-tub:
-	@echo "⚠️ Multi-tenancy removed. Starting single tenant instance (matches old TUB config)..."
-	@make dev
-dev-fub:
-	@echo "⚠️ Multi-tenancy removed. Starting single tenant instance..."
-	@make dev
-dev-veritas:
-	@echo "⚠️ Multi-tenancy removed. Starting single tenant instance..."
-	@make dev
-
 # Start default
 dev-all: dev
 start-all: dev

@@ -35,7 +35,7 @@
             background: linear-gradient(135deg, 
                 #ffffff 0%, 
                 #f8f9fa 40%, 
-                {{ '#' + tenant_color + '15' if tenant_color else '#3b82f615' }} 100%
+                {{ '#' + primary_color + '15' if primary_color else '#3b82f615' }} 100%
             );
         }
         
@@ -116,7 +116,7 @@
             </p>
             
             <!-- Description Box - CENTERED with left border -->
-            <div style="border-left: 4px solid {{ '#' + tenant_color if tenant_color else '#3b82f6' }}; padding: 1.5rem; margin: 0 auto 2rem auto; background: rgba(255,255,255,0.8); border-radius: 0.25rem; text-align: left; max-width: 520px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); backdrop-filter: blur(10px);">
+            <div style="border-left: 4px solid {{ '#' + primary_color if primary_color else '#3b82f6' }}; padding: 1.5rem; margin: 0 auto 2rem auto; background: rgba(255,255,255,0.8); border-radius: 0.25rem; text-align: left; max-width: 520px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); backdrop-filter: blur(10px);">
                 <p style="color: #374151; line-height: 1.6; font-size: 0.925rem;">
                     Sichere Verwaltung digitaler Nachweise und Credentials. 
                     Vollständige Kontrolle über Ihre digitalen Identitätsdaten 
@@ -127,15 +127,15 @@
             <!-- Features - CENTERED -->
             <div style="margin-bottom: 2rem; display: inline-block; text-align: left;">
                 <div style="display: flex; align-items: center; margin-bottom: 0.5rem; color: #4b5563; font-size: 0.925rem;">
-                    <i class="fas fa-certificate" style="margin-right: 0.75rem; color: {{ '#' + tenant_color if tenant_color else '#3b82f6' }};"></i>
+                    <i class="fas fa-certificate" style="margin-right: 0.75rem; color: {{ '#' + primary_color if primary_color else '#3b82f6' }};"></i>
                     <span>BBS+ Selective Disclosure</span>
                 </div>
                 <div style="display: flex; align-items: center; margin-bottom: 0.5rem; color: #4b5563; font-size: 0.925rem;">
-                    <i class="fas fa-mobile-alt" style="margin-right: 0.75rem; color: {{ '#' + tenant_color if tenant_color else '#3b82f6' }};"></i>
+                    <i class="fas fa-mobile-alt" style="margin-right: 0.75rem; color: {{ '#' + primary_color if primary_color else '#3b82f6' }};"></i>
                     <span>Mobile Wallet Integration</span>
                 </div>
                 <div style="display: flex; align-items: center; color: #4b5563; font-size: 0.925rem;">
-                    <i class="fas fa-university" style="margin-right: 0.75rem; color: {{ '#' + tenant_color if tenant_color else '#3b82f6' }};"></i>
+                    <i class="fas fa-university" style="margin-right: 0.75rem; color: {{ '#' + primary_color if primary_color else '#3b82f6' }};"></i>
                     <span>Multi-Tenant Architecture</span>
                 </div>
             </div>
@@ -238,7 +238,7 @@
                         <!-- Login Button - COMPACT -->
                         <button 
                             type="submit" 
-                            style="width: 100%; background: {{ '#' + tenant_color if tenant_color else '#1e40af' }}; color: white; padding: 0.75rem 1.25rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.875rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); cursor: pointer; border: none; transition: all 0.2s;"
+                            style="width: 100%; background: {{ '#' + primary_color if primary_color else '#1e40af' }}; color: white; padding: 0.75rem 1.25rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.875rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); cursor: pointer; border: none; transition: all 0.2s;"
                             onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1)';"
                             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.1)';"
                         >
@@ -256,7 +256,7 @@
                     <button 
                         type="button"
                         onclick="switchToVC()"
-                        style="width: 100%; background: white; color: {{ '#' + tenant_color if tenant_color else '#1e40af' }}; padding: 0.75rem 1.25rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.875rem; border: 2px solid {{ '#' + tenant_color if tenant_color else '#1e40af' }}; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;"
+                        style="width: 100%; background: white; color: {{ '#' + primary_color if primary_color else '#1e40af' }}; padding: 0.75rem 1.25rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.875rem; border: 2px solid {{ '#' + primary_color if primary_color else '#1e40af' }}; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;"
                         onmouseover="this.style.background='rgba(0,0,0,0.02)';"
                         onmouseout="this.style.background='white';"
                     >
@@ -269,7 +269,7 @@
                 <div id="vc-qr-section" style="display: none; opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease;">
                     <div style="text-align: center; padding: 1.5rem; background: #f9fafb; border-radius: 0.5rem; border: 1px solid #e5e7eb;">
                         <p style="font-size: 0.875rem; color: #374151; font-weight: 600; margin-bottom: 1rem;">
-                            <i class="fas fa-mobile-alt" style="margin-right: 0.5rem; color: {{ '#' + tenant_color if tenant_color else '#1e40af' }};"></i>
+                            <i class="fas fa-mobile-alt" style="margin-right: 0.5rem; color: {{ '#' + primary_color if primary_color else '#1e40af' }};"></i>
                             Scan with your Wallet
                         </p>
                         
@@ -277,17 +277,17 @@
                         <div style="width: 200px; height: 200px; margin: 0 auto 1rem auto; background: white; border: 2px solid #e5e7eb; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
                             <!-- QR Pattern Placeholder -->
                             <svg width="180" height="180" viewBox="0 0 180 180" style="opacity: 0.3;">
-                                <rect x="0" y="0" width="50" height="50" fill="{{ '#' + tenant_color if tenant_color else '#1e40af' }}"/>
+                                <rect x="0" y="0" width="50" height="50" fill="{{ '#' + primary_color if primary_color else '#1e40af' }}"/>
                                 <rect x="10" y="10" width="30" height="30" fill="white"/>
-                                <rect x="130" y="0" width="50" height="50" fill="{{ '#' + tenant_color if tenant_color else '#1e40af' }}"/>
+                                <rect x="130" y="0" width="50" height="50" fill="{{ '#' + primary_color if primary_color else '#1e40af' }}"/>
                                 <rect x="140" y="10" width="30" height="30" fill="white"/>
-                                <rect x="0" y="130" width="50" height="50" fill="{{ '#' + tenant_color if tenant_color else '#1e40af' }}"/>
+                                <rect x="0" y="130" width="50" height="50" fill="{{ '#' + primary_color if primary_color else '#1e40af' }}"/>
                                 <rect x="10" y="140" width="30" height="30" fill="white"/>
-                                <rect x="70" y="70" width="40" height="40" fill="{{ '#' + tenant_color if tenant_color else '#1e40af' }}"/>
-                                <text x="90" y="95" text-anchor="middle" font-size="12" fill="{{ '#' + tenant_color if tenant_color else '#1e40af' }}" font-weight="bold">VC</text>
+                                <rect x="70" y="70" width="40" height="40" fill="{{ '#' + primary_color if primary_color else '#1e40af' }}"/>
+                                <text x="90" y="95" text-anchor="middle" font-size="12" fill="{{ '#' + primary_color if primary_color else '#1e40af' }}" font-weight="bold">VC</text>
                             </svg>
                             <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.95); padding: 0.5rem 1rem; border-radius: 0.25rem; border: 1px solid #e5e7eb;">
-                                <i class="fas fa-qrcode" style="font-size: 2rem; color: {{ '#' + tenant_color if tenant_color else '#1e40af' }};"></i>
+                                <i class="fas fa-qrcode" style="font-size: 2rem; color: {{ '#' + primary_color if primary_color else '#1e40af' }};"></i>
                             </div>
                         </div>
                         
@@ -310,7 +310,7 @@
                         <button 
                             type="button"
                             onclick="switchToPassword()"
-                            style="width: 100%; background: white; color: {{ '#' + tenant_color if tenant_color else '#1e40af' }}; padding: 0.75rem 1.25rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.875rem; border: 2px solid {{ '#' + tenant_color if tenant_color else '#1e40af' }}; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;"
+                            style="width: 100%; background: white; color: {{ '#' + primary_color if primary_color else '#1e40af' }}; padding: 0.75rem 1.25rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.875rem; border: 2px solid {{ '#' + primary_color if primary_color else '#1e40af' }}; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;"
                             onmouseover="this.style.background='rgba(0,0,0,0.02)';"
                             onmouseout="this.style.background='white';"
                         >

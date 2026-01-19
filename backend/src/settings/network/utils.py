@@ -106,7 +106,7 @@ def update_flask_server_url(ngrok_domain, default_ip, default_port, use_https=Tr
         # Return a default URL as fallback
         return f"{'https' if use_https else 'http'}://localhost:{default_port}"
 
-def get_network_config(tenant_id=None):
+def get_network_config():
     """Get network configuration"""
     try:
         # Get system settings
