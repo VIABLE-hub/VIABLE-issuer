@@ -5,7 +5,7 @@ class Config:
     UNIVERSITY_NAME = "Technische Universität Berlin"
     UNIVERSITY_SHORT_NAME = "TU Berlin"
     PRIMARY_COLOR = "#c50e1f"
-    ACCENT_COLOR = "#FFD700"
+    ACCENT_COLOR = "#c50e1f"
     TEXT_COLOR = "#FFFFFF"
     
     # Logos (now in static/img/)
@@ -19,7 +19,7 @@ class Config:
         'bgColorTop': 'c50e1f',
         'bgColorBot': 'FFFFFF',
         'fgColorTitle': 'FFFFFF',
-        'accentColor': 'FFD700',
+        'accentColor': 'c50e1f',
         'textColor': 'FFFFFF'
     }
 
@@ -33,9 +33,9 @@ class Config:
                 "textColor": "FFFFFF",
                 "logo": HOCHSCHUL_BRANDING_LOGO,
                 "vcLogo": HOCHSCHUL_BRANDING_LOGO,
-                "bgColorCard": "FFFFFF",
+                "bgColorCard": "c50e1f",
                 "bgColorSectionTop": "c50e1f",
-                "bgColorSectionBot": "FFD700",
+                "bgColorSectionBot": "FFFFFF",
                 "fgColorTitle": "FFFFFF"
             }
         }
