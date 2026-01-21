@@ -12,8 +12,13 @@ from .authorization import resolve_authorization_request
 from .direct_post import resolve_direct_post
 from .qr_codes import generate_qr_code
 from .utils import preprocess_image, get_placeholders, preprocess_theme_icon
+from .qr_codes import generate_qr_code
+from .utils import preprocess_image, get_placeholders, preprocess_theme_icon
+from .csv_import import parse_csv_students, get_csv_template
 import os
 import base64
+import json
+from datetime import datetime
 
 # Diese Variablen werden bei Bedarf später aktualisiert
 placeholder_logo, placeholder_profile = None, None
@@ -44,6 +49,7 @@ def log_request_info():
         logger.info(f'Content-Type: {request.content_type}')
     logger.info('--- END REQUEST ---')
 
+
 private_key = None
 public_key = None
 jwks = None
@@ -62,16 +68,16 @@ def index():
         try:
             vc_template = current_app.config.get('CREDENTIAL_TEMPLATE', {})
             branding = vc_template.get("credentialSubject", {}).get("credentialBranding", {})
-            
+
             # Get values
             system_logo = branding.get("vcLogo", 'studentVC-logo-sora-cropped-darkmode.png')
             branding_bg_card = branding.get("bgColorCard", "").lstrip('#') or '18206C'
             branding_bg_top = branding.get("bgColorSectionTop", "").lstrip('#') or '18206C'
             branding_bg_bot = branding.get("bgColorSectionBot", "").lstrip('#') or ''
             branding_fg_title = branding.get("fgColorTitle", "").lstrip('#') or ''
-            
+
             logger.info(f"🎓 GET REQUEST - Using system config")
-            
+
             # Load specific logo as base64 if it exists
             system_logo_base64 = None
             system_logo_url = None
@@ -91,50 +97,49 @@ def index():
             # Create initial form data
             from ..config import Config
             form_data = {
-                    'firstName': '',
-                    'lastName': '',
-                    'studentId': '',
-                    'studentIdPrefix': '',
-                    'theme_name': Config.UNIVERSITY_NAME,
-                    'theme_bgColorCard': branding_bg_card,
-                    'theme_bgColorSectionTop': branding_bg_top,
-                    'theme_bgColorSectionBot': branding_bg_bot,
-                    'theme_fgColorTitle': branding_fg_title,
-                    'default_logo': system_logo,
-                    'profile_image': None,
-                    'theme_icon': system_logo_base64 if system_logo_base64 else None,  # Use base64 content or None
-                    'theme_icon_url': system_logo_url  # URL for direct access
-                }
-                
+                'firstName': '',
+                'lastName': '',
+                'studentId': '',
+                'studentIdPrefix': '',
+                'theme_name': Config.UNIVERSITY_NAME,
+                'theme_bgColorCard': branding_bg_card,
+                'theme_bgColorSectionTop': branding_bg_top,
+                'theme_bgColorSectionBot': branding_bg_bot,
+                'theme_fgColorTitle': branding_fg_title,
+                'default_logo': system_logo,
+                'profile_image': None,
+                'theme_icon': system_logo_base64 if system_logo_base64 else None,  # Use base64 content or None
+                'theme_icon_url': system_logo_url  # URL for direct access
+            }
+
             return render_template("issuer.html", img_data=None, form_data=form_data)
 
         except Exception as e:
             logger.info(f"🎓 GET REQUEST ERROR - Using defaults: {e}")
-        
-        # Fallback to original behavior
-        return render_template("issuer.html", img_data=None)
+            # Fallback to original behavior
+            return render_template("issuer.html", img_data=None)
 
     # Process the form data
     credential_data = request.form.to_dict()
     logger.info(f"🩺 Received form data: {credential_data}")
     logger.info(f"🩺 Received files: {request.files}")
-    
+
     # 🔧 DEBUG: Log the color values specifically
     logger.info(f"🎨 COLOR DEBUG - Form colors received:")
     logger.info(f"🎨   bgColorCard: {credential_data.get('theme[bgColorCard]')}")
     logger.info(f"🎨   bgColorSectionTop: {credential_data.get('theme[bgColorSectionTop]')}")
     logger.info(f"🎨   bgColorSectionBot: {credential_data.get('theme[bgColorSectionBot]')}")
     logger.info(f"🎨   fgColorTitle: {credential_data.get('theme[fgColorTitle]')}")
-    
+
     # Get system VC branding configuration
     try:
         vc_template = current_app.config.get('CREDENTIAL_TEMPLATE', {})
         branding = vc_template.get("credentialSubject", {}).get("credentialBranding", {})
-        
+
         # Use system logo, fallback to form data, then to default
         system_logo = branding.get("vcLogo")
         default_logo = credential_data.get('default_logo', system_logo or 'studentVC-logo-sora-cropped-darkmode.png')
-        
+
         logger.info(f"🎓 VC BRANDING - Using config")
         logger.info(f"🎓 VC BRANDING - Logo: {system_logo}")
         logger.info(f"🎓 VC BRANDING - Final logo: {default_logo}")
@@ -142,9 +147,9 @@ def index():
         # Fallback to original logic if system fails
         default_logo = credential_data.get('default_logo', 'studentVC-logo-sora-cropped-darkmode.png')
         logger.info(f"🎓 ERROR - Fallback to default logo: {default_logo}, Error: {e}")
-    
+
     default_profile = 'student.png'  # Immer student.png als Standard
-    
+
     # Lade die Platzhalter mit den angegebenen Standardwerten
     placeholder_logo, placeholder_profile = get_placeholders(default_logo, default_profile)
     logger.info(f"🩺 Using default logo: {default_logo}, default profile: {default_profile}")
@@ -177,15 +182,15 @@ def index():
     try:
         vc_template = current_app.config.get('CREDENTIAL_TEMPLATE', {})
         branding = vc_template.get("credentialSubject", {}).get("credentialBranding", {})
-        
+
         # Extract system colors (remove # prefix for the form)
         branding_bg_card = branding.get("bgColorCard", "").lstrip('#')
         branding_bg_top = branding.get("bgColorSectionTop", "").lstrip('#')
         branding_bg_bot = branding.get("bgColorSectionBot", "").lstrip('#')
         branding_fg_title = branding.get("fgColorTitle", "").lstrip('#')
-        
+
         logger.info(f"🎨 COLORS - Card: {branding_bg_card}, Top: {branding_bg_top}")
-        
+
         # Use system colors as defaults
         default_bg_card = branding_bg_card or '18206C'
         default_bg_top = branding_bg_top or '18206C'
@@ -225,7 +230,7 @@ def index():
     link = get_offer_url(full_credential_data)
     logger.info(f"Generated QR code link: {link}")
     img = generate_qr_code(link)
-    
+
     # 🩺 HERZCHIRURG FIX: Erweitere form_data um Bild-Informationen mit Branding
     form_data = {
         'firstName': credential_data.get('firstName', ''),
@@ -242,14 +247,14 @@ def index():
         'theme_icon': credential_data.get('theme[icon]'),  # Übertrage auch das aktuelle Logo
         'theme_icon_url': credential_data.get('theme_icon_url')  # Übertrage auch die URL für direkten Zugriff
     }
-    
+
     # Load config logo as base64 for form display if no custom icon was uploaded
     if not credential_data.get('theme[icon]'):
         try:
             vc_template = current_app.config.get('CREDENTIAL_TEMPLATE', {})
             branding = vc_template.get("credentialSubject", {}).get("credentialBranding", {})
             system_logo = branding.get("vcLogo")
-            
+
             if system_logo and system_logo != 'studentVC-logo-sora-cropped-darkmode.png':
                 # Assuming static/img/
                 logo_path = os.path.join(current_app.static_folder, 'img', system_logo)
@@ -261,18 +266,18 @@ def index():
                         logger.info(f"🎓 POST - Loaded logo as base64: {len(system_logo_base64)} chars")
         except Exception as e:
             logger.error(f"🎓 POST LOGO ERROR - Failed to load logo: {e}")
-    
+
     logger.info(f"🩺 Sending form data back to template: {list(form_data.keys())}")
     logger.info(f"🩺 QR code generated, credential link: {link}")
     logger.info(f"🩺 HERZCHIRURG DEBUG - COMPLETE FORM_DATA: {form_data}")
-    
+
     # 🔧 DEBUG: Log the final color values being sent to template
     logger.info(f"🎨 COLOR DEBUG - Final colors in form_data:")
     logger.info(f"🎨   theme_bgColorCard: {form_data.get('theme_bgColorCard')}")
     logger.info(f"🎨   theme_bgColorSectionTop: {form_data.get('theme_bgColorSectionTop')}")
     logger.info(f"🎨   theme_bgColorSectionBot: {form_data.get('theme_bgColorSectionBot')}")
     logger.info(f"🎨   theme_fgColorTitle: {form_data.get('theme_fgColorTitle')}")
-    
+
     # 🩺 HERZCHIRURG FIX: Gib sowohl den QR-Code als auch die Formulardaten zurück
     return render_template("issuer.html", img_data=img, form_data=form_data, credential_link=link)
 
@@ -298,11 +303,11 @@ def initialize_keys():
         # Load keys
         private_key, public_key = load_or_generate_keys()
         bbs_secret, bbs_dpk = load_or_generate_bbs_keys()
-        
+
         # Generate DID and KID
         issuer_did = generate_did(public_key)
         issuer_kid = generate_kid(issuer_did)
-        
+
     if not jwks:
         jwks = pem_to_jwk(public_key, "public")
     # return jsonify({"credential_offer": credential_offer_uri}), 200
@@ -321,7 +326,7 @@ def verify_access_token():
 def create_credential():
     logger.info("Received request to create a credential")
     auth_header = request.headers.get("Authorization")
-    
+
     # Check for format in request body
     try:
         data = request.get_json(silent=True) or {}
@@ -330,7 +335,8 @@ def create_credential():
         credential_format = "bbs"
 
     logger.info(f"Received credential request with auth header: {auth_header} and format: {credential_format}")
-    return generate_credential(auth_header, public_key, private_key, issuer_did, issuer_kid, bbs_dpk, bbs_secret, format=credential_format)
+    return generate_credential(auth_header, public_key, private_key, issuer_did, issuer_kid, bbs_dpk, bbs_secret,
+                               format=credential_format)
 
 
 @issuer.route("/.well-known/openid-credential-issuer", methods=["GET"])
@@ -358,7 +364,7 @@ def get_jwks():
     keys = [
         {**jwks, "kid": "did:ebsi:zrZZyoQVrgwpV1QZmRUHNPz#sig-key", "use": "sig"},
         {**jwks, "kid": "did:ebsi:zrZZyoQVrgwpV1QZmRUHNPz#authentication-key",
-            "use": "keyAgreement"}
+         "use": "keyAgreement"}
     ]
 
     return jsonify({"keys": keys}), 200
@@ -402,12 +408,12 @@ def debug_tokens():
     logger.info("Debug: Checking stored tokens")
     try:
         from ..models import VC_Token, VC_AuthorizationCode, VC_Offer
-        
+
         # Get all tokens
         tokens = VC_Token.query.all()
         auth_codes = VC_AuthorizationCode.query.all()
         offers = VC_Offer.query.all()
-        
+
         debug_info = {
             "tokens_count": len(tokens),
             "auth_codes_count": len(auth_codes),
@@ -435,10 +441,10 @@ def debug_tokens():
                 } for offer in offers
             ]
         }
-        
+
         logger.info(f"Debug tokens result: {debug_info}")
         return jsonify(debug_info), 200
-        
+
     except Exception as e:
         logger.error(f"Debug tokens error: {e}")
         return jsonify({"error": f"Debug failed: {e}"}), 500
@@ -450,26 +456,28 @@ def debug_test_token():
     logger.info("Debug: Testing token generation and verification")
     try:
         initialize_keys()
-        
+
         # Generate a test token
         test_client_id = "debug-client"
         test_credential_id = "debug-credential"
-        
+
         from .token import generate_access_token
         test_token = generate_access_token(test_client_id, test_credential_id, private_key)
-        
+
         # Try to verify the token
         verification_result = verify_token({"token": test_token}, public_key)
-        
+
         debug_info = {
             "test_token_generated": test_token[:50] + "..." if test_token else None,
             "verification_status": verification_result[1],
-            "verification_response": verification_result[0].get_json() if hasattr(verification_result[0], 'get_json') else str(verification_result[0])
+            "verification_response": verification_result[0].get_json() if hasattr(verification_result[0],
+                                                                                  'get_json') else str(
+                verification_result[0])
         }
-        
+
         logger.info(f"Debug test token result: {debug_info}")
         return jsonify(debug_info), 200
-        
+
     except Exception as e:
         logger.error(f"Debug test token error: {e}")
         return jsonify({"error": f"Debug test token failed: {e}"}), 500
@@ -481,12 +489,12 @@ def debug_oauth_flow():
     logger.info("Debug: Checking OAuth2 flow status")
     try:
         initialize_keys()
-        
+
         flow_info = {
             "server_endpoints": {
                 "credential_offer": "/credential-offer/<uid>",
                 "authorize": "/authorize",
-                "token": "/token", 
+                "token": "/token",
                 "credential": "/credential",
                 "verify_token": "/verifyAccessToken"
             },
@@ -504,10 +512,275 @@ def debug_oauth_flow():
                 "jwks": "/jwks"
             }
         }
-        
+
         logger.info(f"Debug OAuth flow result: {flow_info}")
         return jsonify(flow_info), 200
-        
+
     except Exception as e:
         logger.error(f"Debug OAuth flow error: {e}")
         return jsonify({"error": f"Debug OAuth flow failed: {e}"}), 500
+
+    # =============================================================================
+
+
+# CSV IMPORT & STUDENT MANAGEMENT ENDPOINTS
+# =============================================================================
+
+@issuer.route('/issuer/csv-template', methods=['GET'])
+@login_required
+def download_csv_template():
+    """Download a CSV template for student data import"""
+    logger.info("CSV: Template download requested")
+    from flask import Response
+
+    template = get_csv_template()
+
+    return Response(
+        template,
+        mimetype='text/csv',
+        headers={
+            'Content-Disposition': 'attachment; filename=student_template.csv',
+            'Content-Type': 'text/csv; charset=utf-8'
+        }
+    )
+
+
+@issuer.route('/issuer/import-csv', methods=['POST'])
+@login_required
+def import_csv():
+    """Import students from CSV file and store in session"""
+    logger.info("CSV: Import request received")
+
+    if 'csvFile' not in request.files:
+        return jsonify({'success': False, 'error': 'No CSV file provided'}), 400
+
+    csv_file = request.files['csvFile']
+
+    if csv_file.filename == '':
+        return jsonify({'success': False, 'error': 'No file selected'}), 400
+
+    if not csv_file.filename.lower().endswith('.csv'):
+        return jsonify({'success': False, 'error': 'File must be a CSV file'}), 400
+
+    try:
+        file_content = csv_file.read()
+        result = parse_csv_students(file_content)
+
+        if result['valid_rows'] == 0:
+            return jsonify({
+                'success': False,
+                'error': 'No valid student records found in CSV',
+                'errors': result['errors']
+            }), 400
+
+        # Store students in session
+        from flask import session
+        session['imported_students'] = result['students']
+
+        logger.info(f"CSV: Imported {result['valid_rows']} students successfully")
+
+        return jsonify({
+            'success': True,
+            'message': f"Successfully imported {result['valid_rows']} students",
+            'total_rows': result['total_rows'],
+            'valid_rows': result['valid_rows'],
+            'errors': result['errors'],
+            'students': result['students']
+        }), 200
+
+    except Exception as e:
+        logger.error(f"CSV: Import error: {e}")
+        return jsonify({'success': False, 'error': f'Import failed: {str(e)}'}), 500
+
+
+@issuer.route('/issuer/students', methods=['GET'])
+@login_required
+def get_students():
+    """Get all imported students"""
+    from flask import session
+    students = session.get('imported_students', [])
+
+    return jsonify({
+        'success': True,
+        'students': students,
+        'total': len(students),
+        'stats': {
+            'pending': len([s for s in students if s.get('status') == 'pending']),
+            'qr_generated': len([s for s in students if s.get('status') == 'qr_generated']),
+            'issued': len([s for s in students if s.get('status') == 'issued'])
+        }
+    }), 200
+
+
+@issuer.route('/issuer/students/<student_id>/generate-qr', methods=['POST'])
+@login_required
+def generate_student_qr(student_id):
+    """Generate QR code for a specific student"""
+    initialize_keys()
+    from flask import session
+
+    students = session.get('imported_students', [])
+    student = next((s for s in students if s.get('id') == student_id), None)
+
+    if not student:
+        return jsonify({'success': False, 'error': 'Student not found'}), 404
+
+    try:
+        # Get default images
+        placeholder_logo, placeholder_profile = get_placeholders(
+            'studentVC-logo-sora-cropped-darkmode.png',
+            'student.png'
+        )
+
+        # Get tenant theme
+        theme_data = {
+            "name": "StudentVC",
+            "icon": placeholder_logo,
+            "bgColorCard": "18206C",
+            "bgColorSectionTop": "18206C",
+            "bgColorSectionBot": "FFFFFF",
+            "fgColorTitle": "FFFFFF"
+        }
+
+        try:
+            from ..tenants.registry import get_current_tenant_config
+            tenant_config = get_current_tenant_config()
+            if tenant_config:
+                vc_template = tenant_config.get_credential_template()
+                branding = vc_template.get("credentialSubject", {}).get("credentialBranding", {})
+                theme_data["name"] = tenant_config.name
+                theme_data["bgColorCard"] = branding.get("bgColorCard", "").lstrip('#') or '18206C'
+                theme_data["bgColorSectionTop"] = branding.get("bgColorSectionTop", "").lstrip('#') or '18206C'
+        except Exception as e:
+            logger.warning(f"Could not get tenant theme: {e}")
+
+        # Create credential data
+        full_credential_data = {
+            "firstName": student.get('firstName'),
+            "lastName": student.get('lastName'),
+            "issuanceCount": "1",
+            "image": placeholder_profile,
+            "studentId": student.get('studentId'),
+            "studentIdPrefix": student.get('studentIdPrefix', ''),
+            "theme": theme_data
+        }
+
+        # Generate QR code
+        link = get_offer_url(full_credential_data)
+        img = generate_qr_code(link)
+
+        # Update student status
+        student['status'] = 'qr_generated'
+        student['qrCode'] = img
+        student['credentialLink'] = link
+        student['qrGeneratedAt'] = datetime.now().isoformat()
+
+        # Save back to session
+        session['imported_students'] = students
+        session.modified = True
+
+        logger.info(f"CSV: Generated QR for student {student.get('firstName')} {student.get('lastName')}")
+
+        return jsonify({
+            'success': True,
+            'student': student,
+            'qrCode': img,
+            'credentialLink': link
+        }), 200
+
+    except Exception as e:
+        logger.error(f"CSV: QR generation error for {student_id}: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@issuer.route('/issuer/students/generate-bulk', methods=['POST'])
+@login_required
+def generate_bulk_qr():
+    """Generate QR codes for multiple selected students"""
+    initialize_keys()
+    from flask import session
+
+    data = request.get_json()
+    student_ids = data.get('studentIds', [])
+
+    if not student_ids:
+        return jsonify({'success': False, 'error': 'No students selected'}), 400
+
+    students = session.get('imported_students', [])
+
+    # Get defaults
+    placeholder_logo, placeholder_profile = get_placeholders(
+        'studentVC-logo-sora-cropped-darkmode.png',
+        'student.png'
+    )
+
+    theme_data = {
+        "name": "StudentVC",
+        "icon": placeholder_logo,
+        "bgColorCard": "18206C",
+        "bgColorSectionTop": "18206C",
+        "bgColorSectionBot": "FFFFFF",
+        "fgColorTitle": "FFFFFF"
+    }
+
+    results = []
+    errors = []
+
+    for student_id in student_ids:
+        student = next((s for s in students if s.get('id') == student_id), None)
+
+        if not student:
+            errors.append({'id': student_id, 'error': 'Student not found'})
+            continue
+
+        try:
+            full_credential_data = {
+                "firstName": student.get('firstName'),
+                "lastName": student.get('lastName'),
+                "issuanceCount": "1",
+                "image": placeholder_profile,
+                "studentId": student.get('studentId'),
+                "studentIdPrefix": student.get('studentIdPrefix', ''),
+                "theme": theme_data
+            }
+
+            link = get_offer_url(full_credential_data)
+            img = generate_qr_code(link)
+
+            student['status'] = 'qr_generated'
+            student['qrCode'] = img
+            student['credentialLink'] = link
+
+            results.append({
+                'id': student_id,
+                'name': f"{student.get('firstName')} {student.get('lastName')}",
+                'qrCode': img,
+                'credentialLink': link
+            })
+
+        except Exception as e:
+            errors.append({'id': student_id, 'error': str(e)})
+
+    session['imported_students'] = students
+    session.modified = True
+
+    logger.info(f"CSV: Bulk generated {len(results)} QR codes, {len(errors)} errors")
+
+    return jsonify({
+        'success': True,
+        'generated': len(results),
+        'failed': len(errors),
+        'results': results,
+        'errors': errors
+    }), 200
+
+
+@issuer.route('/issuer/students/clear', methods=['POST'])
+@login_required
+def clear_students():
+    """Clear all imported students"""
+    from flask import session
+    session.pop('imported_students', None)
+    logger.info("CSV: Cleared all imported students")
+
+    return jsonify({'success': True, 'message': 'All students cleared'}), 200

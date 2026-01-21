@@ -593,4 +593,344 @@
       printWindow.print();
     }, 500);
   }
-</script> 
+
+  // =============================================================================
+  // CSV IMPORT FUNCTIONALITY
+  // =============================================================================
+
+  let csvStudentData = [];
+  let selectedStudentIds = new Set();
+
+  function openCsvModal() {
+      let modal = document.getElementById('csvModal');
+      if (!modal) {
+          modal = createCsvModal();
+          document.body.appendChild(modal);
+      }
+      modal.classList.remove('hidden');
+  }
+
+  function closeCsvModal() {
+      const modal = document.getElementById('csvModal');
+      if (modal) modal.classList.add('hidden');
+  }
+
+  function createCsvModal() {
+      const modal = document.createElement('div');
+      modal.id = 'csvModal';
+      modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+      modal.innerHTML = `
+        <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+          <div class="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
+            <h3 class="text-lg font-bold text-white flex items-center">
+              <i class="fas fa-file-csv mr-2"></i>
+              CSV Import - Studierendendaten
+            </h3>
+          </div>
+
+          <div class="p-6 overflow-y-auto flex-1">
+            <p class="text-sm text-gray-600 mb-4">
+              Importieren Sie Studierendendaten aus einer CSV-Datei. Erforderliche Spalten:
+              <code class="bg-gray-100 px-1 rounded">firstName</code>,
+              <code class="bg-gray-100 px-1 rounded">lastName</code>,
+              <code class="bg-gray-100 px-1 rounded">studentId</code>
+            </p>
+
+            <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+              <span class="text-sm text-blue-800"><i class="fas fa-download mr-1"></i> CSV-Vorlage</span>
+              <a href="/issuer/csv-template" download class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md">Download</a>
+            </div>
+
+            <div class="mb-4">
+              <div id="csvDropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-green-500 hover:bg-green-50 transition-all cursor-pointer">
+                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
+                <p class="text-sm text-gray-600">CSV-Datei hierher ziehen oder klicken</p>
+                <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleCsvFile(this)">
+              </div>
+              <p id="csvFileName" class="mt-2 text-sm text-gray-500 hidden"><i class="fas fa-file mr-1"></i> <span></span></p>
+            </div>
+
+            <div id="csvPreviewArea" class="hidden">
+              <div class="flex justify-between items-center mb-2">
+                <label class="text-sm font-medium text-gray-700">Importierte Studierende</label>
+                <span id="csvPreviewCount" class="text-xs text-gray-500"></span>
+              </div>
+              <div class="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
+                <table class="w-full text-xs">
+                  <thead class="bg-gray-100 sticky top-0">
+                    <tr>
+                      <th class="px-3 py-2 text-left w-8"><input type="checkbox" id="selectAllCsv" onchange="toggleSelectAllCsv()"></th>
+                      <th class="px-3 py-2 text-left">Vorname</th>
+                      <th class="px-3 py-2 text-left">Nachname</th>
+                      <th class="px-3 py-2 text-left">Matrikel-Nr.</th>
+                      <th class="px-3 py-2 text-left">Status</th>
+                      <th class="px-3 py-2 text-center">Aktion</th>
+                    </tr>
+                  </thead>
+                  <tbody id="csvPreviewBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div id="csvErrorArea" class="hidden mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p class="text-sm text-red-800 font-medium"><i class="fas fa-exclamation-triangle mr-1"></i> Fehler</p>
+              <ul id="csvErrorList" class="text-xs text-red-700 list-disc list-inside mt-1"></ul>
+            </div>
+          </div>
+
+          <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-t">
+            <span id="selectionInfo" class="text-sm text-gray-600"><span id="selectedCount">0</span> ausgewählt</span>
+            <div class="flex space-x-3">
+              <button type="button" onclick="closeCsvModal()" class="px-4 py-2 text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg">Schließen</button>
+              <button type="button" id="bulkGenerateBtn" onclick="generateSelectedQRCodes()" disabled class="px-4 py-2 text-sm bg-green-600 hover:bg-green-700 text-white rounded-lg disabled:opacity-50">
+                <i class="fas fa-qrcode mr-1"></i> QR-Codes generieren
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      setTimeout(() => {
+          const dropZone = document.getElementById('csvDropZone');
+          const fileInput = document.getElementById('csvFileInput');
+          if (dropZone && fileInput) {
+              dropZone.addEventListener('click', () => fileInput.click());
+              dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-green-500', 'bg-green-50'); });
+              dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-green-500', 'bg-green-50'));
+              dropZone.addEventListener('drop', (e) => {
+                  e.preventDefault();
+                  dropZone.classList.remove('border-green-500', 'bg-green-50');
+                  if (e.dataTransfer.files.length) {
+                      fileInput.files = e.dataTransfer.files;
+                      handleCsvFile(fileInput);
+                  }
+              });
+          }
+      }, 100);
+
+      return modal;
+  }
+
+  function handleCsvFile(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      document.getElementById('csvFileName').querySelector('span').textContent = file.name;
+      document.getElementById('csvFileName').classList.remove('hidden');
+
+      const formData = new FormData();
+      formData.append('csvFile', file);
+
+      fetch('/issuer/import-csv', { method: 'POST', body: formData })
+          .then(response => response.json())
+          .then(data => {
+              if (data.success) {
+                  csvStudentData = data.students;
+                  selectedStudentIds.clear();
+                  renderCsvTable();
+                  document.getElementById('csvPreviewArea').classList.remove('hidden');
+                  document.getElementById('csvPreviewCount').textContent = `${data.valid_rows} von ${data.total_rows} gültig`;
+
+                  // Update status bar
+                  document.getElementById('csvStatusBar').classList.remove('hidden');
+                  document.getElementById('csvStudentCount').textContent = data.valid_rows;
+
+                  if (data.errors && data.errors.length > 0) {
+                      document.getElementById('csvErrorArea').classList.remove('hidden');
+                      document.getElementById('csvErrorList').innerHTML = data.errors.slice(0, 5).map(e => `<li>Zeile ${e.row}: ${e.error}</li>`).join('');
+                  } else {
+                      document.getElementById('csvErrorArea').classList.add('hidden');
+                  }
+              } else {
+                  document.getElementById('csvErrorArea').classList.remove('hidden');
+                  document.getElementById('csvErrorList').innerHTML = `<li>${data.error}</li>`;
+              }
+          })
+          .catch(error => {
+              console.error('CSV upload error:', error);
+              alert('Fehler beim Hochladen der CSV-Datei');
+          });
+  }
+
+  function renderCsvTable() {
+      const tbody = document.getElementById('csvPreviewBody');
+      tbody.innerHTML = csvStudentData.map(s => `
+        <tr class="border-t border-gray-100 hover:bg-gray-50">
+          <td class="px-3 py-2"><input type="checkbox" class="csv-student-cb" data-id="${s.id}" onchange="toggleStudentSelection('${s.id}')" ${selectedStudentIds.has(s.id) ? 'checked' : ''}></td>
+          <td class="px-3 py-2 font-medium">${escapeHtml(s.firstName)}</td>
+          <td class="px-3 py-2">${escapeHtml(s.lastName)}</td>
+          <td class="px-3 py-2 font-mono">${escapeHtml(s.studentId)}</td>
+          <td class="px-3 py-2">${getStatusBadge(s.status)}</td>
+          <td class="px-3 py-2 text-center">
+            ${s.status === 'qr_generated'
+          ? `<button onclick="viewStudentQR('${s.id}')" class="text-xs text-blue-600 hover:text-blue-800"><i class="fas fa-eye"></i></button>`
+          : `<button onclick="generateSingleQR('${s.id}')" class="text-xs text-green-600 hover:text-green-800"><i class="fas fa-qrcode"></i></button>`
+      }
+            <button onclick="fillFormFromStudent('${s.id}')" class="text-xs text-gray-600 hover:text-gray-800 ml-2"><i class="fas fa-edit"></i></button>
+          </td>
+        </tr>
+      `).join('');
+      updateSelectionUI();
+  }
+
+  function getStatusBadge(status) {
+      const badges = {
+          'pending': '<span class="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs">Ausstehend</span>',
+          'qr_generated': '<span class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">QR erstellt</span>',
+      };
+      return badges[status] || badges['pending'];
+  }
+
+  function toggleStudentSelection(id) {
+      if (selectedStudentIds.has(id)) {
+          selectedStudentIds.delete(id);
+      } else {
+          selectedStudentIds.add(id);
+      }
+      updateSelectionUI();
+  }
+
+  function toggleSelectAllCsv() {
+      const selectAll = document.getElementById('selectAllCsv');
+      if (selectAll.checked) {
+          csvStudentData.forEach(s => selectedStudentIds.add(s.id));
+      } else {
+          selectedStudentIds.clear();
+      }
+      document.querySelectorAll('.csv-student-cb').forEach(cb => cb.checked = selectAll.checked);
+      updateSelectionUI();
+  }
+
+  function updateSelectionUI() {
+      document.getElementById('selectedCount').textContent = selectedStudentIds.size;
+      document.getElementById('bulkGenerateBtn').disabled = selectedStudentIds.size === 0;
+  }
+
+  function generateSingleQR(studentId) {
+      fetch(`/issuer/students/${studentId}/generate-qr`, { method: 'POST' })
+          .then(response => response.json())
+          .then(data => {
+              if (data.success) {
+                  const idx = csvStudentData.findIndex(s => s.id === studentId);
+                  if (idx !== -1) csvStudentData[idx] = data.student;
+                  renderCsvTable();
+                  showQRModal(data.student, data.qrCode, data.credentialLink);
+              } else {
+                  alert('Fehler: ' + data.error);
+              }
+          });
+  }
+
+  function generateSelectedQRCodes() {
+      if (selectedStudentIds.size === 0) return;
+
+      const btn = document.getElementById('bulkGenerateBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Generiere...';
+
+      fetch('/issuer/students/generate-bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ studentIds: Array.from(selectedStudentIds) })
+      })
+          .then(response => response.json())
+          .then(data => {
+              btn.disabled = false;
+              btn.innerHTML = '<i class="fas fa-qrcode mr-1"></i> QR-Codes generieren';
+
+              if (data.success) {
+                  alert(`${data.generated} QR-Codes erfolgreich generiert!`);
+                  // Refresh student list
+                  fetch('/issuer/students').then(r => r.json()).then(d => {
+                      if (d.success) {
+                          csvStudentData = d.students;
+                          selectedStudentIds.clear();
+                          renderCsvTable();
+                      }
+                  });
+              }
+          });
+  }
+
+  function fillFormFromStudent(studentId) {
+      const student = csvStudentData.find(s => s.id === studentId);
+      if (!student) return;
+
+      document.getElementById('firstName').value = student.firstName || '';
+      document.getElementById('lastName').value = student.lastName || '';
+      document.getElementById('studentId').value = student.studentId || '';
+      document.getElementById('studentIdPrefix').value = student.studentIdPrefix || '';
+
+      closeCsvModal();
+  }
+
+  function viewStudentQR(studentId) {
+      const student = csvStudentData.find(s => s.id === studentId);
+      if (student && student.qrCode) {
+          showQRModal(student, student.qrCode, student.credentialLink);
+      }
+  }
+
+  function showQRModal(student, qrCode, link) {
+      let modal = document.getElementById('qrViewModal');
+      if (!modal) {
+          modal = document.createElement('div');
+          modal.id = 'qrViewModal';
+          modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+          document.body.appendChild(modal);
+      }
+
+      modal.innerHTML = `
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4">
+          <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 rounded-t-xl">
+            <h3 class="text-lg font-bold text-white">${escapeHtml(student.firstName)} ${escapeHtml(student.lastName)}</h3>
+            <p class="text-blue-100 text-sm">Matrikel-Nr.: ${escapeHtml(student.studentId)}</p>
+          </div>
+          <div class="p-6 text-center">
+            <img src="data:image/png;base64,${qrCode}" alt="QR Code" class="mx-auto mb-4 border rounded-lg" style="max-width: 200px;">
+            <p class="text-sm text-gray-600 mb-4"><i class="fas fa-mobile-alt mr-1"></i> Mit Wallet-App scannen</p>
+          </div>
+          <div class="bg-gray-50 px-6 py-4 rounded-b-xl">
+            <button onclick="document.getElementById('qrViewModal').classList.add('hidden')" class="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg">Schließen</button>
+          </div>
+        </div>
+      `;
+      modal.classList.remove('hidden');
+  }
+
+  function showStudentTable() {
+      openCsvModal();
+  }
+
+  function clearCsvImport() {
+      if (!confirm('Alle importierten Studierenden löschen?')) return;
+
+      fetch('/issuer/students/clear', { method: 'POST' })
+          .then(() => {
+              csvStudentData = [];
+              selectedStudentIds.clear();
+              document.getElementById('csvStatusBar').classList.add('hidden');
+              document.getElementById('csvPreviewArea').classList.add('hidden');
+          });
+  }
+
+  function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text || '';
+      return div.innerHTML;
+  }
+
+  // Check for existing import on page load
+  document.addEventListener('DOMContentLoaded', function() {
+      fetch('/issuer/students')
+          .then(r => r.json())
+          .then(data => {
+              if (data.success && data.students.length > 0) {
+                  csvStudentData = data.students;
+                  document.getElementById('csvStatusBar').classList.remove('hidden');
+                  document.getElementById('csvStudentCount').textContent = data.students.length;
+              }
+          })
+          .catch(() => {});
+  });
+</script>
