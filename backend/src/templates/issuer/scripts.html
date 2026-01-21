@@ -726,7 +726,7 @@
           .then(data => {
               if (data.success) {
                   csvStudentData = data.students;
-                  selectedStudentIds.clear();
+                  //selectedStudentIds.clear();
                   renderCsvTable();
                   document.getElementById('csvPreviewArea').classList.remove('hidden');
                   document.getElementById('csvPreviewCount').textContent = `${data.valid_rows} von ${data.total_rows} gültig`;
@@ -755,21 +755,29 @@
   function renderCsvTable() {
       const tbody = document.getElementById('csvPreviewBody');
       tbody.innerHTML = csvStudentData.map(s => `
-        <tr class="border-t border-gray-100 hover:bg-gray-50">
-          <td class="px-3 py-2"><input type="checkbox" class="csv-student-cb" data-id="${s.id}" onchange="toggleStudentSelection('${s.id}')" ${selectedStudentIds.has(s.id) ? 'checked' : ''}></td>
-          <td class="px-3 py-2 font-medium">${escapeHtml(s.firstName)}</td>
-          <td class="px-3 py-2">${escapeHtml(s.lastName)}</td>
-          <td class="px-3 py-2 font-mono">${escapeHtml(s.studentId)}</td>
-          <td class="px-3 py-2">${getStatusBadge(s.status)}</td>
-          <td class="px-3 py-2 text-center">
-            ${s.status === 'qr_generated'
-          ? `<button onclick="viewStudentQR('${s.id}')" class="text-xs text-blue-600 hover:text-blue-800"><i class="fas fa-eye"></i></button>`
-          : `<button onclick="generateSingleQR('${s.id}')" class="text-xs text-green-600 hover:text-green-800"><i class="fas fa-qrcode"></i></button>`
+                <tr class="border-t border-gray-100 hover:bg-gray-50">
+                  <td class="px-3 py-2"><input type="checkbox" class="csv-student-cb" data-id="${s.id}" onchange="toggleStudentSelection('${s.id}')" ${selectedStudentIds.has(s.id) ? 'checked' : ''}></td>
+                  <td class="px-3 py-2 font-medium">${escapeHtml(s.firstName)}</td>
+                  <td class="px-3 py-2 font-medium">${escapeHtml(s.lastName)}</td>
+                  <td class="px-3 py-2 font-mono text-[10px]">${escapeHtml(s.studentId)}</td>
+                  <td class="px-3 py-2">${getStatusBadge(s.status)}</td>
+                  <td class="px-3 py-2 text-center">
+                    <div class="flex items-center justify-center space-x-2">
+                      ${s.status === 'qr_generated'
+          ? `<button onclick="viewStudentQR('${s.id}')" title="QR ansehen" class="text-xs text-blue-600 hover:opacity-70 transition-all">
+                             <i class="fas fa-eye fa-lg"></i>
+                           </button>`
+          : `<button onclick="generateSingleQR('${s.id}')" title="Generieren" class="text-xs text-gray-400 hover:text-green-600">
+                             <i class="fas fa-qrcode"></i>
+                           </button>`
       }
-            <button onclick="fillFormFromStudent('${s.id}')" class="text-xs text-gray-600 hover:text-gray-800 ml-2"><i class="fas fa-edit"></i></button>
-          </td>
-        </tr>
-      `).join('');
+                      <button onclick="fillFormFromStudent('${s.id}')" title="Bearbeiten" class="text-xs text-gray-400 hover:text-gray-800">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('');
       updateSelectionUI();
   }
 
@@ -822,34 +830,109 @@
   }
 
   function generateSelectedQRCodes() {
-      if (selectedStudentIds.size === 0) return;
+      const idsToGenerate = Array.from(selectedStudentIds);
+      if (idsToGenerate.length === 0) return;
 
       const btn = document.getElementById('bulkGenerateBtn');
+      const originalContent = btn.innerHTML;
       btn.disabled = true;
       btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Generiere...';
 
       fetch('/issuer/students/generate-bulk', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ studentIds: Array.from(selectedStudentIds) })
+          body: JSON.stringify({ studentIds: idsToGenerate })
       })
           .then(response => response.json())
-          .then(data => {
+          .then(bulkData => {
               btn.disabled = false;
-              btn.innerHTML = '<i class="fas fa-qrcode mr-1"></i> QR-Codes generieren';
+              btn.innerHTML = originalContent;
 
-              if (data.success) {
-                  alert(`${data.generated} QR-Codes erfolgreich generiert!`);
-                  // Refresh student list
-                  fetch('/issuer/students').then(r => r.json()).then(d => {
-                      if (d.success) {
-                          csvStudentData = d.students;
-                          selectedStudentIds.clear();
-                          renderCsvTable();
+              if (bulkData.success && bulkData.results && bulkData.results.length > 0) {
+                  console.log('[Bulk] Generated', bulkData.results.length, 'QR codes');
+
+                  // Update local csvStudentData with the results from the server
+                  for (const result of bulkData.results) {
+                      const studentIndex = csvStudentData.findIndex(s => s.id === result.id);
+                      if (studentIndex !== -1) {
+                          csvStudentData[studentIndex].status = 'qr_generated';
+                          csvStudentData[studentIndex].qrCode = result.qrCode;
+                          csvStudentData[studentIndex].credentialLink = result.credentialLink;
+                          csvStudentData[studentIndex].viewed = false;
                       }
-                  });
+                  }
+
+                  renderCsvTable();
+
+                  // Generate report directly from bulk results (not from csvStudentData)
+                  generateReportFromBulkResults(bulkData.results);
+              } else {
+                  console.error('[Bulk] Generation failed:', bulkData);
+                  alert('Fehler bei der QR-Code-Generierung: ' + (bulkData.error || 'Unbekannter Fehler'));
               }
+          })
+          .catch(error => {
+              btn.disabled = false;
+              btn.innerHTML = originalContent;
+              console.error('[Bulk] Fetch error:', error);
+              alert('Netzwerkfehler bei der QR-Code-Generierung');
           });
+  }
+
+  // New function: Generate report directly from bulk API results
+  function generateReportFromBulkResults(results) {
+      if (!results || results.length === 0) {
+          console.warn('[Report] No results provided');
+          return;
+      }
+
+      console.log('[Report] Generating report for', results.length, 'students from bulk results');
+
+      const reportWindow = window.open('', '_blank');
+      if (!reportWindow) {
+          alert('Bitte erlauben Sie Pop-ups, um den Report anzuzeigen.');
+          return;
+      }
+
+      const themeName = document.getElementById('theme_name').value || 'StudentVC';
+
+      // Build cards from the results - find student details from csvStudentData
+      const cardsHtml = results.map(result => {
+          // Get full student info from local data
+          const student = csvStudentData.find(s => s.id === result.id);
+          const firstName = student?.firstName || result.name?.split(' ')[0] || '';
+          const lastName = student?.lastName || result.name?.split(' ').slice(1).join(' ') || '';
+          const studentId = student?.studentId || '';
+
+          return `
+                <div style="border: 1px solid #eee; padding: 20px; text-align: center; border-radius: 12px; page-break-inside: avoid; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                  <div style="margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px dashed #eee;">
+                    <h3 style="margin: 0; font-size: 18px; color: #111;">${escapeHtml(firstName)} ${escapeHtml(lastName)}</h3>
+                    <div style="font-family: monospace; font-size: 13px; color: #666; margin-top: 4px;">ID: ${escapeHtml(studentId)}</div>
+                  </div>
+                  <img src="data:image/png;base64,${result.qrCode}" style="width: 200px; height: 200px; display: block; margin: 0 auto;" />
+                </div>
+              `;
+      }).join('');
+
+      reportWindow.document.write(`
+            <html>
+              <head><title>QR-Codes Report - ${escapeHtml(themeName)}</title></head>
+              <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fff; padding: 40px;">
+                <div style="max-width: 1000px; margin: 0 auto;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #18206c; padding-bottom: 15px;">
+                    <h1 style="margin: 0; color: #18206c; font-size: 24px;">Student QR-Codes Report</h1>
+                    <button onclick="window.print()" style="padding: 10px 20px; background: #18206c; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Download PDF / Print</button>
+                  </div>
+                  <p style="color: #666; margin-bottom: 20px;">${results.length} QR-Code(s) generiert am ${new Date().toLocaleDateString('de-DE')}</p>
+                  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px;">
+                    ${cardsHtml}
+                  </div>
+                </div>
+              </body>
+            </html>
+          `);
+      reportWindow.document.close();
   }
 
   function fillFormFromStudent(studentId) {
@@ -868,6 +951,15 @@
       const student = csvStudentData.find(s => s.id === studentId);
       if (student && student.qrCode) {
           showQRModal(student, student.qrCode, student.credentialLink);
+
+          // Mark as viewed on server
+          if (!student.viewed) {
+              fetch(`/issuer/students/${studentId}/mark-viewed`, { method: 'POST' })
+                  .then(() => {
+                      student.viewed = true;
+                      renderCsvTable();
+                  });
+          }
       }
   }
 

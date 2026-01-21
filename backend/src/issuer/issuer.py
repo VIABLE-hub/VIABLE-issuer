@@ -671,6 +671,7 @@ def generate_student_qr(student_id):
 
         # Update student status
         student['status'] = 'qr_generated'
+        student['viewed'] = False
         student['qrCode'] = img
         student['credentialLink'] = link
         student['qrGeneratedAt'] = datetime.now().isoformat()
@@ -748,6 +749,7 @@ def generate_bulk_qr():
             img = generate_qr_code(link)
 
             student['status'] = 'qr_generated'
+            student['viewed'] = False
             student['qrCode'] = img
             student['credentialLink'] = link
 
@@ -784,3 +786,18 @@ def clear_students():
     logger.info("CSV: Cleared all imported students")
 
     return jsonify({'success': True, 'message': 'All students cleared'}), 200
+
+@issuer.route('/issuer/students/<student_id>/mark-viewed', methods=['POST'])
+@login_required
+def mark_student_viewed(student_id):
+    """Mark a student's QR code as having been viewed"""
+    from flask import session
+    students = session.get('imported_students', [])
+    student = next((s for s in students if s.get('id') == student_id), None)
+
+    if student:
+        student['viewed'] = True
+        session['imported_students'] = students
+        session.modified = True
+        return jsonify({'success': True}), 200
+    return jsonify({'success': False, 'error': 'Student not found'}), 404
