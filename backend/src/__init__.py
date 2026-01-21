@@ -110,12 +110,10 @@ def register_blueprints(app):
     # Feature blueprints - Additional functionality
     from .api_integration import api_integration
     from .issuer.debug import debug as debug_bp
-    from .usecases.usecases import usecases
     from .monitoring import monitoring
     
     app.register_blueprint(api_integration, url_prefix='/')
     app.register_blueprint(debug_bp, url_prefix='/debug')
-    app.register_blueprint(usecases, url_prefix='/usecases')
     app.register_blueprint(monitoring)
     
     # Network API - Dynamic registration (kept separate for backward compatibility)
