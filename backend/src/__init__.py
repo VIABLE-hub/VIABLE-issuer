@@ -177,6 +177,10 @@ def create_app():
         )
 
     app.config['SECRET_KEY'] = SECRET_KEY
+
+    # 🔧 DISABLE CACHING FOR DEVELOPMENT
+    app.config['TEMPLATES_AUTO_RELOAD'] = True
+    app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
     
     # Configure URL generation - use environment variable if set
     # Don't set SERVER_NAME as it causes redirects to fail
