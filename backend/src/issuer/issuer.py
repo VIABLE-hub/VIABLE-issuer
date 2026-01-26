@@ -1,7 +1,6 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, current_app
 from flask_login import login_required
 from logging import getLogger
-from flask_login import login_required
 from .key_generator import generate_did, generate_kid, load_or_generate_bbs_keys, load_or_generate_keys
 from .offer import get_offer_url
 from .token import authenticate_token, verify_token, verify_and_generate_token
@@ -12,12 +11,9 @@ from .authorization import resolve_authorization_request
 from .direct_post import resolve_direct_post
 from .qr_codes import generate_qr_code
 from .utils import preprocess_image, get_placeholders, preprocess_theme_icon
-from .qr_codes import generate_qr_code
-from .utils import preprocess_image, get_placeholders, preprocess_theme_icon
 from .csv_import import parse_csv_students, get_csv_template
 import os
 import base64
-import json
 from datetime import datetime
 
 # Diese Variablen werden bei Bedarf später aktualisiert
@@ -71,8 +67,8 @@ def index():
 
             # Get values
             system_logo = branding.get("vcLogo", 'studentVC-logo-sora-cropped-darkmode.png')
-            branding_bg_card = branding.get("bgColorCard", "").lstrip('#') or '18206C'
-            branding_bg_top = branding.get("bgColorSectionTop", "").lstrip('#') or '18206C'
+            branding_bg_card = branding.get("bgColorCard", "").lstrip('#') or 'c50e1f'
+            branding_bg_top = branding.get("bgColorSectionTop", "").lstrip('#') or 'c50e1f'
             branding_bg_bot = branding.get("bgColorSectionBot", "").lstrip('#') or ''
             branding_fg_title = branding.get("fgColorTitle", "").lstrip('#') or ''
 
@@ -192,16 +188,16 @@ def index():
         logger.info(f"🎨 COLORS - Card: {branding_bg_card}, Top: {branding_bg_top}")
 
         # Use system colors as defaults
-        default_bg_card = branding_bg_card or '18206C'
-        default_bg_top = branding_bg_top or '18206C'
+        default_bg_card = branding_bg_card or 'c50e1f'
+        default_bg_top = branding_bg_top or 'c50e1f'
         default_bg_bot = branding_bg_bot or ''
         default_fg_title = branding_fg_title or ''
 
     except Exception as e:
         # Fallback defaults if system fails
         logger.info(f"🎨 COLORS ERROR - Using defaults: {e}")
-        default_bg_card = '18206C'
-        default_bg_top = '18206C'
+        default_bg_card = 'c50e1f'
+        default_bg_top = 'c50e1f'
         default_bg_bot = ''
         default_fg_title = ''
 
@@ -381,6 +377,7 @@ def direct_post():
     logger.info("Received direct post request")
     state = request.args.get("state")
     id_jwt = request.args.get("id_token")
+    
     logger.info(
         f"Received direct post request with state: {state} and id_token: {id_jwt}")
     return resolve_direct_post(state, id_jwt)
@@ -635,9 +632,9 @@ def generate_student_qr(student_id):
         # Get tenant theme
         theme_data = {
             "name": "StudentVC",
-            "icon": placeholder_logo,
-            "bgColorCard": "18206C",
-            "bgColorSectionTop": "18206C",
+            "icon": system_logo,
+            "bgColorCard": "c50e1f",
+            "bgColorSectionTop": "c50e1f",
             "bgColorSectionBot": "FFFFFF",
             "fgColorTitle": "FFFFFF"
         }
@@ -649,8 +646,8 @@ def generate_student_qr(student_id):
                 vc_template = tenant_config.get_credential_template()
                 branding = vc_template.get("credentialSubject", {}).get("credentialBranding", {})
                 theme_data["name"] = tenant_config.name
-                theme_data["bgColorCard"] = branding.get("bgColorCard", "").lstrip('#') or '18206C'
-                theme_data["bgColorSectionTop"] = branding.get("bgColorSectionTop", "").lstrip('#') or '18206C'
+                theme_data["bgColorCard"] = branding.get("bgColorCard", "").lstrip('#') or 'c50e1f'
+                theme_data["bgColorSectionTop"] = branding.get("bgColorSectionTop", "").lstrip('#') or 'c50e1f'
         except Exception as e:
             logger.warning(f"Could not get tenant theme: {e}")
 
@@ -718,8 +715,8 @@ def generate_bulk_qr():
     theme_data = {
         "name": "StudentVC",
         "icon": placeholder_logo,
-        "bgColorCard": "18206C",
-        "bgColorSectionTop": "18206C",
+        "bgColorCard": "c50e1f",
+        "bgColorSectionTop": "c50e1f",
         "bgColorSectionBot": "FFFFFF",
         "fgColorTitle": "FFFFFF"
     }
