@@ -1,5 +1,4 @@
 from flask import jsonify
-from flask import current_app as app
 from src.utils import get_current_server_url
 
 

@@ -5,6 +5,8 @@ from ..issuer import issuer
 from ..issuer.jwks import pem_to_jwk
 from .presentation_routes import get_aud_val, get_nonce_val
 
+from ..models import VP_NONCE, db
+
 logger = logging.getLogger(__name__)
 
 
@@ -39,13 +41,17 @@ def verify_sd_jwt_presentation(raw_token):
         nonce = get_nonce_val()
         aud = get_aud_val()
 
+        nonce_row = VP_NONCE.query.filter_by(nonce=nonce).first()
+        if nonce_row.used:
+            raise Exception("Nonce already used (replay detected)")
         verifier = SDJWTVerifier(
             raw_token,
             cb_get_issuer_key=cb_get_issuer_key,
             expected_aud=aud,
             expected_nonce=nonce,
         )
-
+        nonce_row.mark_used()
+        db.session.commit()
         payload = verifier.get_verified_payload()
         logger.info(f"SD-JWT verification successful. Payload keys: {payload.keys()}")
         logger.info(f"SD-JWT verification successful. Payload: {payload}")

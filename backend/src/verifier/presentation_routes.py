@@ -8,17 +8,18 @@ from flask import Blueprint, request, jsonify, redirect
 from src.utils import get_current_server_url
 from logging import getLogger
 from urllib.parse import quote
+from datetime import datetime
 import json
-
-from .utils import generate_qr_code, randomString
+from ..models import VP_NONCE, db
+from .utils import randomString
 from .settings_integration import get_presentation_definition
 from .. import socketio
 
 logger = getLogger("LOGGER")
 presentation_bp = Blueprint("presentation", __name__)
 
-nonce_val = randomString(10)
 aud_val = "did:key:tub-verifier-example"
+
 
 @presentation_bp.route("/request_uri", methods=["GET", "POST"])
 def request_uri():
@@ -98,10 +99,14 @@ def create_presentation_request():
         params["response_uri"] = get_current_server_url() + "/verifier/direct_post"
         params["response_mode"] = "direct_post"
         params["state"] = randomString(10)
+        global nonce_val
+        nonce_val = randomString(10)
         params["nonce"] = nonce_val
-        
+
         params["aud"] = aud_val
         # Get structured presentation definition with field categories
+        store_nonce(nonce_val)
+
         presentation_def = get_presentation_definition()
 
         # ✅ ENHANCED DEBUG: Log what we got from get_presentation_definition
@@ -283,6 +288,15 @@ def create_presentation_request():
 
 def get_nonce_val():
     return nonce_val
+
+
+def store_nonce(nonce):
+    vp_nonce = VP_NONCE()
+    vp_nonce.nonce = nonce
+
+    db.session.add(vp_nonce)
+    db.session.commit()
+
 
 def get_aud_val():
     return aud_val
