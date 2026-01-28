@@ -8,7 +8,6 @@ from flask import Blueprint, request, jsonify, redirect
 from src.utils import get_current_server_url
 from logging import getLogger
 from urllib.parse import quote
-from datetime import datetime
 import json
 from ..models import VP_NONCE, db
 from .utils import randomString
@@ -291,6 +290,8 @@ def get_nonce_val():
 
 
 def store_nonce(nonce):
+    
+    
     vp_nonce = VP_NONCE()
     vp_nonce.nonce = nonce
 
