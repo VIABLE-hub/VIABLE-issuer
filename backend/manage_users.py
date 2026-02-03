@@ -27,6 +27,37 @@ def list_users():
     finally:
         conn.close()
 
+def add_user(email, password):
+    if not os.path.exists(DB_PATH):
+        print(f"Database not found at {DB_PATH}")
+        return
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    try:
+        # Check if user already exists
+        cursor.execute("SELECT id FROM user WHERE name = ?", (email,))
+        user_row = cursor.fetchone()
+        
+        if user_row:
+            print(f"User '{email}' already exists.")
+            return
+
+        # Generate hash
+        pwhash = generate_password_hash(password)
+        
+        # Insert new user
+        cursor.execute("INSERT INTO user (name, password_hash) VALUES (?, ?)", (email, pwhash))
+        conn.commit()
+        print(f"✅ User '{email}' successfully created.")
+        
+    except Exception as e:
+        print(f"Error creating user: {e}")
+        conn.rollback()
+    finally:
+        conn.close()
+
 def reset_password(email, new_password):
     if not os.path.exists(DB_PATH):
         print(f"Database not found at {DB_PATH}")
@@ -62,6 +93,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage:")
         print("  python manage_users.py list")
+        print("  python manage_users.py add <email> <password>")
         print("  python manage_users.py reset <email> <new_password>")
         sys.exit(1)
 
@@ -69,6 +101,11 @@ if __name__ == "__main__":
     
     if action == "list":
         list_users()
+    elif action == "add":
+        if len(sys.argv) != 4:
+            print("Usage: python manage_users.py add <email> <password>")
+        else:
+            add_user(sys.argv[2], sys.argv[3])
     elif action == "reset":
         if len(sys.argv) != 4:
             print("Usage: python manage_users.py reset <email> <new_password>")

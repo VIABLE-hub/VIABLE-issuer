@@ -14,6 +14,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 import secrets
 from .. import db
 from . import auth
+from ..metrics import record_auth_attempt
 
 logger = getLogger("LOGGER")
 
@@ -59,12 +60,24 @@ def login():
 
     # if user does not exist
     if user is None:
+        try:
+            record_auth_attempt(success=False)
+        except Exception as e:
+            logger.warning(f"Could not record auth failure metric: {e}")
         return login_error_handler(f"User with name: {name} does not exist.")
 
     # if password is incorrect
     if not check_password_hash(user.password_hash, password):
+        try:
+            record_auth_attempt(success=False)
+        except Exception as e:
+            logger.warning(f"Could not record auth failure metric: {e}")
         return login_error_handler(f"Password incorrect for {name}")
 
+    try:
+        record_auth_attempt(success=True)
+    except Exception as e:
+        logger.warning(f"Could not record auth success metric: {e}")
     login_user(user, remember=True, duration=timedelta(hours=1))
     flash('Logged in successfully!', category='success')
     logger.info(f"Login Success: {name}")

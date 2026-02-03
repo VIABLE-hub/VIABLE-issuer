@@ -111,10 +111,12 @@ def register_blueprints(app):
     from .api_integration import api_integration
     from .issuer.debug import debug as debug_bp
     from .monitoring import monitoring
+    from .metrics import metrics
     
     app.register_blueprint(api_integration, url_prefix='/')
     app.register_blueprint(debug_bp, url_prefix='/debug')
     app.register_blueprint(monitoring)
+    app.register_blueprint(metrics)
     
     # Network API - Dynamic registration (kept separate for backward compatibility)
     # from .settings.network_api import register_network_api
@@ -470,4 +472,11 @@ def create_app():
     def index():
         return redirect(url_for('issuer.index'))
 
+    # Initialize metrics middleware
+    try:
+        from .metrics import init_request_metrics
+        init_request_metrics(app)
+        logger.info("✅ Metrics middleware initialized - Real data collection enabled")
+    except Exception as e:
+        logger.warning(f"⚠️ Could not initialize metrics middleware: {e}")
     return app

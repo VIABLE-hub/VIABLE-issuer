@@ -2,6 +2,7 @@ from flask import jsonify
 from src.utils import get_current_server_url
 import jwt
 from datetime import datetime, timedelta, timezone
+import time
 from uuid import uuid4
 from ..models import VC_Offer
 from .offer import generate_nonce
@@ -15,6 +16,7 @@ from ..models import VC_validity
 from .. import db
 from .shared import get_credential_data
 from .sd_jwt_credential import generate_sd_jwt_credential
+from ..metrics import record_student_id_issued
 
 bbs_core_path = os.path.join(os.path.dirname(__file__), "..", "..", "bbs_core.py")
 bbs_core_path = os.path.abspath(bbs_core_path)
@@ -62,6 +64,9 @@ def generate_credential(
 def generate_bbs_credential(
     auth_header, public_key, private_key, issuer_did, issuer_kid, bbs_dpk, bbs_secret
 ):
+    # Start timing for metrics
+    start_time = time.time()
+    
     if not auth_header:
         return jsonify({"error": "Authorization header is missing"}), 401
 
@@ -161,6 +166,14 @@ def generate_bbs_credential(
     )
     c_nonce = generate_nonce(10)
     c_nonce_expires_in = 86400  # 24 hours
+
+    # Record metrics for Student ID Card issuance
+    try:
+        duration = time.time() - start_time
+        record_student_id_issued(duration)
+    except Exception as e:
+        logger.warning(f"Could not record metrics: {e}")
+
 
     # Send the response with the VC JWT and nonce
     return jsonify(
