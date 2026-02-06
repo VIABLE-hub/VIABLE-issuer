@@ -22,42 +22,6 @@ APP_START_TIME = time.time()
 
 # Main settings route is defined in core.py to avoid duplicates
 
-@settings.route("/settings/api/disclosure", methods=["GET", "POST"])
-def api_disclosure_settings():
-    """API endpoint for selective disclosure settings"""
-    system_settings = SystemSettings.get_or_create_default()
-    
-    if request.method == "GET":
-        # Return current settings
-        disclosure_settings = system_settings.disclosure_settings or {"selective_disclosure": {"mandatory_fields": []}}
-        return jsonify({"status": "success", "data": disclosure_settings})
-    
-    elif request.method == "POST":
-        try:
-            data = request.json
-            
-            # Validate the settings
-            from .core import validate_disclosure_settings
-            valid, message = validate_disclosure_settings(data)
-            if not valid:
-                return jsonify({"status": "error", "message": message}), 400
-            
-            # Create backup
-            create_settings_backup("auto", "Before disclosure settings update")
-            
-            # Update settings
-            system_settings.disclosure_settings = data
-            db.session.commit()
-            
-            # Update verifier
-            initialize_verifier_from_database()
-            
-            return jsonify({"status": "success", "message": "Disclosure settings updated"})
-        except Exception as e:
-            logger.error(f"Error updating disclosure settings: {e}")
-            db.session.rollback()
-            return jsonify({"status": "error", "message": str(e)}), 500
-
 @settings.route("/settings/save", methods=["POST"])
 def save_settings():
     """Legacy route for saving settings"""

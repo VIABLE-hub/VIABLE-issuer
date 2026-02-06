@@ -21,10 +21,9 @@ from typing import Dict, Optional, Tuple
 from flask import Blueprint, request, jsonify, session, redirect, url_for
 from flask_login import login_user
 from ..models import User, db
-from ..verifier.field_extractor import decode_jwt_token, extract_presentation_from_vp
-from ..verifier.integration import safe_verify_presentation
-from ..verifier.settings_integration import get_presentation_definition
+from .verification import decode_jwt_token, extract_presentation_from_vp, safe_verify_presentation, get_presentation_definition
 from .. import socketio
+
 
 logger = logging.getLogger(__name__)
 

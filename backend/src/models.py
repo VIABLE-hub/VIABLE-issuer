@@ -15,16 +15,6 @@ class User(db.Model, UserMixin):
     creation_date = db.Column(db.DateTime(timezone=True), default=func.now())
 
 
-class VP_NONCE(db.Model):
-    nonce = db.Column(db.String(255), primary_key=True)
-    iat = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow())
-    used = db.Column(db.Boolean, nullable=False, default=False)
-
-    def mark_used(self):
-        self.used = True
-        self.used_at = datetime.datetime.utcnow()
-
-
 class VC_Offer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(db.String(36), unique=True, nullable=False)

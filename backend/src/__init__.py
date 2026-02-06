@@ -77,11 +77,9 @@ def register_blueprints(app):
     # Core blueprints - Essential application functionality
     from .home import home
     from .issuer.issuer import issuer
-    from .verifier.main_routes import verifier_bp as verifier
     
     app.register_blueprint(home, url_prefix='/')
     app.register_blueprint(issuer, url_prefix='/')
-    app.register_blueprint(verifier, url_prefix='/verifier')
     
     # Authentication blueprints - User authentication
     from .auth import auth, vc_auth_bp
