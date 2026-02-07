@@ -233,9 +233,13 @@ def api_system_health():
         hostname = socket.gethostname()
         
         # Get local IP
-        from ..network.config import get_local_ip, get_public_ip
-        local_ip = get_local_ip()
-        public_ip = get_public_ip()
+        try:
+            from ...utils import get_local_ip
+            local_ip = get_local_ip()
+        except ImportError:
+            local_ip = "127.0.0.1"
+            
+        public_ip = "Unknown"
         
         # Determine health status based on thresholds
         cpu_status = "healthy"

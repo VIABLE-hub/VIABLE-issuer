@@ -235,11 +235,6 @@ backend/src/
 │   ├── OID4VC metadata and QR code generation
 │   └── Multi-tenant credential templates
 │
-├── verifier/            # Credential Verification
-│   ├── BBS+ proof verification
-│   ├── Selective disclosure handling
-│   └── OID4VP presentation requests
-│
 ├── auth/                # Authentication System
 │   ├── Traditional username/password
 │   └── VC-based authentication

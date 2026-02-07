@@ -20,7 +20,6 @@ from .core import register_routes
 from . import utils
 from . import keys
 from . import trust
-from . import network
 from . import health
 from . import database
 
@@ -33,7 +32,6 @@ def register_all_routes():
     register_routes(settings)
     keys.register_routes(settings)
     trust.register_routes(settings)
-    network.register_routes(settings)
     health.register_routes(settings)
     database.register_routes(settings)
 

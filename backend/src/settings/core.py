@@ -146,9 +146,6 @@ def register_routes(blueprint=None):
             if setting_type == "disclosure":
                 from .disclosure import api_disclosure_settings
                 return api_disclosure_settings()
-            elif setting_type == "network":
-                from .network.config import api_network_settings
-                return api_network_settings()
             elif setting_type == "keys":
                 from .keys import api_key_settings
                 return api_key_settings()

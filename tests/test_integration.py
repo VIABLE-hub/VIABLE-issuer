@@ -135,19 +135,7 @@ class TestFullTenantSystemIntegration:
             except Exception as e:
                 pytest.fail(f"❌ Error validating {config_file}: {e}")
     
-    def test_network_api_structure(self):
-        """Test that network API has correct structure"""
-        try:
-            from src.settings.network_api import network_api
-            
-            # Check that blueprint is created
-            assert hasattr(network_api, 'name')
-            assert network_api.name == 'network_api'
-            
-            print("✅ Network API structure correct")
-            
-        except Exception as e:
-            pytest.fail(f"❌ Network API structure test failed: {e}")
+    # Network API test removed as part of dynamic config refactor
     
     @pytest.mark.slow
     def test_makefile_commands_exist_and_valid(self):
