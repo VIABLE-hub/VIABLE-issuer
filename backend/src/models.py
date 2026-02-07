@@ -23,6 +23,9 @@ class VC_Offer(db.Model):
     credential_data = db.Column(JSON, nullable=False)
     theme_data = db.Column(JSON, nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), default=func.now())
+    # New fields for security
+    used = db.Column(db.Boolean, nullable=False, default=False)
+    expires_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
 
 class VC_Token(db.Model):

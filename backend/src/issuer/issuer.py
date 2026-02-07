@@ -97,6 +97,7 @@ def index():
                 'lastName': '',
                 'studentId': '',
                 'studentIdPrefix': '',
+                'validity': 120,
                 'theme_name': Config.UNIVERSITY_NAME,
                 'theme_bgColorCard': branding_bg_card,
                 'theme_bgColorSectionTop': branding_bg_top,
@@ -222,13 +223,19 @@ def index():
         "theme": theme_data
     }
 
+    # Custom validity duration
+    validity = credential_data.get('validity', 120)
+
     # Now you can use full_credential_data as needed
-    link = get_offer_url(full_credential_data)
-    logger.info(f"Generated QR code link: {link}")
+    link, offer_uuid, expires_at = get_offer_url(full_credential_data, validity_seconds=validity)
+    logger.info(f"Generated QR code link: {link}, UUID: {offer_uuid}")
     img = generate_qr_code(link)
 
     # 🩺 HERZCHIRURG FIX: Erweitere form_data um Bild-Informationen mit Branding
     form_data = {
+        'validity': validity,
+        'offer_uuid': offer_uuid,
+        'expires_at_timestamp': expires_at.timestamp() if expires_at else 0,
         'firstName': credential_data.get('firstName', ''),
         'lastName': credential_data.get('lastName', ''),
         'studentId': credential_data.get('studentId', ''),
@@ -288,7 +295,7 @@ def offer():
     # if request.json:
     #     logger.info(f"Received credential data: {request.json}")
     #     return redirect(get_offer_url(request.json))
-    credential_offer_uri = get_offer_url(None)
+    credential_offer_uri, _, _ = get_offer_url(None)
     logger.info(f"Generated credential offer URI: {credential_offer_uri}")
     return redirect(credential_offer_uri)
 
