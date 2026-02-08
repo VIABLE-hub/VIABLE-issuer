@@ -120,8 +120,38 @@
 
           <!-- Info Zeile: Issuing for Domain -->
           {% if issuer_domain %}
-          <div class="text-xs text-gray-500 mb-4 ml-1 flex items-center">
-              <i class="fas fa-info-circle mr-1"></i> Issuing VCs for <span class="font-mono font-medium ml-1 bg-gray-100 px-1 rounded text-berlin-blue">{{ issuer_domain }}</span>
+          <div class="mb-4">
+              <div class="text-xs text-gray-500 ml-1 flex items-center" id="issuerDomainInfo">
+                  <i class="fas fa-info-circle mr-1"></i> Issuing VCs for <span id="issuerDomainSpan" class="font-mono font-medium ml-1 bg-gray-100 px-1 rounded text-berlin-blue">{{ issuer_domain }}</span>
+                  
+                  <!-- CHECK STATUS INDICATORS -->
+                  <span id="domainCheckLoading" class="ml-2 inline-flex items-center text-gray-400">
+                      <i class="fas fa-circle-notch fa-spin"></i>
+                  </span>
+                  
+                  <span id="domainCheckSuccess" class="ml-2 hidden text-green-600" title="Domain verification successful">
+                      <i class="fas fa-check-circle"></i>
+                  </span>
+
+                  <span id="domainCheckError" class="ml-2 hidden text-red-500 cursor-pointer hover:text-red-700 transition" onclick="toggleDomainWarning()" title="Click for details">
+                      <i class="fas fa-exclamation-triangle"></i>
+                  </span>
+              </div>
+              
+              <!-- WARNING MESSAGE (Hidden by default) -->
+              <div id="domainCheckWarningMsg" class="hidden mt-2 p-3 bg-red-50 border border-red-200 rounded-md text-xs text-red-800 shadow-sm transition-all">
+                   <div class="flex items-start">
+                       <i class="fas fa-exclamation-triangle mt-0.5 mr-2 text-red-600"></i>
+                       <div>
+                           <span class="font-bold block mb-1">Configuration Warning</span>
+                           <span id="domainWarningText">
+                               <span class="font-mono font-bold">{{ issuer_domain }}</span> is currently not setup correctly for did:web verification. 
+                               You can still issue VCs now, but they will only be verified as valid if and when the domain is setup correctly.
+                           </span>
+                           <div class="mt-2 text-red-600 text-[10px] font-mono p-1 bg-white border border-red-100 rounded" id="domainDebugDetails"></div>
+                       </div>
+                   </div>
+              </div>
           </div>
           {% else %}
           <div class="mb-4"></div>
@@ -556,6 +586,88 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // --- DOMAIN VERIFICATION CHECK (HERZCHIRURG) ---
+        {% if issuer_domain %}
+        (function verifyDomainConfiguration() {
+            const domain = "{{ issuer_domain }}";
+            const loadingEl = document.getElementById('domainCheckLoading');
+            const successEl = document.getElementById('domainCheckSuccess');
+            const errorEl = document.getElementById('domainCheckError');
+            const warningMsg = document.getElementById('domainCheckWarningMsg');
+            const debugDetails = document.getElementById('domainDebugDetails');
+
+            // --- Cache Logic ---
+            const CACHE_KEY = `did_check_${domain}`;
+            const CACHE_TTL_MS = 60 * 1000; // 60s
+
+            function applyResult(data) {
+                // Hide loading
+                if(loadingEl) loadingEl.classList.add('hidden');
+
+                if (data.match === true) {
+                    // SUCCESS
+                    if(successEl) successEl.classList.remove('hidden');
+                    console.log("✅ DID Verification Successful (from cache or fresh)");
+                } else {
+                    // FAILURE
+                    if(errorEl) errorEl.classList.remove('hidden');
+                    if(warningMsg) warningMsg.classList.remove('hidden');
+                    
+                    let errorText = "Unknown mismatch";
+                    if (data.error) errorText = data.error;
+                    else if (data.remote === null) errorText = "Remote did.json not found (404) or network error";
+                    else errorText = "Content mismatch between local and remote did.json";
+
+                    if(debugDetails) debugDetails.textContent = `Details: ${errorText}`;
+                }
+            }
+
+            try {
+                const cached = localStorage.getItem(CACHE_KEY);
+                if (cached) {
+                    const entry = JSON.parse(cached);
+                    const age = Date.now() - entry.timestamp;
+                    if (age < CACHE_TTL_MS) {
+                        console.log(`🕵️ Using cached DID check result (${Math.round(age/1000)}s old)`);
+                        applyResult(entry.data);
+                        return; // Skip fetch
+                    }
+                }
+            } catch (e) {
+                console.warn("Error reading DID cache", e);
+            }
+
+            console.log("🕵️ Checking DID configuration for:", domain);
+
+            fetch(`/settings/api/did-web-check?domain=${encodeURIComponent(domain)}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Save to cache
+                    try {
+                        localStorage.setItem(CACHE_KEY, JSON.stringify({
+                            timestamp: Date.now(),
+                            data: data
+                        }));
+                    } catch (e) { console.warn("Could not cache DID result", e); }
+                    
+                    applyResult(data);
+                })
+                .catch(err => {
+                    console.error("❌ check failed", err);
+                    if(loadingEl) loadingEl.classList.add('hidden');
+                    if(errorEl) errorEl.classList.remove('hidden');
+                    if(warningMsg) warningMsg.classList.remove('hidden');
+                    if(debugDetails) debugDetails.textContent = `Network Error: ${err.message}`;
+                });
+        })();
+        
+        function toggleDomainWarning() {
+            const msg = document.getElementById('domainCheckWarningMsg');
+            if (msg) msg.classList.toggle('hidden');
+        }
+        window.toggleDomainWarning = toggleDomainWarning; // Make accessible globally
+        {% endif %}
+
         {% if form_data and form_data.offer_uuid %}
         const offerUuid = "{{ form_data.offer_uuid }}";
         const expiresAtTimestamp = {{ form_data.expires_at_timestamp|default(0) }};
