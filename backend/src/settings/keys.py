@@ -1,7 +1,8 @@
-from flask import request, jsonify, render_template
+from flask import request, jsonify, render_template, send_file
 import logging
 import json
 import os
+import io
 import uuid
 import datetime
 import secrets
@@ -256,8 +257,63 @@ def generate_new_key(key_type, purpose="General Purpose", validity_days=365):
 
 def register_routes(blueprint):
     """Register routes with the provided blueprint"""
+
+    @blueprint.route("/settings/api/did-web-json", methods=["GET"])
+    def download_did_web_json():
+        """Generate and download a did:web DID Document"""
+        try:
+            domain = request.args.get('domain')
+            if not domain:
+                return jsonify({"error": "Missing 'domain' query parameter"}), 400
+
+            # 🛠️ HERZCHIRURG FIX: Persist the chosen DID domain to Database
+            try:
+                from ..models import SystemSettings, db
+                # Construct the DID string
+                new_did = f"did:web:{domain.replace(':', '%3A')}"
+                
+                settings = SystemSettings.get_or_create_default()
+                
+                # Fetch mutable dict, update, and reassign to flag modification
+                # SQLAlchemy JSON types sometimes track mutations tricky, this is safest
+                current_keys = dict(settings.key_settings) if settings.key_settings else {}
+                current_keys['did'] = new_did
+                current_keys['did_web_domain'] = domain
+                settings.key_settings = current_keys
+                
+                flag_modified(settings, "key_settings")
+                db.session.commit()
+                logger.info(f"✅ Persisted new DID to database: {new_did}")
+            except Exception as e:
+                logger.error(f"❌ Failed to persist DID to database: {e}")
+                db.session.rollback()
+
+            from ..issuer import key_generator
+            
+            # Load keys
+            bbs_private, bbs_public = key_generator.load_or_generate_bbs_keys()
+            jwt_private, jwt_public = key_generator.load_or_generate_keys()
+            
+            # Generate DID Doc
+            did_doc = key_generator.generate_did_web_doc(domain, jwt_public, bbs_public)
+            
+            # Create file in memory
+            mem = io.BytesIO()
+            mem.write(json.dumps(did_doc, indent=2).encode('utf-8'))
+            mem.seek(0)
+            
+            return send_file(
+                mem,
+                as_attachment=True,
+                download_name="did.json",
+                mimetype="application/json"
+            )
+        except Exception as e:
+            logger.error(f"Error generating DID Document: {e}")
+            return jsonify({"error": str(e)}), 500
     
     @blueprint.route("/settings/api/keys/inventory", methods=["GET"])
+
     def api_key_inventory():
         """Get comprehensive key inventory"""
         try:

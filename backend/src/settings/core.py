@@ -127,7 +127,15 @@ def register_routes(blueprint=None):
     def settings_view():
         """Render the main settings view"""
         try:
-            return render_template("settings.html")
+            # Fetch current settings from DB
+            from ..models import SystemSettings
+            settings_obj = SystemSettings.get_or_create_default()
+            
+            did_domain = ""
+            if settings_obj and settings_obj.key_settings:
+                did_domain = settings_obj.key_settings.get('did_web_domain', "")
+            
+            return render_template("settings.html", did_domain=did_domain)
         except Exception as e:
             logger.error(f"Error rendering settings: {e}")
             return jsonify({"status": "error", "message": str(e)}), 500

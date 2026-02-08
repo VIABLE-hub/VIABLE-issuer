@@ -45,3 +45,10 @@ class Config:
     INSTANCE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'instance')
     SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(INSTANCE_PATH, 'studentvc.sqlite')}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # Issuer Identity
+    # If set, this DID will be used as the 'iss' claim in VCs.
+    # If empty, a dynamic did:key will be generated from the keys.
+    # Example: "did:web:tu-berlin.de"
+    ISSUER_DID = os.environ.get("ISSUER_DID", "")
+

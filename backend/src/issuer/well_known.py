@@ -5,6 +5,19 @@ from src.utils import get_current_server_url
 def openid_credential_issuer():
     # 🩺 HERZCHIRURG FIX: Use get_current_server_url() for ngrok compatibility
     server_url = get_current_server_url()
+    
+    # Auto-detect issuer DID like we do in issuer.py
+    # Ideally this logic should be centralized.
+    # Currently we rely on the caller to have initialized the keys global in issuer.py if we need it,
+    # OR we just use the did provided by the global state if we can import it.
+    # But usually openid metadata 'credential_issuer' field is the URL, NOT the DID.
+    # The 'issuer' claim in the credential MUST be the DID.
+    # However, for 'credential_issuer' metadata: 
+    # "The value of the credential_issuer parameter MUST be a URL." (OID4VCI spec)
+    #
+    # Wait, the error is "SD-JWT Verification failed: Issuer DID must be did:web..."
+    # This refers to the 'iss' claim INSIDE the credential/token.
+    
     metadata = {
         "credential_issuer": server_url,
         "authorization_server": server_url,

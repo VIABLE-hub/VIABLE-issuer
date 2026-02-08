@@ -99,6 +99,7 @@ document.addEventListener('alpine:init', () => {
     responseTime: 0,
     
     // 🔐 Key Management State
+    didWebDomain: '',
     keyInventoryData: [],
     keyInventoryLoading: false,
     keyGenerating: false,
@@ -2651,7 +2652,22 @@ document.addEventListener('alpine:init', () => {
     // Enterprise-grade cryptographic key lifecycle management
     
     // Load key inventory from backend with enhanced statistics
+    
+    // --- 🔐 Key Management Functions ---
+    
+    downloadDidWeb() {
+        if (!this.didWebDomain) {
+            this.showNotification('Please enter a target domain first.', 'error');
+            return;
+        }
+
+        const url = `/settings/api/did-web-json?domain=${encodeURIComponent(this.didWebDomain)}`;
+        window.open(url, '_blank');
+        this.showNotification('DID Document download started.', 'success');
+    },
+
     loadKeyInventory() {
+
       console.log('🔑 Loading key inventory...');
       this.keyInventoryLoading = true;
       this.keyInventoryError = null;

@@ -192,3 +192,69 @@ def generate_did(public_key_pem):
 def generate_kid(did):
     """Generate a Key ID for the issuer DID"""
     return f"{did}#key-1"
+
+
+def generate_did_web_doc(domain, public_key_pem, bbs_public_key_bytes=None):
+    """
+    Generate a DID Document for did:web method.
+    
+    Args:
+        domain (str): The domain name (e.g. "tu-berlin.de" or "sub.domain.com")
+        public_key_pem (bytes/str): The ECDSA public key in PEM format
+        bbs_public_key_bytes (bytes): The BBS+ public key bytes (optional)
+        
+    Returns:
+        dict: The DID Document as a dictionary
+    """
+    did = f"did:web:{domain.replace(':', '%3A').replace('/', ':')}"
+    
+    # Process ECDSA Key (P-256)
+    if isinstance(public_key_pem, str):
+        public_key_pem = public_key_pem.encode("utf-8")
+        
+    # Use jwcrypto (via our existing jwks helper or directly) to get JWK params
+    from jwcrypto.jwk import JWK
+    p256_key = JWK.from_pem(public_key_pem)
+    p256_jwk = p256_key.export_public(as_dict=True)
+    
+    # Verification Method 1: ECDSA Key
+    vm_ecdsa_id = f"{did}#key-1"
+    vm_ecdsa = {
+        "id": vm_ecdsa_id,
+        "type": "JsonWebKey2020",
+        "controller": did,
+        "publicKeyJwk": p256_jwk
+    }
+    
+    verification_methods = [vm_ecdsa]
+    assertion_methods = [vm_ecdsa_id]
+    
+    # Process BBS+ Key (Bls12381) if available
+    if bbs_public_key_bytes:
+        # We need to encode raw bytes to base58 for Bls12381G2Key2020
+        bbs_b58 = base58.b58encode(bbs_public_key_bytes).decode('utf-8')
+        
+        vm_bbs_id = f"{did}#bbs-1"
+        vm_bbs = {
+            "id": vm_bbs_id,
+            "type": "Bls12381G2Key2020",
+            "controller": did,
+            "publicKeyBase58": bbs_b58
+        }
+        verification_methods.append(vm_bbs)
+        assertion_methods.append(vm_bbs_id)
+        
+    did_doc = {
+        "@context": [
+            "https://www.w3.org/ns/did/v1",
+            "https://w3id.org/security/suites/jws-2020/v1", 
+            "https://w3id.org/security/bbs/v1"
+        ],
+        "id": did,
+        "verificationMethod": verification_methods,
+        "assertionMethod": assertion_methods,
+        # authentication key agreement etc can be added if needed
+    }
+    
+    return did_doc
+

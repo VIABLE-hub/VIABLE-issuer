@@ -12,6 +12,7 @@ from .direct_post import resolve_direct_post
 from .qr_codes import generate_qr_code
 from .utils import preprocess_image, get_placeholders, preprocess_theme_icon
 from .csv_import import parse_csv_students, get_csv_template
+from src.utils import get_current_server_url
 import os
 import base64
 from datetime import datetime
@@ -59,6 +60,13 @@ bbs_secret = None
 @login_required
 def index():
     initialize_keys()
+    
+    # Calculate issuer domain for display
+    current_issuer_did = issuer_did
+    issuer_domain = None
+    if current_issuer_did and current_issuer_did.startswith("did:web:"):
+        issuer_domain = current_issuer_did[8:].replace("%3A", ":")
+        
     if request.method == "GET":
         # Pre-populate form with config defaults for GET requests
         try:
@@ -109,12 +117,12 @@ def index():
                 'theme_icon_url': system_logo_url  # URL for direct access
             }
 
-            return render_template("issuer.html", img_data=None, form_data=form_data)
+            return render_template("issuer.html", img_data=None, form_data=form_data, issuer_domain=issuer_domain)
 
         except Exception as e:
             logger.info(f"🎓 GET REQUEST ERROR - Using defaults: {e}")
             # Fallback to original behavior
-            return render_template("issuer.html", img_data=None)
+            return render_template("issuer.html", img_data=None, issuer_domain=issuer_domain)
 
     # Process the form data
     credential_data = request.form.to_dict()
@@ -282,7 +290,7 @@ def index():
     logger.info(f"🎨   theme_fgColorTitle: {form_data.get('theme_fgColorTitle')}")
 
     # 🩺 HERZCHIRURG FIX: Gib sowohl den QR-Code als auch die Formulardaten zurück
-    return render_template("issuer.html", img_data=img, form_data=form_data, credential_link=link)
+    return render_template("issuer.html", img_data=img, form_data=form_data, credential_link=link, issuer_domain=issuer_domain)
 
 
 @issuer.route("/offer", methods=["POST"])
@@ -302,14 +310,58 @@ def offer():
 
 def initialize_keys():
     global private_key, public_key, jwks, issuer_did, issuer_kid, bbs_dpk, bbs_secret
+    
+    # Always ensure keys are valid
     if not private_key or not public_key or not bbs_dpk or not bbs_secret:
         # Load keys
         private_key, public_key = load_or_generate_keys()
         bbs_secret, bbs_dpk = load_or_generate_bbs_keys()
 
+    # 🔄 CHECK DB FOR UPDATES (Hot-Reload Configuration)
+    # This allows changing the DID (e.g. to did:web) without restarting the server
+    try:
+         from ..models import SystemSettings
+         settings = SystemSettings.get_or_create_default()
+         if settings and settings.key_settings:
+             db_did = settings.key_settings.get('did')
+             if db_did and db_did != issuer_did:
+                 logger.info(f"🔄 Hot-Reload: Updating DID from SystemSettings: {issuer_did} -> {db_did}")
+                 issuer_did = db_did
+                 issuer_kid = None # Force regeneration of KID
+    except Exception as e:
+         pass # Ignore DB errors here, fall back to existing state
+
+    # Always ensure DID is valid (Fix for issuer_did=None issue)
+    if not issuer_did:
         # Generate DID and KID
-        issuer_did = generate_did(public_key)
+        config_did = current_app.config.get('ISSUER_DID')
+        
+        # 1. Check DB Settings (SystemSettings) - Highest Priority for runtime changes
+        try:
+             from ..models import SystemSettings
+             settings = SystemSettings.get_or_create_default()
+             if settings and settings.key_settings:
+                 db_did = settings.key_settings.get('did')
+                 if db_did:
+                     config_did = db_did
+                     logger.info(f"Using DID from SystemSettings (DB): {config_did}")
+        except Exception as e:
+             logger.warning(f"Failed to read DID from SystemSettings: {e}")
+
+        if config_did:
+            logger.info(f"Using configured DID: {config_did}")
+            issuer_did = config_did
+        else:
+            # STRICT MODE: Only did:web allowed. No did:key fallback.
+            # If no DID is configured in DB, we default to a placeholder did:web
+            # to satisfy the "did:web only" requirement while indicating missing config.
+            issuer_did = "did:web:not-configured.example.com"
+            logger.warning(f"⚠️ No DID configured in DB! Defaulting to placeholder: {issuer_did}")
+            
+    # Regenerate KID if DID changed or is missing
+    if not issuer_kid or (issuer_did and not issuer_kid.startswith(issuer_did)):
         issuer_kid = generate_kid(issuer_did)
+        logger.info(f"🔑 Updated KID: {issuer_kid}")
 
     if not jwks:
         jwks = pem_to_jwk(public_key, "public")
@@ -327,6 +379,12 @@ def verify_access_token():
 @issuer.route("/credential", methods=["POST"])
 @authenticate_token
 def create_credential():
+    # RELOAD KEYS ON EACH REQUEST to prevent stale DID/Keys (Hotfix)
+    # This ensures that if we switch from did:key to did:web in config (via app restart or code change),
+    # the endpoint actually picks it up without full reload issues.
+    global issuer_did, issuer_kid
+    initialize_keys() 
+    
     logger.info("Received request to create a credential")
     auth_header = request.headers.get("Authorization")
 
@@ -342,8 +400,48 @@ def create_credential():
                                format=credential_format)
 
 
+@issuer.route("/.well-known/did.json", methods=["GET"])
+def get_did_json():
+    initialize_keys()
+    
+    # Auto-detect domain if not configured
+    config_did = issuer_did # Use the global one we just resolved
+    
+    domain = None
+    
+    if config_did and config_did.startswith("did:web:"):
+        # Extract domain from did:web:example.com
+        domain = config_did[8:].replace("%3A", ":")
+    else:
+        # Fallback to current request host
+        from urllib.parse import urlparse
+        server_url = get_current_server_url()
+        parsed = urlparse(server_url)
+        domain = parsed.hostname
+        if parsed.port and parsed.port not in [80, 443]:
+             domain = f"{domain}:{parsed.port}"
+    
+    # Ensure domain is set
+    if not domain:
+        return jsonify({"error": "Could not determine domain for DID"}), 500
+
+    from .key_generator import generate_did_web_doc
+    
+    # Load keys (pem bytes)
+    priv, pub_pem = load_or_generate_keys()
+    bbs_priv, bbs_pub = load_or_generate_bbs_keys()
+    
+    # Generate Doc
+    did_doc = generate_did_web_doc(domain, pub_pem, bbs_pub)
+    
+    return jsonify(did_doc), 200
+
+
 @issuer.route("/.well-known/openid-credential-issuer", methods=["GET"])
 def get_credential_issuer_metadata():
+    # RELOAD KEYS to ensure we return the correct issuer ID in metadata
+    initialize_keys()
+    
     logger.info("Received request for credential issuer metadata")
     return openid_credential_issuer()
 

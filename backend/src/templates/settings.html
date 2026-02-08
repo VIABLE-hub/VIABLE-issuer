@@ -9,7 +9,7 @@
   <script src="/static/js/settings.js"></script>
 
 <!-- Settings Component - Main Container -->
-<div x-data="settings" x-init="init()" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div x-data="settings" x-init="didWebDomain='{{ did_domain }}'; init()" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Header -->
     <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Einstellungen</h1>
