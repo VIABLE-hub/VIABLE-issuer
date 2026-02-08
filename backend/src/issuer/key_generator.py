@@ -217,6 +217,12 @@ def generate_did_web_doc(domain, public_key_pem, bbs_public_key_bytes=None):
     p256_key = JWK.from_pem(public_key_pem)
     p256_jwk = p256_key.export_public(as_dict=True)
     
+    # 🩹 HERZCHIRURG FIX: Add explicit alg and use for iOS/verifier compatibility
+    p256_jwk['alg'] = 'ES256'
+    p256_jwk['use'] = 'sig'
+    p256_jwk['kid'] = f"{did}#key-1" # Match the VM ID for consistency
+
+    
     # Verification Method 1: ECDSA Key
     vm_ecdsa_id = f"{did}#key-1"
     vm_ecdsa = {
