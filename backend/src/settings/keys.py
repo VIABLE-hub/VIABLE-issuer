@@ -263,6 +263,8 @@ def register_routes(blueprint):
         """Generate and download a did:web DID Document"""
         try:
             domain = request.args.get('domain')
+            mode = request.args.get('mode', 'download') # download | json
+            
             if not domain:
                 return jsonify({"error": "Missing 'domain' query parameter"}), 400
 
@@ -297,6 +299,9 @@ def register_routes(blueprint):
             # Generate DID Doc
             did_doc = key_generator.generate_did_web_doc(domain, jwt_public, bbs_public)
             
+            if mode == 'json':
+                return jsonify(did_doc)
+
             # Create file in memory
             mem = io.BytesIO()
             mem.write(json.dumps(did_doc, indent=2).encode('utf-8'))
@@ -310,6 +315,66 @@ def register_routes(blueprint):
             )
         except Exception as e:
             logger.error(f"Error generating DID Document: {e}")
+            return jsonify({"error": str(e)}), 500
+
+    @blueprint.route("/settings/api/did-web-check", methods=["GET"])
+    def check_did_web_match():
+        """Check if the generated DID JSON matches the one hosted on the domain"""
+        try:
+            import requests
+            domain = request.args.get('domain')
+            if not domain:
+                return jsonify({"error": "Missing 'domain' query parameter"}), 400
+            
+            # 1. Generate Local
+            from ..issuer import key_generator
+            bbs_private, bbs_public = key_generator.load_or_generate_bbs_keys()
+            jwt_private, jwt_public = key_generator.load_or_generate_keys()
+            local_did_doc = key_generator.generate_did_web_doc(domain, jwt_public, bbs_public)
+            
+            # 2. Fetch Remote
+            # Handle ports if present
+            if ":" in domain:
+                # Naive assumption: http for localhost/10.0.2.2, https otherwise? 
+                # Verification is strictly HTTPS usually, but let's try HTTPS first, then HTTP if localhost
+                # Actually, did:web spec requires HTTPS. But dev env might differ.
+                # Let's try HTTPS first.
+                protocol = "https"
+                if "localhost" in domain or "127.0.0.1" in domain or "10.0.2.2" in domain:
+                    protocol = "http" # Allow http for local dev
+            else:
+                protocol = "https"
+                
+            url = f"{protocol}://{domain}/.well-known/did.json"
+            
+            try:
+                resp = requests.get(url, timeout=5, verify=False) # verify=False for dev certs
+                if resp.status_code != 200:
+                   return jsonify({
+                       "match": False, 
+                       "error": f"Remote server returned {resp.status_code}",
+                       "local": local_did_doc
+                   })
+                remote_did_doc = resp.json()
+            except requests.RequestException as e:
+                return jsonify({
+                    "match": False,
+                    "error": f"Failed to connect to {url}: {str(e)}",
+                    "local": local_did_doc
+                })
+            
+            # 3. Compare (Key order agnostic)
+            # We convert to canonical JSON string for string comparison or just deep dict compare
+            match = (remote_did_doc == local_did_doc)
+            
+            return jsonify({
+                "match": match,
+                "remote": remote_did_doc,
+                "local": local_did_doc
+            })
+            
+        except Exception as e:
+            logger.error(f"Error checking DID matches: {e}")
             return jsonify({"error": str(e)}), 500
     
     @blueprint.route("/settings/api/keys/inventory", methods=["GET"])

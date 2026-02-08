@@ -100,6 +100,10 @@ document.addEventListener('alpine:init', () => {
     
     // 🔐 Key Management State
     didWebDomain: '',
+    didJson: '', 
+    didJsonVisible: false,
+    didMatchStatus: null,
+    didMatchDetails: null,
     keyInventoryData: [],
     keyInventoryLoading: false,
     keyGenerating: false,
@@ -2655,13 +2659,78 @@ document.addEventListener('alpine:init', () => {
     
     // --- 🔐 Key Management Functions ---
     
+    saveAndPreviewDid() {
+        if (!this.didWebDomain) {
+            this.showNotification('Please enter a target domain first.', 'error');
+            return;
+        }
+        
+        // Reset match status when generating new DID
+        this.didMatchStatus = null;
+        this.didMatchDetails = null;
+        
+        // Show loading state if desired (reusing isLoading for simplicity or add specific one)
+        
+        fetch(`/settings/api/did-web-json?domain=${encodeURIComponent(this.didWebDomain)}&mode=json`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) throw new Error(data.error);
+                this.didJson = JSON.stringify(data, null, 2);
+                this.didJsonVisible = true;
+                this.showNotification('DID Document generated and saved.', 'success');
+            })
+            .catch(err => {
+                 this.showNotification(err.message, 'error');
+            });
+    },
+
+    checkDidMatch() {
+         if (!this.didWebDomain) {
+            this.showNotification('Please enter a domain to check.', 'error');
+            return;
+         }
+         this.didMatchStatus = 'loading';
+         
+         fetch(`/settings/api/did-web-check?domain=${encodeURIComponent(this.didWebDomain)}`)
+            .then(res => res.json())
+            .then(data => {
+                if(data.error && !data.local) { // Critical error
+                    this.didMatchStatus = 'fail';
+                    this.didMatchDetails = data.error;
+                    this.showNotification('Check failed: ' + data.error, 'error');
+                } else {
+                    // Start logic even if error exists (like 404 remote)
+                    this.didMatchStatus = data.match ? 'success' : 'fail';
+                    this.didMatchDetails = data;
+                    
+                    if(data.match) {
+                        this.showNotification('✅ DID Document matches!', 'success');
+                        // Update local JSON with what we checked against
+                        this.didJson = JSON.stringify(data.local, null, 2);
+                    } else {
+                        this.showNotification('❌ Verification Mismatch', 'warning');
+                        // Show local one anyway so they can see what it SHOULD be
+                        if (data.local) {
+                            this.didJson = JSON.stringify(data.local, null, 2);
+                            this.didJsonVisible = true;
+                        }
+                    }
+                }
+            })
+            .catch(err => {
+                this.didMatchStatus = 'fail';
+                this.didMatchDetails = err.message;
+                this.showNotification('Network error checking DID', 'error');
+            });
+    },
+
     downloadDidWeb() {
         if (!this.didWebDomain) {
             this.showNotification('Please enter a target domain first.', 'error');
             return;
         }
 
-        const url = `/settings/api/did-web-json?domain=${encodeURIComponent(this.didWebDomain)}`;
+        const url = `/settings/api/did-web-json?domain=${encodeURIComponent(this.didWebDomain)}&mode=download`;
         window.open(url, '_blank');
         this.showNotification('DID Document download started.', 'success');
     },
