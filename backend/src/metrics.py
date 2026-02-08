@@ -1,0 +1,174 @@
+"""Prometheus metrics for StudentVC - Student ID Card focused"""
+from prometheus_client import Counter, Histogram, Gauge, generate_latest, REGISTRY
+from flask import Blueprint, Response, request as flask_request, g
+import time
+import logging
+
+logger = logging.getLogger("LOGGER")
+
+# ============================================================================
+# CREDENTIAL ISSUANCE METRICS
+# ============================================================================
+studentid_issued_total = Counter(
+    'studentvc_credentials_issued_total',
+    'Total Student ID Cards issued'
+)
+
+studentid_issued_duration = Histogram(
+    'studentvc_credential_issuance_duration_seconds',
+    'Student ID Card issuance latency in seconds',
+    buckets=(0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0)
+)
+
+# ============================================================================
+# CREDENTIAL VERIFICATION METRICS
+# ============================================================================
+studentid_verified_success = Counter(
+    'studentvc_credentials_verified_success_total',
+    'Total successful Student ID Card verifications'
+)
+
+studentid_verified_failed = Counter(
+    'studentvc_credentials_verified_failed_total',
+    'Total failed Student ID Card verifications'
+)
+
+studentid_verification_duration = Histogram(
+    'studentvc_credential_verification_duration_seconds',
+    'Student ID Card verification latency in seconds',
+    buckets=(0.01, 0.05, 0.1, 0.25, 0.5, 1.0)
+)
+
+# ============================================================================
+# CREDENTIAL STATE METRICS
+# ============================================================================
+studentid_valid_count = Gauge(
+    'studentvc_valid_credentials_total',
+    'Number of valid Student ID Cards'
+)
+
+studentid_revoked_total = Counter(
+    'studentvc_credentials_revoked_total',
+    'Total Student ID Cards revoked'
+)
+
+# ============================================================================
+# AUTHENTICATION METRICS
+# ============================================================================
+auth_attempts_total = Counter(
+    'studentvc_auth_attempts_total',
+    'Total authentication attempts',
+    ['result']
+)
+
+# ============================================================================
+# REQUEST TRACKING METRICS
+# ============================================================================
+request_duration = Histogram(
+    'studentvc_request_duration_seconds',
+    'HTTP request duration in seconds',
+    ['method', 'endpoint'],
+    buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0)
+)
+
+request_count = Counter(
+    'studentvc_requests_total',
+    'Total HTTP requests',
+    ['method', 'endpoint', 'status']
+)
+
+# Create blueprint
+metrics = Blueprint('metrics', __name__)
+
+@metrics.route('/metrics')
+def metrics_endpoint():
+    """Prometheus metrics endpoint"""
+    return Response(generate_latest(REGISTRY), mimetype='text/plain')
+
+# Request tracking middleware
+def init_request_metrics(app):
+    """Initialize request metrics middleware"""
+    
+    @app.before_request
+    def before_request():
+        """Track request start time"""
+        g.request_start_time = time.time()
+    
+    @app.after_request
+    def after_request(response):
+        """Track request metrics after response"""
+        try:
+            # Calculate request duration
+            if hasattr(g, 'request_start_time'):
+                duration = time.time() - g.request_start_time
+                
+                # Get endpoint and method
+                endpoint = flask_request.endpoint or 'unknown'
+                method = flask_request.method or 'unknown'
+                status = response.status_code or 500
+                
+                # Record metrics
+                request_count.labels(method=method, endpoint=endpoint, status=status).inc()
+                request_duration.labels(method=method, endpoint=endpoint).observe(duration)
+        except Exception as e:
+            logger.warning(f"Error recording request metrics: {e}")
+        
+        return response
+
+def record_request(method, endpoint, status, duration):
+    """Record a request in Prometheus metrics"""
+    try:
+        request_count.labels(method=method, endpoint=endpoint, status=status).inc()
+        request_duration.labels(method=method, endpoint=endpoint).observe(duration)
+    except Exception as e:
+        logger.warning(f"Error recording request metrics: {e}")
+
+def record_student_id_issued(duration_seconds=0):
+    """Record a Student ID Card issuance"""
+    try:
+        studentid_issued_total.inc()
+        if duration_seconds > 0:
+            studentid_issued_duration.observe(duration_seconds)
+        logger.info("📊 Student ID Card issued - metric recorded")
+    except Exception as e:
+        logger.warning(f"Error recording Student ID Card issuance: {e}")
+
+def record_student_id_verified(success=True, duration_seconds=0):
+    """Record a Student ID Card verification"""
+    try:
+        if success:
+            studentid_verified_success.inc()
+            logger.info("📊 Student ID Card verified (success) - metric recorded")
+        else:
+            studentid_verified_failed.inc()
+            logger.info("📊 Student ID Card verified (failed) - metric recorded")
+        
+        if duration_seconds > 0:
+            studentid_verification_duration.observe(duration_seconds)
+    except Exception as e:
+        logger.warning(f"Error recording Student ID Card verification: {e}")
+
+def record_student_id_revoked():
+    """Record a Student ID Card revocation"""
+    try:
+        studentid_revoked_total.inc()
+        logger.info("📊 Student ID Card revoked - metric recorded")
+    except Exception as e:
+        logger.warning(f"Error recording Student ID Card revocation: {e}")
+
+def update_valid_credentials(count):
+    """Update the gauge for valid Student ID Cards"""
+    try:
+        studentid_valid_count.set(count)
+        logger.info(f"📊 Valid Student ID Cards: {count}")
+    except Exception as e:
+        logger.warning(f"Error updating valid credentials gauge: {e}")
+
+def record_auth_attempt(success=True):
+    """Record an authentication attempt"""
+    try:
+        result = "success" if success else "failed"
+        auth_attempts_total.labels(result=result).inc()
+        logger.info(f"📊 Auth attempt ({result}) - metric recorded")
+    except Exception as e:
+        logger.warning(f"Error recording auth attempt: {e}")

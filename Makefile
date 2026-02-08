@@ -2,7 +2,7 @@
 
 BACKEND_DIR = backend
 VENV_DIR = .venv
-PYTHON = python3
+PYTHON = python3.12
 PIP = pip3
 PORT = 8080
 HOST = 0.0.0.0

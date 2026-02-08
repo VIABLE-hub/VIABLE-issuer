@@ -3,6 +3,7 @@ from src.utils import get_current_server_url
 import jwt
 from uuid import uuid4
 import logging
+import time
 from datetime import datetime, timezone
 from sd_jwt.issuer import SDJWTIssuer
 from sd_jwt.common import SDObj
@@ -14,10 +15,14 @@ from .offer import generate_nonce
 from .. import db
 from .shared import get_credential_data
 from .direct_post import get_holder_key
+from ..metrics import record_student_id_issued
 logger = logging.getLogger(__name__)
 
 
 def generate_sd_jwt_credential(auth_header, public_key, private_key, issuer_did, issuer_kid):
+    # Start timing for metrics
+    start_time = time.time()
+    
     if not auth_header:
         return jsonify({"error": "Authorization header is missing"}), 401
 
@@ -133,6 +138,13 @@ def generate_sd_jwt_credential(auth_header, public_key, private_key, issuer_did,
         )
 
         credential_token = sdjwt.sd_jwt_issuance
+
+        # Record metrics for Student ID Card issuance
+        try:
+            duration = time.time() - start_time
+            record_student_id_issued(duration)
+        except Exception as e:
+            logger.warning(f"Could not record metrics: {e}")
 
         return jsonify(
             {

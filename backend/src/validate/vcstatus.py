@@ -8,11 +8,11 @@ import csv
 import io
 from datetime import datetime, timezone, timedelta
 from dateutil import parser
+from ..metrics import record_student_id_verified, record_student_id_revoked, update_valid_credentials
 
 
 vcstatus = Blueprint('vcstatus', __name__)
 logger = getLogger("LOGGER")
-
 
 def extract_credential_info(credential_data):
     """
@@ -116,6 +116,12 @@ def vcstatus_page():
         total_credentials = len(credentials)
         valid_credentials = len([c for c in credentials if c.validity])
         invalid_credentials = total_credentials - valid_credentials
+        
+        # Record valid credentials count
+        try:
+            update_valid_credentials(valid_credentials)
+        except Exception as e:
+            logger.warning(f"Could not update valid credentials metric: {e}")
         
         # Process credentials with enhanced data extraction
         processed_credentials = []
@@ -459,18 +465,39 @@ def export_csv():
 
 @vcstatus.route('/isvalid/<string:identifier>', methods=['GET', 'POST'])
 def is_valid(identifier):
+    import time
+    start_time = time.time()
+    
     logger.info(
         f"Checking validity of credential with identifier: {identifier}")
     entry = VC_validity.query.filter_by(identifier=identifier).first()
+    
+    duration = time.time() - start_time
+    
     if entry:
         logger.info(
             f"Found credential with validity: {entry.validity}")
+        # Record successful verification
+        try:
+            record_student_id_verified(success=True, duration_seconds=duration)
+        except Exception as e:
+            logger.warning(f"Could not record metrics: {e}")
         return jsonify({"valid": 1 if entry.validity else 0})
     else:
         # For testing purposes: return True for test credentials starting with 'pw4'
         if identifier.startswith('pw4'):
             logger.info(f"Test credential detected, returning valid=1 for testing")
+            try:
+                record_student_id_verified(success=True, duration_seconds=duration)
+            except Exception as e:
+                logger.warning(f"Could not record metrics: {e}")
             return jsonify({"valid": 1})
+        
+        # Record failed verification
+        try:
+            record_student_id_verified(success=False, duration_seconds=duration)
+        except Exception as e:
+            logger.warning(f"Could not record metrics: {e}")
         return jsonify({"valid": 0})
 
 
@@ -481,16 +508,32 @@ validate_legacy = Blueprint('validate', __name__)
 @validate_legacy.route('/isvalid/<string:identifier>', methods=['GET', 'POST'])
 def is_valid_legacy(identifier):
     """Legacy endpoint for backward compatibility with old validity_identifier URLs"""
+    import time
+    start_time = time.time()
     logger.info(f"[LEGACY] Checking validity of credential with identifier: {identifier}")
     entry = VC_validity.query.filter_by(identifier=identifier).first()
+    duration = time.time() - start_time
+    
     if entry:
         logger.info(f"[LEGACY] Found credential with validity: {entry.validity}")
+        try:
+            record_student_id_verified(success=True, duration_seconds=duration)
+        except Exception as e:
+            logger.warning(f"Could not record metrics: {e}")
         return jsonify({"valid": 1 if entry.validity else 0})
     else:
         # For testing purposes: return True for test credentials starting with 'pw4'
         if identifier.startswith('pw4'):
             logger.info(f"[LEGACY] Test credential detected, returning valid=1 for testing")
+            try:
+                record_student_id_verified(success=True, duration_seconds=duration)
+            except Exception as e:
+                logger.warning(f"Could not record metrics: {e}")
             return jsonify({"valid": 1})
+        try:
+            record_student_id_verified(success=False, duration_seconds=duration)
+        except Exception as e:
+            logger.warning(f"Could not record metrics: {e}")
         return jsonify({"valid": 0})
 
 
@@ -503,6 +546,10 @@ def toggle_revocation():
         if credential.validity:  # Wenn aktiv (nicht revoked)
             credential.revoke(reason="Admin revoked", revoked_by="admin")
             logger.info(f"Credential mit ID {vc_id} wurde widerrufen")
+            try:
+                record_student_id_revoked()
+            except Exception as e:
+                logger.warning(f"Could not record revocation metric: {e}")
         else:  # Wenn bereits revoked
             credential.restore()
             logger.info(f"Credential mit ID {vc_id} wurde wiederhergestellt")
