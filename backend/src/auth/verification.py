@@ -110,8 +110,8 @@ def get_presentation_definition():
     """
     return {
         "technical_fields": TECHNICAL_FIELDS,
-        "user_mandatory_fields": ["firstName", "lastName", "studentId", "email"],
-        "mandatory_fields": TECHNICAL_FIELDS + ["firstName", "lastName", "studentId", "email"] 
+        "user_mandatory_fields": ["firstName", "lastName", "studentId", "email", "image"],
+        "mandatory_fields": TECHNICAL_FIELDS + ["firstName", "lastName", "studentId", "email", "image"] 
     }
 
 def safe_verify_presentation(decoded_vp, presentation_definition, raw_token=None):
