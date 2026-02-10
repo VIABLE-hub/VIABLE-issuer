@@ -13,6 +13,14 @@ logger = logging.getLogger("LOGGER")
 studentvc_up = Gauge('studentvc_up', 'StudentVC Service Status')
 studentvc_up.set(1)
 
+# Application Uptime
+app_start_time = time.time()
+studentvc_uptime = Gauge('studentvc_uptime_seconds', 'Time since application process started')
+studentvc_uptime.set_function(lambda: time.time() - app_start_time)
+
+# Key Management Metrics
+signing_key_age_days = Gauge('studentvc_signing_key_age_days', 'Age of signing keys in days', ['type'])
+
 did_web_status = Gauge('studentvc_did_web_status', 'Status of DID:Web configuration (1=Valid, 0=Invalid)')
 
 studentid_issued_total = Counter(
@@ -83,7 +91,13 @@ request_count = Counter(
     ['method', 'endpoint', 'status']
 )
 
-# Cr
+# Create blueprint
+metrics = Blueprint('metrics', __name__)
+
+@metrics.route('/metrics')
+def metrics_endpoint():
+    """Prometheus metrics endpoint"""
+    
     # Check DID Status
     try:
         from .issuer.issuer import initialize_keys, issuer_did
@@ -95,13 +109,31 @@ request_count = Counter(
     except Exception as e:
         logger.error(f"Metrics Check Failed: {e}")
         did_web_status.set(0)
-        
-    eate blueprint
-metrics = Blueprint('metrics', __name__)
 
-@metrics.route('/metrics')
-def metrics_endpoint():
-    """Prometheus metrics endpoint"""
+    # Check Key Ages
+    try:
+        from flask import current_app
+        import os
+        
+        # Using current_app.instance_path is the most reliable way in Flask
+        instance_path = current_app.instance_path
+        
+        # Check ECDSA Key Age
+        ecdsa_path = os.path.join(instance_path, 'private.pem')
+        if os.path.exists(ecdsa_path):
+             # Calculate age in days
+             age = (time.time() - os.path.getmtime(ecdsa_path)) / 86400
+             signing_key_age_days.labels(type='ecdsa').set(age)
+             
+        # Check BBS+ Key Age
+        bbs_path = os.path.join(instance_path, 'bbs_private.pem')
+        if os.path.exists(bbs_path):
+             age = (time.time() - os.path.getmtime(bbs_path)) / 86400
+             signing_key_age_days.labels(type='bbs').set(age)
+             
+    except Exception as e:
+        logger.warning(f"Error checking key ages: {e}")
+        
     return Response(generate_latest(REGISTRY), mimetype='text/plain')
 
 # Request tracking middleware
