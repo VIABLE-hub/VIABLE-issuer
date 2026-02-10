@@ -18,8 +18,12 @@ app_start_time = time.time()
 studentvc_uptime = Gauge('studentvc_uptime_seconds', 'Time since application process started')
 studentvc_uptime.set_function(lambda: time.time() - app_start_time)
 
-# Key Management Metrics
-signing_key_age_days = Gauge('studentvc_signing_key_age_days', 'Age of signing keys in days', ['type'])
+# Key Management Metrics (File-based)
+signing_key_age_days = Gauge('studentvc_signing_key_age_days', 'Age of signing keys in days (Filesystem)', ['type'])
+
+# Key Registry Metrics (Database-based)
+key_registry_count = Gauge('studentvc_key_registry_count', 'Number of keys in registry', ['status', 'type'])
+key_registry_expiring_soon = Gauge('studentvc_key_registry_expiring_soon', 'Active keys expiring within 30 days', ['type'])
 
 did_web_status = Gauge('studentvc_did_web_status', 'Status of DID:Web configuration (1=Valid, 0=Invalid)')
 
@@ -100,9 +104,9 @@ def metrics_endpoint():
     
     # Check DID Status
     try:
-        from .issuer.issuer import initialize_keys, issuer_did
+        from .issuer.issuer import initialize_keys, config_did
         initialize_keys()
-        if issuer_did:
+        if config_did:
             did_web_status.set(1)
         else:
             did_web_status.set(0)
@@ -127,6 +131,54 @@ def metrics_endpoint():
              
         # Check BBS+ Key Age
         bbs_path = os.path.join(instance_path, 'bbs_private.pem')
+        # Check Key Registry (Database)
+        try:
+            from .models import KeyRegistry
+            from . import db
+            from datetime import datetime, timedelta
+            
+            # Reset counters
+            # Note: In a real prod env, we might want to be more careful about resetting 
+            # if we have high cardinality, but for keys (low cardinality), this is fine.
+            
+            # 1. Status Counts
+            # We explicitly set 0 for known states to ensure they exist in Prometheus
+            for ktype in ['bbs_issuer', 'jwt_signing']:
+                for status in ['active', 'expired', 'revoked']:
+                    key_registry_count.labels(status=status, type=ktype).set(0)
+            
+            # Query aggregates
+            results = db.session.query(
+                KeyRegistry.key_type, 
+                KeyRegistry.status, 
+                db.func.count(KeyRegistry.id)
+            ).group_by(KeyRegistry.key_type, KeyRegistry.status).all()
+            
+            for key_type, status, count in results:
+                key_registry_count.labels(status=status, type=key_type).set(count)
+                
+            # 2. Expiring Soon (Active keys only)
+            threshold = datetime.utcnow() + timedelta(days=30)
+            expiring_results = db.session.query(
+                KeyRegistry.key_type,
+                db.func.count(KeyRegistry.id)
+            ).filter(
+                KeyRegistry.status == 'active',
+                KeyRegistry.expires_at <= threshold,
+                KeyRegistry.expires_at > datetime.utcnow() # Not already expired
+            ).group_by(KeyRegistry.key_type).all()
+            
+            # Reset expiring metrics
+            for ktype in ['bbs_issuer', 'jwt_signing']:
+                key_registry_expiring_soon.labels(type=ktype).set(0)
+                
+            for key_type, count in expiring_results:
+                key_registry_expiring_soon.labels(type=key_type).set(count)
+                
+        except Exception as e:
+            # Table might not exist yet if migration hasn't run
+            logger.warning(f"Error querying KeyRegistry metrics: {e}")
+             
         if os.path.exists(bbs_path):
              age = (time.time() - os.path.getmtime(bbs_path)) / 86400
              signing_key_age_days.labels(type='bbs').set(age)
