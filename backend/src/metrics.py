@@ -104,9 +104,9 @@ def metrics_endpoint():
     
     # Check DID Status
     try:
-        from .issuer.issuer import initialize_keys, config_did
+        from .issuer.issuer import initialize_keys, issuer_did
         initialize_keys()
-        if config_did:
+        if issuer_did:
             did_web_status.set(1)
         else:
             did_web_status.set(0)
