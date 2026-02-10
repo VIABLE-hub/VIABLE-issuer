@@ -9,6 +9,12 @@ logger = logging.getLogger("LOGGER")
 # ============================================================================
 # CREDENTIAL ISSUANCE METRICS
 # ============================================================================
+# System Status Metrics
+studentvc_up = Gauge('studentvc_up', 'StudentVC Service Status')
+studentvc_up.set(1)
+
+did_web_status = Gauge('studentvc_did_web_status', 'Status of DID:Web configuration (1=Valid, 0=Invalid)')
+
 studentid_issued_total = Counter(
     'studentvc_credentials_issued_total',
     'Total Student ID Cards issued'
@@ -77,7 +83,20 @@ request_count = Counter(
     ['method', 'endpoint', 'status']
 )
 
-# Create blueprint
+# Cr
+    # Check DID Status
+    try:
+        from .issuer.issuer import initialize_keys, issuer_did
+        initialize_keys()
+        if issuer_did:
+            did_web_status.set(1)
+        else:
+            did_web_status.set(0)
+    except Exception as e:
+        logger.error(f"Metrics Check Failed: {e}")
+        did_web_status.set(0)
+        
+    eate blueprint
 metrics = Blueprint('metrics', __name__)
 
 @metrics.route('/metrics')
