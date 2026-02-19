@@ -27,7 +27,7 @@ key_registry_expiring_soon = Gauge('studentvc_key_registry_expiring_soon', 'Acti
 
 did_web_status = Gauge('studentvc_did_web_status', 'Status of DID:Web configuration (1=Valid, 0=Invalid)')
 
-studentid_issued_total = Counter(
+studentid_issued_total = Gauge(
     'studentvc_credentials_issued_total',
     'Total Student ID Cards issued'
 )
@@ -65,7 +65,7 @@ studentid_valid_count = Gauge(
     'Number of valid Student ID Cards'
 )
 
-studentid_revoked_total = Counter(
+studentid_revoked_total = Gauge(
     'studentvc_credentials_revoked_total',
     'Total Student ID Cards revoked'
 )
@@ -185,6 +185,30 @@ def metrics_endpoint():
              
     except Exception as e:
         logger.warning(f"Error checking key ages: {e}")
+
+    # Check VC Counts from Database
+    try:
+        from .models import VC_validity, db
+        from sqlalchemy import func
+        
+        # 1. Total Issued Credentials (All rows)
+        issued_count = db.session.query(func.count(VC_validity.id)).scalar()
+        studentid_issued_total.set(issued_count or 0)
+        
+        # 2. Valid Credentials
+        valid_count = db.session.query(func.count(VC_validity.id)).filter(
+            VC_validity.validity == True
+        ).scalar()
+        studentid_valid_count.set(valid_count or 0)
+        
+        # 3. Revoked Credentials
+        revoked_count = db.session.query(func.count(VC_validity.id)).filter(
+            VC_validity.validity == False
+        ).scalar()
+        studentid_revoked_total.set(revoked_count or 0)
+
+    except Exception as e:
+        logger.warning(f"Error querying VC metrics: {e}")
         
     return Response(generate_latest(REGISTRY), mimetype='text/plain')
 
