@@ -138,43 +138,44 @@ def metrics_endpoint():
     except Exception as e:
         logger.warning(f"Error checking key ages: {e}")
 
-    # Check Key Registry (Database)
+    # Check Key Registry (Database) & File-Based Keys
     try:
         from .models import KeyRegistry
         from . import db
         from datetime import datetime, timedelta
         from sqlalchemy import inspect
         
-        # Check if table exists to avoid crashes on fresh inits
+        # 1. Reset counters to ensure valid metrics
+        for ktype in ['bbs_issuer', 'jwt_signing', 'ecdsa']:
+            for status in ['active', 'expired', 'revoked']:
+                key_registry_count.labels(status=status, type=ktype).set(0)
+            key_registry_expiring_soon.labels(type=ktype).set(0)
+
+        # 2. Add File-Based Keys (since user confirmed keys are not in DB)
+        if os.path.exists(ecdsa_path):
+             key_registry_count.labels(status='active', type='ecdsa').set(1)
+        
+        if os.path.exists(bbs_path):
+             key_registry_count.labels(status='active', type='bbs_issuer').set(1)
+
+        # 3. Check Database (Optional, but safe if table exists)
         inspector = inspect(db.engine)
-        if not inspector.has_table("key_registry"):
-            logger.info("KeyRegistry table not found, skipping metrics")
-            # Set to 0 so we don't get 'No data'
-            for ktype in ['bbs_issuer', 'jwt_signing', 'ecdsa']:
-                for status in ['active', 'expired', 'revoked']:
-                    key_registry_count.labels(status=status, type=ktype).set(0)
-                key_registry_expiring_soon.labels(type=ktype).set(0)
-        else:
-            # Table exists, proceed with logic
-            
-            # Reset counters - Initialize to 0 to ensure they appear in Prometheus
-            for ktype in ['bbs_issuer', 'jwt_signing', 'ecdsa']:
-                for status in ['active', 'expired', 'revoked']:
-                    key_registry_count.labels(status=status, type=ktype).set(0)
-                key_registry_expiring_soon.labels(type=ktype).set(0)
-            
-            # Query aggregates: KeyRegistry might not exist if migration hasn't run
+        if inspector.has_table("key_registry"):
             try:
+                # Query aggregates
                 results = db.session.query(
                     KeyRegistry.key_type, 
                     KeyRegistry.status, 
                     db.func.count(KeyRegistry.id)
                 ).group_by(KeyRegistry.key_type, KeyRegistry.status).all()
                 
-                for key_type, status, count in results:
-                    key_registry_count.labels(status=status, type=key_type).set(count)
+                # If DB has keys, overwrite file-based counts (or sum them if needed)
+                # But since user says keys are files, DB is likely empty.
+                if results and len(results) > 0:
+                    for key_type, status, count in results:
+                        key_registry_count.labels(status=status, type=key_type).set(count)
                     
-                # 2. Expiring Soon (Active keys only)
+                # Expiring Soon
                 threshold = datetime.utcnow() + timedelta(days=30)
                 expiring_results = db.session.query(
                     KeyRegistry.key_type,
@@ -182,7 +183,7 @@ def metrics_endpoint():
                 ).filter(
                     KeyRegistry.status == 'active',
                     KeyRegistry.expires_at <= threshold,
-                    KeyRegistry.expires_at > datetime.utcnow() # Not already expired
+                    KeyRegistry.expires_at > datetime.utcnow()
                 ).group_by(KeyRegistry.key_type).all()
                     
                 for key_type, count in expiring_results:
