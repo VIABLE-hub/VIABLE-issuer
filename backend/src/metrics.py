@@ -25,12 +25,84 @@ signing_key_age_days = Gauge('studentvc_signing_key_age_days', 'Age of signing k
 key_registry_count = Gauge('studentvc_key_registry_count', 'Number of keys in registry', ['status', 'type'])
 key_registry_expiring_soon = Gauge('studentvc_key_registry_expiring_soon', 'Active keys expiring within 30 days', ['type'])
 
-did_web_status = Gauge('studentvc_did_web_status', 'Status of DID:Web configuration (1=Valid, 0=Invalid)')
+did_web_status = Gauge('studentvc_did_web_status', 'Status of DID:Web configuration (1=Valid/Verified, 0=Invalid/Mismatch)')
 
 studentid_issued_total = Gauge(
     'studentvc_credentials_issued_total',
     'Total Student ID Cards issued'
 )
+
+# --- DID CHECK CACHING ---
+_did_check_cache = {
+    'last_check': 0,
+    'status': 0
+}
+
+def check_did_configuration_cached():
+    """
+    Checks if the local DID configuration matches the remote did.json.
+    Caches the result for 60 seconds to avoid network contention during scrapes.
+    """
+    now = time.time()
+    if now - _did_check_cache['last_check'] < 60:
+        return _did_check_cache['status']
+
+    try:
+        import requests
+        from urllib.parse import urlparse
+        from .issuer import issuer as issuer_module, key_generator
+        from .utils import get_current_server_url
+
+        # 1. Initialize Keys & Get Configured DID
+        issuer_module.initialize_keys()
+        config_did = getattr(issuer_module, 'issuer_did', None)
+        
+        if not config_did or not config_did.startswith("did:web:"):
+             _did_check_cache['status'] = 0
+             _did_check_cache['last_check'] = now
+             return 0
+
+        # 2. Determine Domain (Logic from issuer.py)
+        domain = config_did[8:].replace("%3A", ":")
+
+        # 3. Generate Local DID Doc
+        # Note: We need to load keys fresh to compare with what's on disk
+        # (in case keys were rotated but app not restarted, though initialize_keys handles some of that)
+        bbs_private, bbs_public = key_generator.load_or_generate_bbs_keys()
+        jwt_private, jwt_public = key_generator.load_or_generate_keys()
+        local_did_doc = key_generator.generate_did_web_doc(domain, jwt_public, bbs_public)
+
+        # 4. Fetch Remote DID Doc
+        # Detect protocol (naive)
+        protocol = "https"
+        if "localhost" in domain or "127.0.0.1" in domain or "10.0.2.2" in domain or ":" in domain:
+             protocol = "http" # Allow http for local dev / ports
+
+        url = f"{protocol}://{domain}/.well-known/did.json"
+        
+        try:
+            resp = requests.get(url, timeout=3, verify=False) # Short timeout
+            if resp.status_code == 200:
+                remote_did_doc = resp.json()
+                # 5. Compare
+                if remote_did_doc == local_did_doc:
+                    _did_check_cache['status'] = 1
+                else:
+                    logger.warning(f"DID Mismatch for {domain}. Remote keys do not match local keys.")
+                    _did_check_cache['status'] = 0
+            else:
+                logger.warning(f"DID Fetch Failed: {url} returned {resp.status_code}")
+                _did_check_cache['status'] = 0
+        except Exception as ex:
+            logger.warning(f"DID Network Check Error: {ex}")
+            _did_check_cache['status'] = 0
+
+    except Exception as e:
+        logger.error(f"DID Check Infrastructure Error: {e}")
+        _did_check_cache['status'] = 0
+    
+    _did_check_cache['last_check'] = now
+    return _did_check_cache['status']
 
 studentid_issued_duration = Histogram(
     'studentvc_credential_issuance_duration_seconds',
@@ -102,26 +174,14 @@ metrics = Blueprint('metrics', __name__)
 def metrics_endpoint():
     """Prometheus metrics endpoint"""
     
-    # Check DID Status
+    # Check DID Status (Now uses robust, cached network check)
     try:
-        # Import the module to access the current value of the global variable
-        from .issuer import issuer as issuer_module_instance
-        # This imports stvc.backend.src.issuer.issuer module because issuer is a package and issuer.py is inside it
-        # Actually... "from .issuer.issuer import initialize_keys" worked before.
-        # So "from .issuer import issuer" imports the 'issuer' module from 'issuer' package.
-        
-        issuer_module_instance.initialize_keys()
-        
-        # Access the updated global variable from the module
-        current_did = getattr(issuer_module_instance, 'issuer_did', None)
-        
-        if current_did:
-            did_web_status.set(1)
-            # logger.info(f"DID Status Check OK: {current_did}")
-        else:
-            did_web_status.set(0)
-            logger.warning("DID Status Check Failed: issuer_did is None")
+         # Uses the cached check we added at module level
+         status = check_did_configuration_cached()
+         did_web_status.set(status)
     except Exception as e:
+         logger.error(f"Metrics DID Check Failed: {e}")
+         did_web_status.set(0)
         logger.error(f"Metrics Check Failed - DID Web Status: {e}")
         did_web_status.set(0)
 
