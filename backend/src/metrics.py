@@ -186,29 +186,6 @@ def metrics_endpoint():
     except Exception as e:
         logger.warning(f"Error checking key ages: {e}")
 
-    # Check VC Counts from Database
-    try:
-        from .models import VC_validity, db
-        from sqlalchemy import func
-        
-        # 1. Total Issued Credentials (All rows)
-        issued_count = db.session.query(func.count(VC_validity.id)).scalar()
-        studentid_issued_total.set(issued_count or 0)
-        
-        # 2. Valid Credentials
-        valid_count = db.session.query(func.count(VC_validity.id)).filter(
-            VC_validity.validity == True
-        ).scalar()
-        studentid_valid_count.set(valid_count or 0)
-        
-        # 3. Revoked Credentials
-        revoked_count = db.session.query(func.count(VC_validity.id)).filter(
-            VC_validity.validity == False
-        ).scalar()
-        studentid_revoked_total.set(revoked_count or 0)
-
-    except Exception as e:
-        logger.warning(f"Error querying VC metrics: {e}")
         
     return Response(generate_latest(REGISTRY), mimetype='text/plain')
 
@@ -299,3 +276,19 @@ def record_auth_attempt(success=True):
         logger.info(f"📊 Auth attempt ({result}) - metric recorded")
     except Exception as e:
         logger.warning(f"Error recording auth attempt: {e}")
+
+def update_total_credentials(count):
+    """Update the gauge for total Student ID Cards"""
+    try:
+        studentid_issued_total.set(count)
+        logger.info(f"📊 Total Student ID Cards: {count}")
+    except Exception as e:
+        logger.warning(f"Error updating total credentials gauge: {e}")
+
+def update_revoked_credentials(count):
+    """Update the gauge for revoked/invalid Student ID Cards"""
+    try:
+        studentid_revoked_total.set(count)
+        logger.info(f"📊 Revoked/Invalid Student ID Cards: {count}")
+    except Exception as e:
+        logger.warning(f"Error updating revoked credentials gauge: {e}")

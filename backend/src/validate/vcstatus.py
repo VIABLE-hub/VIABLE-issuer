@@ -8,8 +8,7 @@ import csv
 import io
 from datetime import datetime, timezone, timedelta
 from dateutil import parser
-from ..metrics import record_student_id_verified, record_student_id_revoked, update_valid_credentials
-
+from ..metrics import record_student_id_verified, record_student_id_revoked, update_valid_credentials, update_total_credentials, update_revoked_credentials
 
 vcstatus = Blueprint('vcstatus', __name__)
 logger = getLogger("LOGGER")
@@ -120,6 +119,8 @@ def vcstatus_page():
         # Record valid credentials count
         try:
             update_valid_credentials(valid_credentials)
+            update_total_credentials(total_credentials)
+            update_revoked_credentials(invalid_credentials)
         except Exception as e:
             logger.warning(f"Could not update valid credentials metric: {e}")
         
