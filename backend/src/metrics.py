@@ -27,7 +27,7 @@ key_registry_expiring_soon = Gauge('studentvc_key_registry_expiring_soon', 'Acti
 
 did_web_status = Gauge('studentvc_did_web_status', 'Status of DID:Web configuration (1=Valid, 0=Invalid)')
 
-studentid_issued_total = Counter(
+studentid_issued_total = Gauge(
     'studentvc_credentials_issued_total',
     'Total Student ID Cards issued'
 )
@@ -111,7 +111,7 @@ def metrics_endpoint():
         else:
             did_web_status.set(0)
     except Exception as e:
-        logger.error(f"Metrics Check Failed: {e}")
+        logger.error(f"Metrics Check Failed - DID Web Status: {e}")
         did_web_status.set(0)
 
     # Check Key Ages
@@ -131,21 +131,18 @@ def metrics_endpoint():
              
         # Check BBS+ Key Age
         bbs_path = os.path.join(instance_path, 'bbs_private.pem')
+        
         # Check Key Registry (Database)
         try:
             from .models import KeyRegistry
             from . import db
             from datetime import datetime, timedelta
             
-            # Reset counters
-            # Note: In a real prod env, we might want to be more careful about resetting 
-            # if we have high cardinality, but for keys (low cardinality), this is fine.
-            
-            # 1. Status Counts
-            # We explicitly set 0 for known states to ensure they exist in Prometheus
-            for ktype in ['bbs_issuer', 'jwt_signing']:
+            # Reset counters - Initialize to 0 to ensure they appear in Prometheus
+            for ktype in ['bbs_issuer', 'jwt_signing', 'ecdsa']:
                 for status in ['active', 'expired', 'revoked']:
                     key_registry_count.labels(status=status, type=ktype).set(0)
+                key_registry_expiring_soon.labels(type=ktype).set(0)
             
             # Query aggregates
             results = db.session.query(
@@ -167,10 +164,6 @@ def metrics_endpoint():
                 KeyRegistry.expires_at <= threshold,
                 KeyRegistry.expires_at > datetime.utcnow() # Not already expired
             ).group_by(KeyRegistry.key_type).all()
-            
-            # Reset expiring metrics
-            for ktype in ['bbs_issuer', 'jwt_signing']:
-                key_registry_expiring_soon.labels(type=ktype).set(0)
                 
             for key_type, count in expiring_results:
                 key_registry_expiring_soon.labels(type=key_type).set(count)
