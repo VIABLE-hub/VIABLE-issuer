@@ -174,14 +174,26 @@ metrics = Blueprint('metrics', __name__)
 def metrics_endpoint():
     """Prometheus metrics endpoint"""
     
-    # Check DID Status (Now uses robust, cached network check)
+    # Check DID Status
     try:
-         # Uses the cached check we added at module level
-         status = check_did_configuration_cached()
-         did_web_status.set(status)
+        # Import the module to access the current value of the global variable
+        from .issuer import issuer as issuer_module_instance
+        # This imports stvc.backend.src.issuer.issuer module because issuer is a package and issuer.py is inside it
+        # Actually... "from .issuer.issuer import initialize_keys" worked before.
+        # So "from .issuer import issuer" imports the 'issuer' module from 'issuer' package.
+        
+        issuer_module_instance.initialize_keys()
+        
+        # Access the updated global variable from the module
+        current_did = getattr(issuer_module_instance, 'issuer_did', None)
+        
+        if current_did:
+            did_web_status.set(1)
+            logger.info(f"DID Status Check OK: {current_did}")
+        else:
+            did_web_status.set(0)
+            logger.warning("DID Status Check Failed: issuer_did is None")
     except Exception as e:
-         logger.error(f"Metrics DID Check Failed: {e}")
-         did_web_status.set(0)
         logger.error(f"Metrics Check Failed - DID Web Status: {e}")
         did_web_status.set(0)
 
