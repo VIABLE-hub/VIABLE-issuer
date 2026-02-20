@@ -131,20 +131,27 @@ def metrics_endpoint():
              
         # Check BBS+ Key Age
         bbs_path = os.path.join(instance_path, 'bbs_private.pem')
+        if os.path.exists(bbs_path):
+             age = (time.time() - os.path.getmtime(bbs_path)) / 86400
+             signing_key_age_days.labels(type='bbs').set(age)
+             
+    except Exception as e:
+        logger.warning(f"Error checking key ages: {e}")
+
+    # Check Key Registry (Database)
+    try:
+        from .models import KeyRegistry
+        from . import db
+        from datetime import datetime, timedelta
         
-        # Check Key Registry (Database)
+        # Reset counters - Initialize to 0 to ensure they appear in Prometheus
+        for ktype in ['bbs_issuer', 'jwt_signing', 'ecdsa']:
+            for status in ['active', 'expired', 'revoked']:
+                key_registry_count.labels(status=status, type=ktype).set(0)
+            key_registry_expiring_soon.labels(type=ktype).set(0)
+        
+        # Query aggregates: KeyRegistry might not exist if migration hasn't run
         try:
-            from .models import KeyRegistry
-            from . import db
-            from datetime import datetime, timedelta
-            
-            # Reset counters - Initialize to 0 to ensure they appear in Prometheus
-            for ktype in ['bbs_issuer', 'jwt_signing', 'ecdsa']:
-                for status in ['active', 'expired', 'revoked']:
-                    key_registry_count.labels(status=status, type=ktype).set(0)
-                key_registry_expiring_soon.labels(type=ktype).set(0)
-            
-            # Query aggregates
             results = db.session.query(
                 KeyRegistry.key_type, 
                 KeyRegistry.status, 
@@ -167,19 +174,14 @@ def metrics_endpoint():
                 
             for key_type, count in expiring_results:
                 key_registry_expiring_soon.labels(type=key_type).set(count)
-                
         except Exception as e:
-            # Table might not exist yet if migration hasn't run
-            logger.warning(f"Error querying KeyRegistry metrics: {e}")
-             
-        if os.path.exists(bbs_path):
-             age = (time.time() - os.path.getmtime(bbs_path)) / 86400
-             signing_key_age_days.labels(type='bbs').set(age)
-             
+             logger.warning(f"Error executing KeyRegistry query: {e}")
+
     except Exception as e:
-        logger.warning(f"Error checking key ages: {e}")
+        logger.warning(f"Error in KeyRegistry block: {e}")
 
     # Check VC Counts from Database
+
     try:
         from .models import VC_validity, db
         from sqlalchemy import func
