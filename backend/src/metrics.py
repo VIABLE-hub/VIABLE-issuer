@@ -143,39 +143,52 @@ def metrics_endpoint():
         from .models import KeyRegistry
         from . import db
         from datetime import datetime, timedelta
+        from sqlalchemy import inspect
         
-        # Reset counters - Initialize to 0 to ensure they appear in Prometheus
-        for ktype in ['bbs_issuer', 'jwt_signing', 'ecdsa']:
-            for status in ['active', 'expired', 'revoked']:
-                key_registry_count.labels(status=status, type=ktype).set(0)
-            key_registry_expiring_soon.labels(type=ktype).set(0)
-        
-        # Query aggregates: KeyRegistry might not exist if migration hasn't run
-        try:
-            results = db.session.query(
-                KeyRegistry.key_type, 
-                KeyRegistry.status, 
-                db.func.count(KeyRegistry.id)
-            ).group_by(KeyRegistry.key_type, KeyRegistry.status).all()
+        # Check if table exists to avoid crashes on fresh inits
+        inspector = inspect(db.engine)
+        if not inspector.has_table("key_registry"):
+            logger.info("KeyRegistry table not found, skipping metrics")
+            # Set to 0 so we don't get 'No data'
+            for ktype in ['bbs_issuer', 'jwt_signing', 'ecdsa']:
+                for status in ['active', 'expired', 'revoked']:
+                    key_registry_count.labels(status=status, type=ktype).set(0)
+                key_registry_expiring_soon.labels(type=ktype).set(0)
+        else:
+            # Table exists, proceed with logic
             
-            for key_type, status, count in results:
-                key_registry_count.labels(status=status, type=key_type).set(count)
+            # Reset counters - Initialize to 0 to ensure they appear in Prometheus
+            for ktype in ['bbs_issuer', 'jwt_signing', 'ecdsa']:
+                for status in ['active', 'expired', 'revoked']:
+                    key_registry_count.labels(status=status, type=ktype).set(0)
+                key_registry_expiring_soon.labels(type=ktype).set(0)
+            
+            # Query aggregates: KeyRegistry might not exist if migration hasn't run
+            try:
+                results = db.session.query(
+                    KeyRegistry.key_type, 
+                    KeyRegistry.status, 
+                    db.func.count(KeyRegistry.id)
+                ).group_by(KeyRegistry.key_type, KeyRegistry.status).all()
                 
-            # 2. Expiring Soon (Active keys only)
-            threshold = datetime.utcnow() + timedelta(days=30)
-            expiring_results = db.session.query(
-                KeyRegistry.key_type,
-                db.func.count(KeyRegistry.id)
-            ).filter(
-                KeyRegistry.status == 'active',
-                KeyRegistry.expires_at <= threshold,
-                KeyRegistry.expires_at > datetime.utcnow() # Not already expired
-            ).group_by(KeyRegistry.key_type).all()
-                
-            for key_type, count in expiring_results:
-                key_registry_expiring_soon.labels(type=key_type).set(count)
-        except Exception as e:
-             logger.warning(f"Error executing KeyRegistry query: {e}")
+                for key_type, status, count in results:
+                    key_registry_count.labels(status=status, type=key_type).set(count)
+                    
+                # 2. Expiring Soon (Active keys only)
+                threshold = datetime.utcnow() + timedelta(days=30)
+                expiring_results = db.session.query(
+                    KeyRegistry.key_type,
+                    db.func.count(KeyRegistry.id)
+                ).filter(
+                    KeyRegistry.status == 'active',
+                    KeyRegistry.expires_at <= threshold,
+                    KeyRegistry.expires_at > datetime.utcnow() # Not already expired
+                ).group_by(KeyRegistry.key_type).all()
+                    
+                for key_type, count in expiring_results:
+                    key_registry_expiring_soon.labels(type=key_type).set(count)
+            except Exception as e:
+                logger.warning(f"Error executing KeyRegistry query: {e}")
 
     except Exception as e:
         logger.warning(f"Error in KeyRegistry block: {e}")
