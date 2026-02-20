@@ -1,5 +1,5 @@
 """Prometheus metrics for StudentVC - Student ID Card focused"""
-from prometheus_client import Counter, Histogram, Gauge, generate_latest, REGISTRY
+from prometheus_client import Counter, Histogram, Gauge, Info, generate_latest, REGISTRY
 from flask import Blueprint, Response, request as flask_request, g
 import time
 import logging
@@ -26,6 +26,9 @@ key_registry_count = Gauge('studentvc_key_registry_count', 'Number of keys in re
 key_registry_expiring_soon = Gauge('studentvc_key_registry_expiring_soon', 'Active keys expiring within 30 days', ['type'])
 
 did_web_status = Gauge('studentvc_did_web_status', 'Status of DID:Web configuration (1=Valid/Verified, 0=Invalid/Mismatch)')
+
+# DID Information
+did_info = Info('studentvc_issuer', 'StudentVC Issuer Configuration Information')
 
 studentid_issued_total = Gauge(
     'studentvc_credentials_issued_total',
@@ -174,28 +177,24 @@ metrics = Blueprint('metrics', __name__)
 def metrics_endpoint():
     """Prometheus metrics endpoint"""
     
-    # Check DID Status
+    # Check DID Status (Now uses robust, cached network check)
     try:
-        # Import the module to access the current value of the global variable
-        from .issuer import issuer as issuer_module_instance
-        # This imports stvc.backend.src.issuer.issuer module because issuer is a package and issuer.py is inside it
-        # Actually... "from .issuer.issuer import initialize_keys" worked before.
-        # So "from .issuer import issuer" imports the 'issuer' module from 'issuer' package.
-        
-        issuer_module_instance.initialize_keys()
-        
-        # Access the updated global variable from the module
-        current_did = getattr(issuer_module_instance, 'issuer_did', None)
-        
-        if current_did:
-            did_web_status.set(1)
-            logger.info(f"DID Status Check OK: {current_did}")
-        else:
-            did_web_status.set(0)
-            logger.warning("DID Status Check Failed: issuer_did is None")
+         # Uses the cached check we added at module level
+         status = check_did_configuration_cached()
+         did_web_status.set(status)
+         
+         # Also expose the DID string itself
+         # Import the module to access the current value of the global variable
+         from .issuer import issuer as issuer_module_instance
+         # Initialize keys if needed (check_did_configuration_cached already does, but safe to do again)
+         # issuer_module_instance.initialize_keys() 
+         
+         current_did = getattr(issuer_module_instance, 'issuer_did', 'unknown') or 'unknown'
+         did_info.info({'did': current_did})
+             
     except Exception as e:
-        logger.error(f"Metrics Check Failed - DID Web Status: {e}")
-        did_web_status.set(0)
+         logger.error(f"Metrics DID Check Failed: {e}")
+         did_web_status.set(0)
 
     # Check Key Ages
     try:
