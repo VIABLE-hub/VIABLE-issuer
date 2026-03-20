@@ -156,7 +156,7 @@ def preprocess_theme_icon(path, resolution, keep_aspect_ratio=False):
         return fallback_img_str
 
 
-def get_placeholders(logo_filename="studentVC-logo-sora-cropped-darkmode.png", profile_filename="student.png"):
+def get_placeholders(logo_filename="BVG_Logo_07.2021.svg", profile_filename="student.png"):
     from flask import current_app, has_app_context
     import os
     

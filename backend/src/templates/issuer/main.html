@@ -1,22 +1,16 @@
 {% extends "base.html" %} {% block title %}Verifiable Credential ausstellen{% endblock %}
 
-<!-- 🩺 HERZCHIRURG FIX: Cache-Busting Headers -->
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-
+{% block content %}
 <style>
   .text-shadow-sm {
     text-shadow: 0 1px 3px rgba(0,0,0,0.8);
   }
 
-  /* Moderne Proportionen und bessere Lesbarkeit */
   .custom-container {
     max-width: 1440px;
     margin: 0 auto;
   }
 
-  /* Optimierte Kartenproportionen */
   .content-card {
     border-radius: 1rem;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
@@ -28,27 +22,23 @@
     transform: translateY(-2px);
   }
 
-  /* Einheitliche Formularelemente */
   .form-element-height {
     min-height: 2.5rem;
   }
 
-  /* Helleres Berlin-Blau */
   .bg-berlin-blue-light {
-    background-color: #304a9f;
+    background-color: #F0D722;
   }
 
   .hover\:bg-berlin-blue-light:hover {
-    background-color: #304a9f;
+    background-color: #F0D722;
   }
 
-  /* Sanfter Übergang für Content-Karten */
   .card-header {
     background: linear-gradient(to right, #f9fafb, #f3f4f6);
     border-bottom: 1px solid rgba(209, 213, 219, 0.5);
   }
 
-  /* Verbesserte Schatten für Buttons */
   .btn-shadow {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
     transition: all 0.2s ease;
@@ -59,49 +49,49 @@
     transform: translateY(-1px);
   }
 
-  /* Verifier-Style Card Design */
-  .card {
-    @apply bg-white rounded-xl border border-gray-200 shadow-md overflow-hidden;
+  /* Issuer page scale up ~8% */
+  #issuer-grid {
+    font-size: 108%;
   }
 
-  .card-title {
-    @apply flex items-center text-sm font-semibold text-gray-900;
-  }
-
-  .card-header {
-    @apply p-3 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200;
+  /* Glass style wie Home-Seite */
+  .airy-glass {
+    background: rgba(255, 255, 255, 0.88) !important;
+    backdrop-filter: blur(25px) !important;
+    -webkit-backdrop-filter: blur(25px) !important;
+    border: 1px solid rgba(255, 255, 255, 1) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.10), inset 0 0 0 1px rgba(255, 255, 255, 0.5) !important;
+    border-radius: 20px !important;
   }
 </style>
+<div class="bg-transparent">
+  <div class="max-w-7xl mx-auto px-4 py-1">
+    <!-- Einheitlicher Glass-Container -->
+    <div class="airy-glass p-4 mt-0">
 
-{% block content %}
-<!-- Streamlined Header like Verifier -->
-<div class="bg-white shadow-sm border-b border-gray-200">
-  <div class="max-w-6xl mx-auto px-4 py-4">
-    <div class="text-center">
-      <h1 class="text-2xl font-bold text-gray-900 mb-1">
+    <!-- Title + Branding inside glass box -->
+    <div class="flex items-center justify-center gap-3 mb-3">
+      <h1 class="text-base font-semibold text-gray-900 text-center" id="page-title">
         Verifiable Credential ausstellen
       </h1>
-      <p class="text-sm text-gray-600">
-        Erstellen Sie ein BBS+ signiertes Credential für Studierende
-      </p>
+      <button type="button" id="branding-toggle-btn" onclick="toggleBrandingView()"
+              class="px-3 py-1 text-xs font-medium rounded-lg border transition-all duration-200
+                     bg-white text-gray-700 border-gray-300 hover:bg-[#F0D722] hover:text-black hover:border-[#F0D722]">
+        <i class="fas fa-palette mr-1"></i>Branding
+      </button>
     </div>
-  </div>
-</div>
 
-<div class="min-h-screen bg-gray-50">
-  <div class="max-w-6xl mx-auto px-4 py-6">
-    <!-- Neues Grid-Layout im Verifier-Style mit 3 Boxen -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6" id="issuer-grid">
-      <!-- Linke Spalte: 2 gestapelte Boxen -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch" id="issuer-grid">
+      <!-- Linke Spalte -->
       <div class="col-span-2 flex flex-col gap-4">
-        <!-- Box 1: Studierendendaten -->
-        <div class="bg-white rounded-xl border border-gray-200 shadow-md p-6" id="student-data-box">
+        <!-- Mitarbeiterdaten -->
+        <div class="flex-1" id="student-data-box">
           
           <!-- Header Zeile: Titel und Buttons -->
           <div class="flex justify-between items-center mb-2">
             <h2 class="font-semibold text-lg flex items-center">
-              <i class="fas fa-user-graduate text-berlin-blue mr-2"></i>
-              Studierendendaten
+              <i class="fas fa-id-badge text-gray-900 mr-2"></i>
+              Mitarbeiterdaten
             </h2>
             
             <!-- Buttons -->
@@ -112,7 +102,7 @@
               <button type="button" id="randomDataBtn" class="px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg border border-gray-300 shadow-sm flex items-center transition-all duration-200" onclick="fillRandomData(); return false;">
                 <i class="fas fa-random mr-1"></i> Zufäll. Daten
               </button>
-              <button type="submit" form="myForm" class="px-3 py-1.5 text-xs bg-[#18206c] hover:bg-berlin-blue text-white rounded-lg shadow-md flex items-center font-semibold transition-all duration-200">
+              <button type="submit" form="myForm" class="px-3 py-1.5 text-xs bg-[#F0D722] hover:brightness-90 text-black rounded-lg shadow-md flex items-center font-semibold transition-all duration-200">
                 <i class="fas fa-qrcode mr-1"></i> QR-Code generieren
               </button>
             </div>
@@ -122,7 +112,7 @@
           {% if issuer_domain %}
           <div class="mb-4">
               <div class="text-xs text-gray-500 ml-1 flex items-center" id="issuerDomainInfo">
-                  <i class="fas fa-info-circle mr-1"></i> Issuing VCs for <span id="issuerDomainSpan" class="font-mono font-medium ml-1 bg-gray-100 px-1 rounded text-berlin-blue">{{ issuer_domain }}</span>
+                  <i class="fas fa-info-circle mr-1"></i> Issuing VCs for <span id="issuerDomainSpan" class="font-mono font-medium ml-1 bg-gray-100 px-1 rounded text-gray-900">{{ issuer_domain }}</span>
                   
                   <!-- CHECK STATUS INDICATORS -->
                   <span id="domainCheckLoading" class="ml-2 inline-flex items-center text-gray-400">
@@ -163,7 +153,7 @@
               <div class="flex items-center">
                 <i class="fas fa-file-csv text-green-600 mr-2"></i>
                 <span class="text-sm text-green-800">
-        CSV geladen: <strong><span id="csvStudentCount">0</span></strong> Studierende
+        CSV geladen: <strong><span id="csvStudentCount">0</span></strong> Mitarbeiter
       </span>
               </div>
               <div class="flex items-center space-x-2">
@@ -190,10 +180,10 @@
                   <label for="firstName" class="block text-xs font-medium text-gray-700 mb-1">First Name</label>
                   <input
                           type="text"
-                          class="form-control w-full border border-gray-300 px-2 py-1.5 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-berlin-blue focus:border-transparent form-element-height transition-all duration-200"
+                          class="form-control w-full border border-gray-300 px-2 py-1.5 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0D722] focus:border-transparent form-element-height transition-all duration-200"
                           id="firstName"
                           name="firstName"
-                          placeholder="Maxi"
+                          placeholder="Marlene"
                           value="{% if form_data and form_data.firstName %}{{ form_data.firstName }}{% endif %}"
                   />
                 </div>
@@ -201,10 +191,10 @@
                   <label for="lastName" class="block text-xs font-medium text-gray-700 mb-1">Last Name</label>
                   <input
                           type="text"
-                          class="form-control w-full border border-gray-300 px-2 py-1.5 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-berlin-blue focus:border-transparent form-element-height transition-all duration-200"
+                          class="form-control w-full border border-gray-300 px-2 py-1.5 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0D722] focus:border-transparent form-element-height transition-all duration-200"
                           id="lastName"
                           name="lastName"
-                          placeholder="Musterfrau"
+                          placeholder="Kowalski"
                           value="{% if form_data and form_data.lastName %}{{ form_data.lastName }}{% endif %}"
                   />
                 </div>
@@ -212,10 +202,10 @@
 
               <div class="grid grid-cols-2 gap-3">
                 <div>
-                  <label for="studentId" class="block text-xs font-medium text-gray-700 mb-1">Student ID</label>
+                  <label for="studentId" class="block text-xs font-medium text-gray-700 mb-1">Personalnummer</label>
                   <input
                           type="text"
-                          class="form-control w-full border border-gray-300 px-2 py-1.5 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-berlin-blue focus:border-transparent form-element-height transition-all duration-200"
+                          class="form-control w-full border border-gray-300 px-2 py-1.5 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0D722] focus:border-transparent form-element-height transition-all duration-200"
                           id="studentId"
                           name="studentId"
                           placeholder="123456"
@@ -223,26 +213,68 @@
                   />
                 </div>
                 <div>
-                  <label for="studentIdPrefix" class="block text-xs font-medium text-gray-700 mb-1">Student ID Prefix</label>
+                  <label for="studentIdPrefix" class="block text-xs font-medium text-gray-700 mb-1">Personalnummer Prefix</label>
                   <input
                           type="text"
-                          class="form-control w-full border border-gray-300 px-2 py-1.5 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-berlin-blue focus:border-transparent form-element-height transition-all duration-200"
+                          class="form-control w-full border border-gray-300 px-2 py-1.5 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0D722] focus:border-transparent form-element-height transition-all duration-200"
                           id="studentIdPrefix"
                           name="studentIdPrefix"
-                          placeholder="654321"
+                          placeholder="BVG"
                           value="{% if form_data and form_data.studentIdPrefix %}{{ form_data.studentIdPrefix }}{% endif %}"
                   />
                 </div>
               </div>
 
-              <!-- Validity Dropdown -->
-              <div class="grid grid-cols-2 gap-3">
+              <!-- Profile Image + Validity nebeneinander -->
+              <div class="grid grid-cols-2 gap-4">
+                <!-- Links: Profile Image -->
+                <div>
+                  <label for="profileImage" class="block text-xs font-medium text-gray-700 mb-1">Profile Image</label>
+                  <div class="flex items-center space-x-2">
+                    <div id="imagePreviewContainer" class="flex-none w-16 h-16 rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 bg-gray-50 relative cursor-pointer">
+                      <img
+                              id="imagePreview"
+                              src="{% if form_data and form_data.profile_image %}data:image/png;base64,{{ form_data.profile_image }}{% else %}{{ url_for('static', filename='student.png') }}{% endif %}"
+                              alt="Vorschau"
+                              class="w-full h-full object-cover"
+                      />
+                      <div class="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 flex items-center justify-center transition-all duration-200">
+                        <i class="fas fa-camera text-white opacity-0 hover:opacity-100 transition-opacity duration-200 text-xs"></i>
+                      </div>
+                    </div>
+                    <div class="flex-grow">
+                      <div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-2 flex items-center justify-center bg-gray-50 relative hover:bg-yellow-50 hover:border-[#F0D722] transition-all duration-300 group min-h-[4rem]">
+                        <div class="flex flex-col items-center">
+                          <i class="fas fa-cloud-upload-alt text-gray-400 group-hover:text-gray-900 transition-colors text-xs"></i>
+                          <span class="text-[10px] text-gray-500 group-hover:text-gray-900 text-center mt-0.5 transition-colors">Bild hochladen</span>
+                        </div>
+                        <input
+                                type="file"
+                                class="form-control absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                id="profileImage"
+                                name="image"
+                                accept=".png,.jpg,.jpeg"
+                        />
+                      </div>
+                    </div>
+                    <button
+                            type="button"
+                            id="resetImageBtn"
+                            class="flex-none w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-all duration-200 shadow-sm border border-gray-200"
+                            title="Zurücksetzen"
+                    >
+                      <i class="fas fa-undo text-[10px]"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Rechts: Validity Duration -->
                 <div>
                   <label for="validity" class="block text-xs font-medium text-gray-700 mb-1">Validity Duration</label>
                   <select
                           id="validity"
                           name="validity"
-                          class="form-control w-full border border-gray-300 px-2 py-1.5 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-berlin-blue focus:border-transparent form-element-height transition-all duration-200"
+                          class="form-control w-full border border-gray-300 px-2 py-1.5 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0D722] focus:border-transparent form-element-height transition-all duration-200"
                   >
                     <option value="10" {% if form_data and form_data.validity|string == '10' %}selected{% endif %}>10 Seconds (Debug)</option>
                     <option value="120" {% if form_data and form_data.validity|string == '120' %}selected{% endif %}>2 Minutes</option>
@@ -253,92 +285,44 @@
                   </select>
                 </div>
               </div>
-
-              <div class="mt-1">
-                <label for="profileImage" class="block text-xs font-medium text-gray-700 mb-2">Profile Image</label>
-                <div class="flex items-center space-x-4">
-                  <!-- Linke Seite: Bildvorschau - Verbesserte Ästhetik -->
-                  <div id="imagePreviewContainer" class="flex-none w-24 h-24 rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 bg-gray-50 relative cursor-pointer form-element-height">
-                    <img
-                            id="imagePreview"
-                            src="{% if form_data and form_data.profile_image %}data:image/png;base64,{{ form_data.profile_image }}{% else %}{{ url_for('static', filename='student.png') }}{% endif %}"
-                            alt="Vorschau"
-                            class="w-full h-full object-cover"
-                    />
-                    <div class="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 flex items-center justify-center transition-all duration-200">
-                      <i class="fas fa-camera text-white opacity-0 hover:opacity-100 transition-opacity duration-200 text-shadow-sm"></i>
-                    </div>
-                  </div>
-
-                  <!-- Mittlere Spalte: Upload-Box mit besserem Hover-Effekt -->
-                  <div class="flex-grow">
-                    <div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-3 flex items-center justify-center bg-gray-50 relative hover:bg-blue-50 hover:border-berlin-blue transition-all duration-300 group form-element-height min-h-[3.5rem]">
-                      <div class="flex flex-col items-center">
-                        <i class="fas fa-cloud-upload-alt text-gray-400 group-hover:text-berlin-blue transition-colors"></i>
-                        <span class="text-xs text-gray-500 group-hover:text-berlin-blue text-center mt-1 transition-colors">Ziehen Sie ein Bild hierher<br class="hidden sm:block"> oder klicken Sie</span>
-                      </div>
-                      <input
-                              type="file"
-                              class="form-control absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                              id="profileImage"
-                              name="image"
-                              accept=".png,.jpg,.jpeg"
-                      />
-                    </div>
-                  </div>
-
-                  <!-- Rechte Spalte: Reset Button mit besserem Hover-Effekt -->
-                  <button
-                          type="button"
-                          id="resetImageBtn"
-                          class="flex-none w-10 h-10 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200 form-element-height"
-                          title="Zurücksetzen"
-                  >
-                    <i class="fas fa-undo text-xs"></i>
-                  </button>
-                </div>
-              </div>
             </div>
         </div>
 
-        <!-- Separate Box für Hochschul-Branding -->
-        <div class="bg-white rounded-xl border border-gray-200 shadow-md p-6" id="branding-box">
-          <div class="flex justify-between items-center mb-4">
-            <h2 class="font-semibold text-lg flex items-center">
-              <i class="fas fa-palette text-blue-600 mr-2"></i>
-              Hochschul-Branding
+        <!-- Unternehmens-Branding -->
+        <div id="branding-box" style="display:none;">
+          <div class="flex justify-between items-center mb-3">
+            <h2 class="font-semibold text-sm flex items-center">
+              <i class="fas fa-heart text-yellow-600 mr-2"></i>
+              Unternehmens-Branding
             </h2>
           </div>
 
           <div class="form-group space-y-3">
-            <div class="flex items-center justify-between mb-1">
-              <p class="text-xs text-gray-500">Passen Sie das Design für Ihre Hochschule an</p>
-            </div>
 
             <!-- Verstecktes Feld für Standard-Logo-Wert -->
-            <input type="hidden" name="default_logo" value="{% if form_data and form_data.default_logo %}{{ form_data.default_logo }}{% else %}studentVC-logo-sora-cropped-darkmode.png{% endif %}" />
+            <input type="hidden" name="default_logo" value="{% if form_data and form_data.default_logo %}{{ form_data.default_logo }}{% else %}BVG_Logo_07.2021.svg{% endif %}" />
 
             <!-- Theme Name in horizontaler Zeile mit besserem Styling -->
             <div class="flex items-center gap-x-3">
               <label for="theme_name" class="text-xs font-medium text-gray-700 whitespace-nowrap">Theme Name:</label>
               <input
                       type="text"
-                      class="form-control flex-1 border border-gray-300 px-2 py-1.5 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-berlin-blue focus:border-transparent form-element-height transition-all duration-200"
+                      class="form-control flex-1 border border-gray-300 px-2 py-1.5 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0D722] focus:border-transparent form-element-height transition-all duration-200"
                       id="theme_name"
                       name="theme[name]"
-                      placeholder="Technische Universität Berlin"
+                      placeholder="Berliner Verkehrsbetriebe"
                       value="{% if form_data and form_data.theme_name %}{{ form_data.theme_name }}{% endif %}"
               />
             </div>
 
             <label for="theme_icon" class="block text-xs font-medium text-gray-700 mb-1">Theme Icon</label>
-            <div class="flex items-center space-x-3 mt-1">
-              <!-- Linke Seite: Bildvorschau mit verbessertem Berlin-Blau-Hintergrund -->
-              <div id="themeIconPreviewContainer" class="flex-none w-24 h-24 rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 relative cursor-pointer"
-                   style="background: linear-gradient(135deg, #{% if form_data and form_data.theme_bgColorCard %}{{ form_data.theme_bgColorCard }}{% else %}18206c{% endif %} 0%, #{% if form_data and form_data.theme_bgColorSectionTop %}{{ form_data.theme_bgColorSectionTop }}{% else %}304a9f{% endif %} 100%);">
+            <div class="flex items-center space-x-2 mt-1">
+              <!-- Linke Seite: Bildvorschau -->
+              <div id="themeIconPreviewContainer" class="flex-none w-16 h-16 rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 relative cursor-pointer"
+                   style="background: linear-gradient(135deg, #{% if form_data and form_data.theme_bgColorCard %}{{ form_data.theme_bgColorCard }}{% else %}F0D722{% endif %} 0%, #{% if form_data and form_data.theme_bgColorSectionTop %}{{ form_data.theme_bgColorSectionTop }}{% else %}F0D722{% endif %} 100%);">
                 <img
                         id="themeIconPreview"
-                        src="{% if form_data and form_data.theme_icon %}data:image/png;base64,{{ form_data.theme_icon }}{% else %}{{ url_for('static', filename='studentVC-logo-sora-cropped-darkmode.png') }}{% endif %}"
+                        src="{% if form_data and form_data.theme_icon %}data:image/png;base64,{{ form_data.theme_icon }}{% else %}{{ url_for('static', filename='BVG_Logo_07.2021.svg') }}{% endif %}"
                         alt="Vorschau"
                         class="w-full h-full object-contain p-2"
                 />
@@ -349,10 +333,10 @@
 
               <!-- Mittlere Spalte: Upload-Box mit besserem Hover-Effekt -->
               <div class="flex-grow">
-                <div id="themeDropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-3 flex items-center justify-center bg-gray-50 relative hover:bg-blue-50 hover:border-berlin-blue transition-all duration-300 group form-element-height min-h-[3.5rem]">
+                <div id="themeDropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-3 flex items-center justify-center bg-gray-50 relative hover:bg-yellow-50 hover:border-[#F0D722] transition-all duration-300 group form-element-height min-h-[3.5rem]">
                   <div class="flex flex-col items-center">
-                    <i class="fas fa-cloud-upload-alt text-gray-400 group-hover:text-berlin-blue transition-colors text-sm"></i>
-                    <span class="text-xs text-gray-500 group-hover:text-berlin-blue text-center mt-0.5 transition-colors">Logo hochladen<br class="hidden sm:block">oder ablegen</span>
+                    <i class="fas fa-cloud-upload-alt text-gray-400 group-hover:text-gray-900 transition-colors text-sm"></i>
+                    <span class="text-xs text-gray-500 group-hover:text-gray-900 text-center mt-0.5 transition-colors">Logo hochladen<br class="hidden sm:block">oder ablegen</span>
                   </div>
                   <input
                           type="file"
@@ -370,87 +354,85 @@
                       id="resetThemeIconBtn"
                       class="flex-none w-10 h-10 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200"
                       title="Zurücksetzen"
-                      onclick="document.querySelector('input[name=default_logo]').value='studentVC-logo-sora-cropped-darkmode.png'"
+                      onclick="document.querySelector('input[name=default_logo]').value='BVG_Logo_07.2021.svg'"
               >
                 <i class="fas fa-undo text-xs"></i>
               </button>
             </div>
 
-            <!-- Farben mit verbessertem visuellem Feedback -->
-            <div class="grid grid-cols-2 gap-3 mt-2">
+            <!-- Farben in einer kompakten Zeile -->
+            <div class="grid grid-cols-2 gap-2 mt-2">
               <div>
-                <label for="bg_color_card" class="block text-xs font-medium text-gray-700 mb-1">BG Color (Card)</label>
+                <label for="bg_color_card" class="block text-[10px] font-medium text-gray-700 mb-1">Card</label>
                 <div class="relative flex items-center">
-                  <span class="absolute inset-y-0 left-0 flex items-center pl-2 text-gray-400 text-xs">#</span>
+                  <span class="absolute inset-y-0 left-0 flex items-center pl-1.5 text-gray-400 text-[10px]">#</span>
                   <input
                           type="text"
-                          class="form-control w-full border border-gray-300 px-2 py-1.5 pl-6 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-berlin-blue focus:border-transparent form-element-height transition-all duration-200"
+                          class="form-control w-full border border-gray-300 px-1.5 py-1 pl-4 text-xs rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0D722] focus:border-transparent transition-all duration-200"
                           id="bg_color_card"
                           name="theme[bgColorCard]"
-                          placeholder="18206C"
-                          value="{% if form_data and form_data.theme_bgColorCard %}{{ form_data.theme_bgColorCard }}{% else %}18206C{% endif %}"
+                          placeholder="F0D722"
+                          value="{% if form_data and form_data.theme_bgColorCard %}{{ form_data.theme_bgColorCard }}{% else %}F0D722{% endif %}"
                           onchange="this.nextElementSibling.style.backgroundColor = '#' + this.value"
                   />
-                  <div class="w-5 h-5 rounded-full ml-2 border border-gray-200 shadow-sm"
-                       style="background-color: #{% if form_data and form_data.theme_bgColorCard %}{{ form_data.theme_bgColorCard }}{% else %}18206C{% endif %}"
+                  <div class="w-4 h-4 rounded-full ml-1 border border-gray-200 shadow-sm shrink-0"
+                       style="background-color: #{% if form_data and form_data.theme_bgColorCard %}{{ form_data.theme_bgColorCard }}{% else %}F0D722{% endif %}"
                        title="Vorschau"></div>
                 </div>
               </div>
 
               <div>
-                <label for="bg_color_section_top" class="block text-xs font-medium text-gray-700 mb-1">BG Color (Top)</label>
+                <label for="bg_color_section_top" class="block text-[10px] font-medium text-gray-700 mb-1">Top</label>
                 <div class="relative flex items-center">
-                  <span class="absolute inset-y-0 left-0 flex items-center pl-2 text-gray-400 text-xs">#</span>
+                  <span class="absolute inset-y-0 left-0 flex items-center pl-1.5 text-gray-400 text-[10px]">#</span>
                   <input
                           type="text"
-                          class="form-control w-full border border-gray-300 px-2 py-1.5 pl-6 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-berlin-blue focus:border-transparent form-element-height transition-all duration-200"
+                          class="form-control w-full border border-gray-300 px-1.5 py-1 pl-4 text-xs rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0D722] focus:border-transparent transition-all duration-200"
                           id="bg_color_section_top"
                           name="theme[bgColorSectionTop]"
-                          placeholder="18206C"
-                          value="{% if form_data and form_data.theme_bgColorSectionTop %}{{ form_data.theme_bgColorSectionTop }}{% else %}18206C{% endif %}"
+                          placeholder="F0D722"
+                          value="{% if form_data and form_data.theme_bgColorSectionTop %}{{ form_data.theme_bgColorSectionTop }}{% else %}F0D722{% endif %}"
                           onchange="this.nextElementSibling.style.backgroundColor = '#' + this.value"
                   />
-                  <div class="w-5 h-5 rounded-full ml-2 border border-gray-200 shadow-sm"
-                       style="background-color: #{% if form_data and form_data.theme_bgColorSectionTop %}{{ form_data.theme_bgColorSectionTop }}{% else %}18206C{% endif %}"
+                  <div class="w-4 h-4 rounded-full ml-1 border border-gray-200 shadow-sm shrink-0"
+                       style="background-color: #{% if form_data and form_data.theme_bgColorSectionTop %}{{ form_data.theme_bgColorSectionTop }}{% else %}F0D722{% endif %}"
                        title="Vorschau"></div>
                 </div>
               </div>
-            </div>
 
-            <div class="grid grid-cols-2 gap-3 mt-1">
               <div>
-                <label for="bg_color_section_bot" class="block text-xs font-medium text-gray-700 mb-1">BG Color (Bottom)</label>
+                <label for="bg_color_section_bot" class="block text-[10px] font-medium text-gray-700 mb-1">Bottom</label>
                 <div class="relative flex items-center">
-                  <span class="absolute inset-y-0 left-0 flex items-center pl-2 text-gray-400 text-xs">#</span>
+                  <span class="absolute inset-y-0 left-0 flex items-center pl-1.5 text-gray-400 text-[10px]">#</span>
                   <input
                           type="text"
-                          class="form-control w-full border border-gray-300 px-2 py-1.5 pl-6 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-berlin-blue focus:border-transparent form-element-height transition-all duration-200"
+                          class="form-control w-full border border-gray-300 px-1.5 py-1 pl-4 text-xs rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0D722] focus:border-transparent transition-all duration-200"
                           id="bg_color_section_bot"
                           name="theme[bgColorSectionBot]"
                           placeholder="FFFFFF"
                           value="{% if form_data and form_data.theme_bgColorSectionBot %}{{ form_data.theme_bgColorSectionBot }}{% else %}FFFFFF{% endif %}"
                           onchange="this.nextElementSibling.style.backgroundColor = '#' + this.value"
                   />
-                  <div class="w-5 h-5 rounded-full ml-2 border border-gray-200 shadow-sm"
+                  <div class="w-4 h-4 rounded-full ml-1 border border-gray-200 shadow-sm shrink-0"
                        style="background-color: #{% if form_data and form_data.theme_bgColorSectionBot %}{{ form_data.theme_bgColorSectionBot }}{% else %}FFFFFF{% endif %}"
                        title="Vorschau"></div>
                 </div>
               </div>
 
               <div>
-                <label for="fg_color_title" class="block text-xs font-medium text-gray-700 mb-1">FG Color (Title)</label>
+                <label for="fg_color_title" class="block text-[10px] font-medium text-gray-700 mb-1">Title</label>
                 <div class="relative flex items-center">
-                  <span class="absolute inset-y-0 left-0 flex items-center pl-2 text-gray-400 text-xs">#</span>
+                  <span class="absolute inset-y-0 left-0 flex items-center pl-1.5 text-gray-400 text-[10px]">#</span>
                   <input
                           type="text"
-                          class="form-control w-full border border-gray-300 px-2 py-1.5 pl-6 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-berlin-blue focus:border-transparent form-element-height transition-all duration-200"
+                          class="form-control w-full border border-gray-300 px-1.5 py-1 pl-4 text-xs rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0D722] focus:border-transparent transition-all duration-200"
                           id="fg_color_title"
                           name="theme[fgColorTitle]"
                           placeholder="FFFFFF"
                           value="{% if form_data and form_data.theme_fgColorTitle %}{{ form_data.theme_fgColorTitle }}{% else %}FFFFFF{% endif %}"
                           onchange="this.nextElementSibling.style.backgroundColor = '#' + this.value"
                   />
-                  <div class="w-5 h-5 rounded-full ml-2 border border-gray-200 shadow-sm"
+                  <div class="w-4 h-4 rounded-full ml-1 border border-gray-200 shadow-sm shrink-0"
                        style="background-color: #{% if form_data and form_data.theme_fgColorTitle %}{{ form_data.theme_fgColorTitle }}{% else %}FFFFFF{% endif %}"
                        title="Vorschau"></div>
                 </div>
@@ -461,125 +443,228 @@
         </div>
       </div>
 
-      <!-- Rechte Spalte: QR-Code Box -->
-      <div class="col-span-1">
-        <div class="bg-white rounded-xl border border-gray-200 shadow-md p-6 h-full flex flex-col justify-between">
-          <h2 class="font-semibold text-lg mb-4 flex items-center">
-            <i class="fas fa-qrcode text-berlin-blue mr-2"></i>
-            QR-Code
-          </h2>
+      <!-- Rechte Spalte: QR / Vorschau -->
+      <div class="col-span-1 flex flex-col">
+        <div class="flex flex-col flex-1 justify-center">
 
           {% if img_data %}
-          <div class="flex-1 flex flex-col">
+          <div class="flex flex-col items-center gap-2">
             <!-- QR Code Container with Overlay -->
-            <div id="qrCodeContainer" class="p-4 bg-white rounded-xl border border-gray-200 shadow-inner flex flex-col items-center justify-center mb-2 min-h-[200px] hover:shadow-md transition-all duration-300 relative">
+            <div id="qrCodeContainer" class="p-2 bg-white rounded-xl border border-gray-200 shadow-inner flex items-center justify-center relative w-full hover:shadow-md transition-all duration-300">
               <img
                       id="picture"
                       src="data:image/png;base64,{{ img_data }}"
-                      class="max-w-full h-auto rounded-lg max-h-56 transition-opacity duration-300"
+                      class="w-full h-auto rounded-lg max-h-44 object-contain transition-opacity duration-300"
                       alt="QR Code"
               />
-              <!-- Used Overlay (for when offer is consumed) -->
-              <div id="qrUsedOverlay" class="absolute inset-0 bg-white/95 flex flex-col items-center justify-center rounded-lg hidden z-10 box-border border-4 border-berlin-blue">
-                  <div class="bg-green-100 p-4 rounded-full mb-3">
-                    <i class="fas fa-check text-green-600 text-3xl"></i>
+              <!-- Used Overlay -->
+              <div id="qrUsedOverlay" class="absolute inset-0 bg-white/95 flex flex-col items-center justify-center rounded-xl hidden z-10 border-4 border-[#F0D722]">
+                  <div class="bg-green-100 p-3 rounded-full mb-2">
+                    <i class="fas fa-check text-green-600 text-2xl"></i>
                   </div>
-                  <span class="text-black font-bold text-xl tracking-wide">QR Code Used</span>
+                  <span class="text-black font-bold text-base tracking-wide">QR Code Used</span>
               </div>
               <!-- Expired Overlay -->
-              <div id="qrExpiredOverlay" class="absolute inset-0 bg-white/95 flex flex-col items-center justify-center rounded-lg hidden z-10 box-border border-4 border-red-500">
-                  <div class="bg-red-100 p-4 rounded-full mb-3">
-                    <i class="fas fa-times text-red-600 text-3xl"></i>
+              <div id="qrExpiredOverlay" class="absolute inset-0 bg-white/95 flex flex-col items-center justify-center rounded-xl hidden z-10 border-4 border-red-500">
+                  <div class="bg-red-100 p-3 rounded-full mb-2">
+                    <i class="fas fa-times text-red-600 text-2xl"></i>
                   </div>
-                  <span class="text-black font-bold text-xl tracking-wide">Expired</span>
+                  <span class="text-black font-bold text-base tracking-wide">Abgelaufen</span>
               </div>
             </div>
 
-            <!-- Timer Display -->
-            <div id="timerDisplay" class="text-center text-sm font-medium mb-4 p-2 bg-gray-50 rounded-lg border border-gray-200 hidden">
-                 <i class="fas fa-hourglass-half text-berlin-blue mr-2"></i>
-                 Expires in: <span id="timeRemaining" class="text-berlin-blue font-bold font-mono">--:--</span>
-            </div>
-            <p class="text-center text-sm text-gray-600 flex items-center mb-4 bg-blue-50 px-3 py-2 rounded-lg border border-blue-100 w-full justify-center">
-              <i class="fas fa-mobile-alt mr-2 text-blue-500"></i>
-              Scannen Sie diesen QR-Code mit der Wallet-App
-            </p>
-
-            <!-- OID4VC URL Information -->
-            {% if credential_link %}
-            <div class="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <h4 class="text-xs font-semibold text-gray-700 mb-1 flex items-center">
-                <i class="fas fa-link mr-1 text-gray-500"></i>
-                OID4VC Credential Offer URL:
-              </h4>
-              <div class="text-xs text-gray-600 break-all font-mono bg-white p-2 rounded border border-gray-300">
-                {{ credential_link }}
+            <!-- Kompakte Info-Zeile: Timer | Hinweis | Drucken -->
+            <div class="flex items-center justify-between w-full gap-2">
+              <div id="timerDisplay" class="hidden flex items-center gap-1.5 text-xs font-mono font-semibold text-gray-700 bg-gray-100 px-2 py-1.5 rounded-lg whitespace-nowrap">
+                <i class="fas fa-hourglass-half text-gray-500 text-[10px]"></i>
+                <span id="timeRemaining" class="text-gray-900">--:--</span>
               </div>
+              <span class="text-xs text-gray-500 flex items-center gap-1 flex-1 justify-center min-w-0">
+                <i class="fas fa-mobile-alt text-yellow-500"></i>
+                <span class="truncate">Mit Wallet-App scannen</span>
+              </span>
               <button
-                      type="button"
-                      onclick="navigator.clipboard.writeText('{{ credential_link }}'); this.innerHTML = '<i class=\'fas fa-check mr-1\'></i>Copied!'; setTimeout(() => { this.innerHTML = '<i class=\'fas fa-copy mr-1\'></i>Copy URL'; }, 2000);"
-                      class="mt-2 px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md border border-gray-300 shadow-sm transition-all duration-200"
+                type="button"
+                id="printButton"
+                onclick="printCredential()"
+                class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs bg-[#F0D722] hover:brightness-90 text-black rounded-lg font-semibold transition-all duration-200 whitespace-nowrap"
               >
-                <i class="fas fa-copy mr-1"></i>Copy URL
+                <i class="fas fa-print"></i> Drucken
               </button>
             </div>
-            {% endif %}
-
-            <!-- Druckknopf mit verbessertem Styling -->
-            <button
-                    type="button"
-                    id="printButton"
-                    onclick="printCredential()"
-                    class="px-4 py-2 text-sm bg-[#18206c] hover:bg-berlin-blue text-white rounded-lg shadow-md flex items-center font-semibold mx-auto transition-all duration-300 hover:shadow-lg"
-            >
-              <i class="fas fa-print mr-2"></i> QR-Code & Daten ausdrucken
-            </button>
           </div>
           {% else %}
-          <div id="qrcode" class="flex-1 flex items-center justify-center border border-dashed rounded-lg p-4 mb-4">
-            <div class="text-center">
-              <div class="bg-gray-50 rounded-full p-4 mb-4 mx-auto w-16 h-16 flex items-center justify-center border border-gray-100 shadow-sm">
-                <i class="fas fa-qrcode text-2xl text-gray-400"></i>
-              </div>
-              <p class="text-sm text-gray-500 text-center">
-                QR-Code wird hier angezeigt<br>
-                Füllen Sie das Formular aus und klicken Sie auf "QR-Code generieren"
-              </p>
-            </div>
+          <!-- BVG Mitarbeiterausweis Preview -->
+          <div class="flex-1 flex flex-col items-center justify-center p-1">
+                    <div id="liveCardPreview" class="relative w-full rounded-xl overflow-hidden shadow-xl font-sans transition-all duration-300"
+                         style="background: #{% if form_data and form_data.theme_bgColorCard %}{{ form_data.theme_bgColorCard }}{% else %}F0D722{% endif %};">
+                        
+                        <!-- Header: Logo + Titel -->
+                        <div class="px-4 pt-4 pb-2 flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <img id="livePreviewLogo" 
+                                     src="{% if form_data and form_data.theme_icon %}data:image/png;base64,{{ form_data.theme_icon }}{% else %}{{ url_for('static', filename='BVG_Logo_07.2021.svg') }}{% endif %}" 
+                                     class="h-7 w-auto object-contain" alt="Logo" />
+                                <div>
+                                    <h4 id="livePreviewThemeName" class="text-[11px] font-semibold leading-tight" style="color: #{% if form_data and form_data.theme_fgColorTitle %}{{ form_data.theme_fgColorTitle }}{% else %}000000{% endif %}">
+                                        {% if form_data and form_data.theme_name %}{{ form_data.theme_name }}{% else %}Berliner Verkehrsbetriebe{% endif %}
+                                    </h4>
+                                    <p class="text-[9px] font-medium opacity-60 leading-tight" style="color: #{% if form_data and form_data.theme_fgColorTitle %}{{ form_data.theme_fgColorTitle }}{% else %}000000{% endif %}">Mitarbeiterausweis</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Trennlinie -->
+                        <div class="mx-4 border-t" style="border-color: rgba(0,0,0,0.10);"></div>
+
+                        <!-- Personendaten -->
+                        <div class="px-4 py-3 space-y-2">
+                            <!-- Name + Foto nebeneinander -->
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex-1">
+                                    <label class="text-[8px] uppercase tracking-wider font-medium block leading-none" style="color: #{% if form_data and form_data.theme_fgColorTitle %}{{ form_data.theme_fgColorTitle }}{% else %}000000{% endif %}; opacity: 0.50;">Name</label>
+                                    <div id="livePreviewName" class="text-[13px] font-semibold leading-snug mt-0.5" style="color: #{% if form_data and form_data.theme_fgColorTitle %}{{ form_data.theme_fgColorTitle }}{% else %}000000{% endif %}">Marlene Kowalski</div>
+                                </div>
+                                <!-- Passfoto -->
+                                <div class="flex-none w-10 h-12 rounded overflow-hidden border shadow-sm" style="border-color: rgba(0,0,0,0.12);">
+                                    <img id="livePreviewPhoto" 
+                                         src="{% if form_data and form_data.profile_image %}data:image/png;base64,{{ form_data.profile_image }}{% else %}{{ url_for('static', filename='student.png') }}{% endif %}" 
+                                         class="w-full h-full object-cover" alt="Foto" />
+                                </div>
+                            </div>
+                            <!-- Personalnummer + Geburtsdatum -->
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-[8px] uppercase tracking-wider font-medium block leading-none" style="color: #{% if form_data and form_data.theme_fgColorTitle %}{{ form_data.theme_fgColorTitle }}{% else %}000000{% endif %}; opacity: 0.50;">Personal-Nr.</label>
+                                    <div id="livePreviewPersonalNr" class="text-[11px] font-medium leading-snug mt-0.5" style="color: #{% if form_data and form_data.theme_fgColorTitle %}{{ form_data.theme_fgColorTitle }}{% else %}000000{% endif %}">BVG-47110</div>
+                                </div>
+                                <div>
+                                    <label class="text-[8px] uppercase tracking-wider font-medium block leading-none" style="color: #{% if form_data and form_data.theme_fgColorTitle %}{{ form_data.theme_fgColorTitle }}{% else %}000000{% endif %}; opacity: 0.50;">Geburtsdatum</label>
+                                    <div class="text-[11px] font-medium leading-snug mt-0.5" style="color: #{% if form_data and form_data.theme_fgColorTitle %}{{ form_data.theme_fgColorTitle }}{% else %}000000{% endif %}">01.04.1998</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Footer-Leiste -->
+                        <div class="px-4 py-2 flex items-center justify-between" style="background: rgba(0,0,0,0.06);">
+                            <span class="text-[8px] font-medium tracking-wide uppercase" style="color: #{% if form_data and form_data.theme_fgColorTitle %}{{ form_data.theme_fgColorTitle }}{% else %}000000{% endif %}; opacity: 0.40;">Gültig bis 07/2026</span>
+                            <span class="text-[8px] font-medium" style="color: #{% if form_data and form_data.theme_fgColorTitle %}{{ form_data.theme_fgColorTitle }}{% else %}000000{% endif %}; opacity: 0.40;">BBS+ Credential</span>
+                        </div>
+                    </div>
+
           </div>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const updateCardBg = () => {
+                const c = document.getElementById('bg_color_card')?.value || 'F0D722';
+                const preview = document.getElementById('liveCardPreview');
+                if(preview) preview.style.background = `#${c}`;
+            };
+
+            const updateTextColor = () => {
+                const txtColor = document.getElementById('fg_color_title')?.value || '000000';
+                const els = document.querySelectorAll('#liveCardPreview [style*="color:"]');
+                els.forEach(el => el.style.color = `#${txtColor}`);
+            };
+            
+            const updateThemeName = () => {
+                const val = document.getElementById('theme_name')?.value || 'Berliner Verkehrsbetriebe';
+                const el = document.getElementById('livePreviewThemeName');
+                if(el) el.innerText = val;
+            };
+            
+            const iconUpload = document.getElementById('theme_icon');
+            if(iconUpload) {
+                iconUpload.addEventListener('change', function(e) {
+                    if (e.target.files && e.target.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = function(e_inner) {
+                           const imgTarget = document.getElementById('livePreviewLogo');
+                           if(imgTarget) imgTarget.src = e_inner.target.result;
+                        }
+                        reader.readAsDataURL(e.target.files[0]);
+                    }
+                });
+            }
+
+            // Sync profile image to card preview photo
+            const profileUpload = document.getElementById('profileImage');
+            if(profileUpload) {
+                profileUpload.addEventListener('change', function(e) {
+                    if (e.target.files && e.target.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = function(e_inner) {
+                            const cardPhoto = document.getElementById('livePreviewPhoto');
+                            if(cardPhoto) cardPhoto.src = e_inner.target.result;
+                        }
+                        reader.readAsDataURL(e.target.files[0]);
+                    }
+                });
+            }
+
+            const updateName = () => {
+                const first = document.getElementById('firstName')?.value || '';
+                const last = document.getElementById('lastName')?.value || '';
+                const el = document.getElementById('livePreviewName');
+                if(el) el.innerText = (first || last) ? `${first} ${last}`.trim() : 'Marlene Kowalski';
+            };
+
+            const updatePersonalNr = () => {
+                const prefix = document.getElementById('studentIdPrefix')?.value || 'BVG';
+                const nr = document.getElementById('studentId')?.value || '';
+                const el = document.getElementById('livePreviewPersonalNr');
+                if(el) el.innerText = nr ? `${prefix}-${nr}` : 'BVG-47110';
+            };
+
+            document.getElementById('firstName')?.addEventListener('input', updateName);
+            document.getElementById('lastName')?.addEventListener('input', updateName);
+            document.getElementById('studentId')?.addEventListener('input', updatePersonalNr);
+            document.getElementById('studentIdPrefix')?.addEventListener('input', updatePersonalNr);
+            document.getElementById('bg_color_card')?.addEventListener('input', updateCardBg);
+            document.getElementById('bg_color_section_top')?.addEventListener('input', updateCardBg);
+            document.getElementById('fg_color_title')?.addEventListener('input', updateTextColor);
+            document.getElementById('theme_name')?.addEventListener('input', updateThemeName);
+        });
+        </script>
           {% endif %}
 
-          <div class="mt-4 text-sm text-blue-600 bg-blue-50 border border-blue-200 rounded p-3">
-            <div class="font-medium mb-2 flex items-center">
-              <i class="fas fa-shield-alt mr-2"></i>
-              BBS+ Selective Disclosure
-            </div>
-            <p class="text-xs text-blue-700 leading-relaxed">
-              Mit BBS+ Signaturen können Studierende selektiv entscheiden, welche Daten sie offenlegen möchten, während die kryptographische Integrität gewahrt bleibt.
-            </p>
-          </div>
+
         </div>
       </div>
+    </div>
     </div>
 
-    <!-- Informationsbereich unten -->
-    <div class="mt-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200 shadow-sm">
-      <div class="flex items-start">
-        <div class="bg-blue-100 rounded-full p-2 mr-3 flex items-center justify-center">
-          <i class="fas fa-info-circle text-blue-600"></i>
-        </div>
-        <div>
-          <h3 class="text-sm font-medium text-gray-900 mb-1">Über BBS+ Credentials</h3>
-          <p class="text-xs text-gray-600 leading-relaxed">
-            Verifiable Credentials mit BBS+ Signaturen bieten fortschrittliche Privatsphäre-Funktionen durch
-            selective disclosure und Zero-Knowledge-Beweise. StudentVC ermöglicht es Bildungseinrichtungen,
-            fälschungssichere digitale Ausweise zu erstellen, die Datenhoheit wahren.
-          </p>
-        </div>
-      </div>
-    </div>
+
   </div>
 </div>
+
+<script>
+let brandingMode = false;
+function toggleBrandingView() {
+  brandingMode = !brandingMode;
+  const studentBox = document.getElementById('student-data-box');
+  const brandingBox = document.getElementById('branding-box');
+  const btn = document.getElementById('branding-toggle-btn');
+  const title = document.getElementById('page-title');
+
+  if (brandingMode) {
+    studentBox.style.display = 'none';
+    brandingBox.style.display = '';
+    title.textContent = 'Unternehmens-Branding';
+    btn.innerHTML = '<i class="fas fa-file-alt mr-1"></i>Ausstellen';
+    btn.classList.remove('bg-white', 'text-gray-700', 'border-gray-300');
+    btn.classList.add('bg-[#F0D722]', 'text-black', 'border-[#F0D722]');
+  } else {
+    studentBox.style.display = '';
+    brandingBox.style.display = 'none';
+    title.textContent = 'Verifiable Credential ausstellen';
+    btn.innerHTML = '<i class="fas fa-palette mr-1"></i>Branding';
+    btn.classList.remove('bg-[#F0D722]', 'text-black', 'border-[#F0D722]');
+    btn.classList.add('bg-white', 'text-gray-700', 'border-gray-300');
+  }
+}
+</script>
 
 {% include "issuer/scripts.html" %}
 

@@ -74,9 +74,9 @@ def index():
             branding = vc_template.get("credentialSubject", {}).get("credentialBranding", {})
 
             # Get values
-            system_logo = branding.get("vcLogo", 'studentVC-logo-sora-cropped-darkmode.png')
-            branding_bg_card = branding.get("bgColorCard", "").lstrip('#') or 'c50e1f'
-            branding_bg_top = branding.get("bgColorSectionTop", "").lstrip('#') or 'c50e1f'
+            system_logo = branding.get("vcLogo", 'BVG_Logo_07.2021.svg')
+            branding_bg_card = branding.get("bgColorCard", "").lstrip('#') or 'F0D722'
+            branding_bg_top = branding.get("bgColorSectionTop", "").lstrip('#') or 'F0D722'
             branding_bg_bot = branding.get("bgColorSectionBot", "").lstrip('#') or ''
             branding_fg_title = branding.get("fgColorTitle", "").lstrip('#') or ''
 
@@ -87,7 +87,7 @@ def index():
             system_logo_url = None
             try:
                 # Assuming logos are in static/img/
-                if system_logo and system_logo != 'studentVC-logo-sora-cropped-darkmode.png':
+                if system_logo and system_logo != 'BVG_Logo_07.2021.svg':
                     system_logo_path = os.path.join(current_app.static_folder, 'img', system_logo)
                     if os.path.exists(system_logo_path):
                         with open(system_logo_path, 'rb') as f:
@@ -143,14 +143,14 @@ def index():
 
         # Use system logo, fallback to form data, then to default
         system_logo = branding.get("vcLogo")
-        default_logo = credential_data.get('default_logo', system_logo or 'studentVC-logo-sora-cropped-darkmode.png')
+        default_logo = credential_data.get('default_logo', system_logo or 'BVG_Logo_07.2021.svg')
 
         logger.info(f"🎓 VC BRANDING - Using config")
         logger.info(f"🎓 VC BRANDING - Logo: {system_logo}")
         logger.info(f"🎓 VC BRANDING - Final logo: {default_logo}")
     except Exception as e:
         # Fallback to original logic if system fails
-        default_logo = credential_data.get('default_logo', 'studentVC-logo-sora-cropped-darkmode.png')
+        default_logo = credential_data.get('default_logo', 'BVG_Logo_07.2021.svg')
         logger.info(f"🎓 ERROR - Fallback to default logo: {default_logo}, Error: {e}")
 
     default_profile = 'student.png'  # Immer student.png als Standard
@@ -197,16 +197,16 @@ def index():
         logger.info(f"🎨 COLORS - Card: {branding_bg_card}, Top: {branding_bg_top}")
 
         # Use system colors as defaults
-        default_bg_card = branding_bg_card or 'c50e1f'
-        default_bg_top = branding_bg_top or 'c50e1f'
+        default_bg_card = branding_bg_card or 'F0D722'
+        default_bg_top = branding_bg_top or 'F0D722'
         default_bg_bot = branding_bg_bot or ''
         default_fg_title = branding_fg_title or ''
 
     except Exception as e:
         # Fallback defaults if system fails
         logger.info(f"🎨 COLORS ERROR - Using defaults: {e}")
-        default_bg_card = 'c50e1f'
-        default_bg_top = 'c50e1f'
+        default_bg_card = 'F0D722'
+        default_bg_top = 'F0D722'
         default_bg_bot = ''
         default_fg_title = ''
 
@@ -266,7 +266,7 @@ def index():
             branding = vc_template.get("credentialSubject", {}).get("credentialBranding", {})
             system_logo = branding.get("vcLogo")
 
-            if system_logo and system_logo != 'studentVC-logo-sora-cropped-darkmode.png':
+            if system_logo and system_logo != 'BVG_Logo_07.2021.svg':
                 # Assuming static/img/
                 logo_path = os.path.join(current_app.static_folder, 'img', system_logo)
                 if os.path.exists(logo_path):
@@ -730,7 +730,7 @@ def generate_student_qr(student_id):
     try:
         # Get default images
         placeholder_logo, placeholder_profile = get_placeholders(
-            'studentVC-logo-sora-cropped-darkmode.png',
+            'BVG_Logo_07.2021.svg',
             'student.png'
         )
 
@@ -738,8 +738,8 @@ def generate_student_qr(student_id):
         theme_data = {
             "name": "StudentVC",
             "icon": system_logo,
-            "bgColorCard": "c50e1f",
-            "bgColorSectionTop": "c50e1f",
+            "bgColorCard": "F0D722",
+            "bgColorSectionTop": "F0D722",
             "bgColorSectionBot": "FFFFFF",
             "fgColorTitle": "FFFFFF"
         }
@@ -751,8 +751,8 @@ def generate_student_qr(student_id):
                 vc_template = tenant_config.get_credential_template()
                 branding = vc_template.get("credentialSubject", {}).get("credentialBranding", {})
                 theme_data["name"] = tenant_config.name
-                theme_data["bgColorCard"] = branding.get("bgColorCard", "").lstrip('#') or 'c50e1f'
-                theme_data["bgColorSectionTop"] = branding.get("bgColorSectionTop", "").lstrip('#') or 'c50e1f'
+                theme_data["bgColorCard"] = branding.get("bgColorCard", "").lstrip('#') or 'F0D722'
+                theme_data["bgColorSectionTop"] = branding.get("bgColorSectionTop", "").lstrip('#') or 'F0D722'
         except Exception as e:
             logger.warning(f"Could not get tenant theme: {e}")
 
@@ -813,15 +813,15 @@ def generate_bulk_qr():
 
     # Get defaults
     placeholder_logo, placeholder_profile = get_placeholders(
-        'studentVC-logo-sora-cropped-darkmode.png',
+        'BVG_Logo_07.2021.svg',
         'student.png'
     )
 
     theme_data = {
         "name": "StudentVC",
         "icon": placeholder_logo,
-        "bgColorCard": "c50e1f",
-        "bgColorSectionTop": "c50e1f",
+        "bgColorCard": "F0D722",
+        "bgColorSectionTop": "F0D722",
         "bgColorSectionBot": "FFFFFF",
         "fgColorTitle": "FFFFFF"
     }

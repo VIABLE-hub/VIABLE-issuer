@@ -2,9 +2,9 @@
 {% block title %}Über StudentVC{% endblock %}
 {% block content %}
 
-<div class="bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
+<div class="py-10 px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-12rem)]">
   <div class="max-w-4xl mx-auto">
-    <div class="bg-white shadow-sm rounded-xl p-6 sm:p-8">
+    <div class="custom-glass-panel  shadow-xl rounded-[5px] p-6 sm:p-8 border border-gray-200">
       <!-- Header -->
       <div class="border-b border-gray-200 pb-5 mb-6">
         <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center">
@@ -54,9 +54,31 @@
                     Das Fachgebiet Service-centric Networking erforscht innovative Dienste und Technologien im Bereich der vernetzten Systeme, mit besonderem Fokus auf identitätsbasierte Dienste, IoT, Mobile Computing und dezentrale Technologien.
                   </p>
                   
-                  <div class="pt-2">
-                    <h3 class="font-medium">Leitung</h3>
-                    <p>Prof. Dr. Axel Küpper</p>
+                  <div class="pt-2 mb-4">
+                    <h3 class="font-medium">Leitung und Inhaltlich verantwortlich</h3>
+                    <p>
+                      Prof. Dr. Axel Küpper<br>
+                      <a href="mailto:axel.kuepper@tu-berlin.de" class="text-berlin-blue hover:text-blue-800 transition-colors">axel.kuepper@tu-berlin.de</a><br>
+                      <a href="https://www.tu.berlin/snet/ueber-uns/leitung" class="text-berlin-blue hover:text-blue-800 transition-colors" target="_blank">https://www.tu.berlin/snet/ueber-uns/leitung</a>
+                    </p>
+                  </div>
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 pt-4 border-t border-gray-100 text-[0.875rem] text-gray-700">
+                    <div>
+                      <h4 class="font-medium mb-1 text-gray-800">Technische Konzeption und Umsetzung:</h4>
+                      <p class="leading-relaxed">
+                        Patrick Herbke<br>
+                        Research Assistant<br>
+                        <a href="mailto:p.herbke@tu-berlin.de" class="text-berlin-blue hover:text-blue-800 transition-colors">p.herbke@tu-berlin.de</a><br>
+                        <a href="https://tu.berlin/snet/patrick-herbke/" class="text-berlin-blue hover:text-blue-800 transition-colors" target="_blank">https://tu.berlin/snet/patrick-herbke/</a>
+                      </p>
+                    </div>
+                    <div>
+                      <h4 class="font-medium mb-1 text-gray-800">Entwicklungsunterstützung:</h4>
+                      <p class="leading-relaxed">
+                        Frank, Masterstudent
+                      </p>
+                    </div>
                   </div>
                 </div>
               </td>

@@ -1,11 +1,11 @@
 {% extends "base.html" %} {% block title %}Register{% endblock %} {% block content %}
 
-<div class="min-h-[calc(100vh-12rem)] flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
-  <div class="bg-white shadow-lg rounded-xl p-6 w-full max-w-md border border-gray-200">
-    <div class="text-center mb-6">
-      <h1 class="text-2xl font-semibold text-berlin-blue mb-2 tracking-tight">Registrieren</h1>
-      <p class="text-gray-600 text-sm leading-relaxed">Erstellen Sie Ihr StudentVC-Konto</p>
-    </div>
+<div class="min-h-[calc(100vh-12rem)] flex items-center justify-center">
+  <div class="custom-glass-panel  shadow-xl rounded-[5px] p-6 w-full max-w-md border border-gray-200">
+    <div class="flex flex-col sm:flex-row sm:items-baseline space-y-1 sm:space-y-0 sm:space-x-4 mb-6 pb-2 border-b border-gray-200/50">
+  <h1 class="text-xl font-bold text-gray-900 leading-none">Registrieren</h1>
+  <span class="text-sm text-gray-500 sm:border-l border-gray-300 sm:pl-4">Erstellen Sie Ihr StudentVC-Konto</span>
+</div>
     
     <form action="/register" method="post" class="space-y-5">
       <div>

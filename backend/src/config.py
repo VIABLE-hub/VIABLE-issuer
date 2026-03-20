@@ -2,24 +2,24 @@ import os
 
 class Config:
     # Branding
-    UNIVERSITY_NAME = "Technische Universität Berlin"
-    UNIVERSITY_SHORT_NAME = "TU Berlin"
-    PRIMARY_COLOR = "#c50e1f"
-    ACCENT_COLOR = "#c50e1f"
+    UNIVERSITY_NAME = "Berliner Verkehrsbetriebe"
+    UNIVERSITY_SHORT_NAME = "BVG"
+    PRIMARY_COLOR = "#F0D722"
+    ACCENT_COLOR = "#F0D722"
     TEXT_COLOR = "#FFFFFF"
     
-    # Logos (now in static/img/)
-    LOGO_FILENAME = "tub_logo.png"
-    HOCHSCHUL_BRANDING_LOGO = "tub_logo_white_red.png"
-    MAIN_LOGO_FILENAME = "studentVC-logo-sora-cropped.png"
+    # Logos
+    LOGO_FILENAME = "BVG_Logo_07.2021.svg"
+    HOCHSCHUL_BRANDING_LOGO = "BVG_Logo_07.2021.svg"
+    MAIN_LOGO_FILENAME = "BVG_Logo_07.2021.svg"
 
     # Theme Colors
     THEME_COLORS = {
-        'bgColorCard': 'c50e1f',
-        'bgColorTop': 'c50e1f',
+        'bgColorCard': 'F0D722',
+        'bgColorTop': 'F0D722',
         'bgColorBot': 'FFFFFF',
         'fgColorTitle': 'FFFFFF',
-        'accentColor': 'c50e1f',
+        'accentColor': 'F0D722',
         'textColor': 'FFFFFF'
     }
 
@@ -33,8 +33,8 @@ class Config:
                 "textColor": "FFFFFF",
                 "logo": HOCHSCHUL_BRANDING_LOGO,
                 "vcLogo": HOCHSCHUL_BRANDING_LOGO,
-                "bgColorCard": "c50e1f",
-                "bgColorSectionTop": "c50e1f",
+                "bgColorCard": "F0D722",
+                "bgColorSectionTop": "F0D722",
                 "bgColorSectionBot": "FFFFFF",
                 "fgColorTitle": "FFFFFF"
             }
