@@ -65,19 +65,71 @@
   }
 </style>
 <div class="bg-transparent">
-  <div class="max-w-7xl mx-auto px-4 py-1">
+  <div class="max-w-7xl mx-auto px-4 py-1 pb-6">
     <!-- Einheitlicher Glass-Container -->
     <div class="airy-glass p-4 mt-0">
 
-    <!-- Title + Branding inside glass box -->
-    <div class="flex items-center justify-center gap-3 mb-3">
-      <h1 class="text-base font-semibold text-gray-900 text-center" id="page-title">
+    <!-- Title -->
+    <div class="mb-1">
+      <h1 class="text-lg font-bold text-gray-900" id="page-title">
         Verifiable Credential ausstellen
       </h1>
+    </div>
+    <!-- Action-Buttons Zeile (unterhalb Titel, rechts ausgerichtet) -->
+    <div class="flex items-center gap-2 flex-wrap justify-end mb-3">
+      <!-- Issuing Domain Info -->
+      {% if issuer_domain %}
+      <div class="flex items-center gap-1 text-xs text-gray-500" id="issuerDomainInfo">
+        <i class="fas fa-globe text-gray-400"></i>
+        <span class="font-mono text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded text-[11px]">{{ issuer_domain }}</span>
+        <span id="domainCheckLoading" class="text-gray-400"><i class="fas fa-circle-notch fa-spin text-[10px]"></i></span>
+        <span id="domainCheckSuccess" class="hidden text-green-600" title="Domain OK"><i class="fas fa-check-circle text-[10px]"></i></span>
+        <span id="domainCheckError" class="hidden text-red-500 cursor-pointer" onclick="toggleDomainWarning()" title="Details"><i class="fas fa-exclamation-triangle text-[10px]"></i></span>
+      </div>
+      <div class="w-px h-4 bg-gray-200"></div>
+      {% endif %}
+      <!-- Branding -->
       <button type="button" id="branding-toggle-btn" onclick="toggleBrandingView()"
-              class="px-3 py-1 text-xs font-medium rounded-lg border transition-all duration-200
+              class="px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200
                      bg-white text-gray-700 border-gray-300 hover:bg-[#F0D722] hover:text-black hover:border-[#F0D722]">
         <i class="fas fa-palette mr-1"></i>Branding
+      </button>
+      <!-- CSV Import -->
+      <button type="button" id="csvImportBtn" onclick="openCsvModal()"
+              class="px-3 py-1.5 text-xs bg-white hover:bg-green-50 text-gray-700 rounded-lg border border-gray-300 flex items-center transition-all duration-200">
+        <i class="fas fa-file-csv mr-1 text-green-600"></i> CSV Import
+      </button>
+      <!-- Zufällige Daten -->
+      <button type="button" id="randomDataBtn" onclick="fillRandomData(); return false;"
+              class="px-3 py-1.5 text-xs bg-white hover:bg-gray-50 text-gray-700 rounded-lg border border-gray-300 flex items-center transition-all duration-200">
+        <i class="fas fa-random mr-1"></i> Zufäll. Daten
+      </button>
+      <!-- QR-Code generieren -->
+      <button type="submit" form="myForm"
+              class="px-3 py-1.5 text-xs bg-[#F0D722] hover:brightness-90 text-black rounded-lg flex items-center font-semibold transition-all duration-200">
+        <i class="fas fa-qrcode mr-1"></i> QR-Code generieren
+      </button>
+      <!-- Separator -->
+      <div id="qrActionsSeparator" class="hidden w-px h-5 bg-gray-300"></div>
+      <!-- Timer (erscheint nach QR-Generierung) -->
+      <div id="timerDisplay" class="hidden items-center gap-1.5 text-xs font-mono font-semibold text-gray-700 bg-gray-100 px-2 py-1.5 rounded-lg whitespace-nowrap">
+        <i class="fas fa-hourglass-half text-gray-500 text-[10px]"></i>
+        <span id="timeRemaining" class="text-gray-900">--:--</span>
+      </div>
+      <!-- Drucken (erscheint nach QR-Generierung) -->
+      <button type="button" id="printButton" onclick="printCredential()"
+              class="hidden items-center gap-1.5 px-3 py-1.5 text-xs bg-[#F0D722] hover:brightness-90 text-black rounded-lg font-semibold transition-all duration-200 whitespace-nowrap">
+        <i class="fas fa-print mr-1"></i> Drucken
+      </button>
+      <!-- QR stoppen (erscheint nach QR-Generierung) -->
+      <button type="button" id="cancelQrBtn" onclick="cancelOffer()"
+              class="hidden items-center gap-1.5 px-3 py-1.5 text-xs bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold transition-all duration-200 whitespace-nowrap">
+        <i class="fas fa-ban mr-1"></i> QR stoppen
+      </button>
+      <!-- Zurück zur Vorschau (erscheint nach QR-Generierung) -->
+      <button type="button" id="backToPreviewBtn" onclick="backToPreview()"
+              class="hidden items-center gap-1.5 px-3 py-1.5 text-xs bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-lg font-semibold transition-all duration-200 whitespace-nowrap">
+        <i class="fas fa-arrow-left mr-1"></i> Vorschau
       </button>
     </div>
 
@@ -87,49 +139,19 @@
         <!-- Mitarbeiterdaten -->
         <div class="flex-1" id="student-data-box">
           
-          <!-- Header Zeile: Titel und Buttons -->
-          <div class="flex justify-between items-center mb-2">
-            <h2 class="font-semibold text-lg flex items-center">
-              <i class="fas fa-id-badge text-gray-900 mr-2"></i>
+          <!-- Header Zeile: nur Titel -->
+          <div class="flex items-center mb-2">
+            <h2 class="font-semibold text-base flex items-center text-gray-700">
+              <i class="fas fa-id-badge text-gray-500 mr-2"></i>
               Mitarbeiterdaten
             </h2>
-            
-            <!-- Buttons -->
-            <div class="flex space-x-2">
-              <button type="button" id="csvImportBtn" onclick="openCsvModal()" class="px-3 py-1.5 text-xs bg-green-100 hover:bg-green-200 text-green-700 rounded-lg border border-green-300 shadow-sm flex items-center transition-all duration-200">
-                <i class="fas fa-file-csv mr-1"></i> CSV Import
-              </button>
-              <button type="button" id="randomDataBtn" class="px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg border border-gray-300 shadow-sm flex items-center transition-all duration-200" onclick="fillRandomData(); return false;">
-                <i class="fas fa-random mr-1"></i> Zufäll. Daten
-              </button>
-              <button type="submit" form="myForm" class="px-3 py-1.5 text-xs bg-[#F0D722] hover:brightness-90 text-black rounded-lg shadow-md flex items-center font-semibold transition-all duration-200">
-                <i class="fas fa-qrcode mr-1"></i> QR-Code generieren
-              </button>
-            </div>
           </div>
 
           <!-- Info Zeile: Issuing for Domain -->
           {% if issuer_domain %}
-          <div class="mb-4">
-              <div class="text-xs text-gray-500 ml-1 flex items-center" id="issuerDomainInfo">
-                  <i class="fas fa-info-circle mr-1"></i> Issuing VCs for <span id="issuerDomainSpan" class="font-mono font-medium ml-1 bg-gray-100 px-1 rounded text-gray-900">{{ issuer_domain }}</span>
-                  
-                  <!-- CHECK STATUS INDICATORS -->
-                  <span id="domainCheckLoading" class="ml-2 inline-flex items-center text-gray-400">
-                      <i class="fas fa-circle-notch fa-spin"></i>
-                  </span>
-                  
-                  <span id="domainCheckSuccess" class="ml-2 hidden text-green-600" title="Domain verification successful">
-                      <i class="fas fa-check-circle"></i>
-                  </span>
-
-                  <span id="domainCheckError" class="ml-2 hidden text-red-500 cursor-pointer hover:text-red-700 transition" onclick="toggleDomainWarning()" title="Click for details">
-                      <i class="fas fa-exclamation-triangle"></i>
-                  </span>
-              </div>
-              
+          <div class="mb-2">
               <!-- WARNING MESSAGE (Hidden by default) -->
-              <div id="domainCheckWarningMsg" class="hidden mt-2 p-3 bg-red-50 border border-red-200 rounded-md text-xs text-red-800 shadow-sm transition-all">
+              <div id="domainCheckWarningMsg" class="hidden p-3 bg-red-50 border border-red-200 rounded-md text-xs text-red-800 shadow-sm transition-all">
                    <div class="flex items-start">
                        <i class="fas fa-exclamation-triangle mt-0.5 mr-2 text-red-600"></i>
                        <div>
@@ -290,54 +312,44 @@
 
         <!-- Unternehmens-Branding -->
         <div id="branding-box" style="display:none;">
-          <div class="flex justify-between items-center mb-3">
-            <h2 class="font-semibold text-sm flex items-center">
-              <i class="fas fa-heart text-yellow-600 mr-2"></i>
-              Unternehmens-Branding
-            </h2>
-          </div>
-
           <div class="form-group space-y-3">
 
             <!-- Verstecktes Feld für Standard-Logo-Wert -->
             <input type="hidden" name="default_logo" value="{% if form_data and form_data.default_logo %}{{ form_data.default_logo }}{% else %}BVG_Logo_07.2021.svg{% endif %}" />
 
-            <!-- Theme Name in horizontaler Zeile mit besserem Styling -->
-            <div class="flex items-center gap-x-3">
-              <label for="theme_name" class="text-xs font-medium text-gray-700 whitespace-nowrap">Theme Name:</label>
-              <input
-                      type="text"
-                      class="form-control flex-1 border border-gray-300 px-2 py-1.5 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0D722] focus:border-transparent form-element-height transition-all duration-200"
-                      id="theme_name"
-                      name="theme[name]"
-                      placeholder="Berliner Verkehrsbetriebe"
-                      value="{% if form_data and form_data.theme_name %}{{ form_data.theme_name }}{% endif %}"
-              />
-            </div>
-
-            <label for="theme_icon" class="block text-xs font-medium text-gray-700 mb-1">Theme Icon</label>
-            <div class="flex items-center space-x-2 mt-1">
-              <!-- Linke Seite: Bildvorschau -->
-              <div id="themeIconPreviewContainer" class="flex-none w-16 h-16 rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 relative cursor-pointer"
-                   style="background: linear-gradient(135deg, #{% if form_data and form_data.theme_bgColorCard %}{{ form_data.theme_bgColorCard }}{% else %}F0D722{% endif %} 0%, #{% if form_data and form_data.theme_bgColorSectionTop %}{{ form_data.theme_bgColorSectionTop }}{% else %}F0D722{% endif %} 100%);">
-                <img
-                        id="themeIconPreview"
-                        src="{% if form_data and form_data.theme_icon %}data:image/png;base64,{{ form_data.theme_icon }}{% else %}{{ url_for('static', filename='BVG_Logo_07.2021.svg') }}{% endif %}"
-                        alt="Vorschau"
-                        class="w-full h-full object-contain p-2"
+            <!-- Theme Name + Icon Upload in einer Zeile -->
+            <div class="flex items-center gap-3">
+              <!-- Links: Name Label + Input -->
+              <div class="flex items-center gap-x-3 flex-1 min-w-0">
+                <label for="theme_name" class="text-xs font-medium text-gray-700 whitespace-nowrap">Theme Name:</label>
+                <input
+                        type="text"
+                        class="form-control flex-1 min-w-0 border border-gray-300 px-2 py-1.5 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0D722] focus:border-transparent form-element-height transition-all duration-200"
+                        id="theme_name"
+                        name="theme[name]"
+                        placeholder="Berliner Verkehrsbetriebe"
+                        value="{% if form_data and form_data.theme_name %}{{ form_data.theme_name }}{% endif %}"
                 />
-                <div class="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 flex items-center justify-center transition-all duration-200">
-                  <i class="fas fa-camera text-white opacity-0 hover:opacity-100 transition-opacity duration-200 text-shadow-sm text-xs"></i>
-                </div>
               </div>
-
-              <!-- Mittlere Spalte: Upload-Box mit besserem Hover-Effekt -->
-              <div class="flex-grow">
-                <div id="themeDropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-3 flex items-center justify-center bg-gray-50 relative hover:bg-yellow-50 hover:border-[#F0D722] transition-all duration-300 group form-element-height min-h-[3.5rem]">
-                  <div class="flex flex-col items-center">
-                    <i class="fas fa-cloud-upload-alt text-gray-400 group-hover:text-gray-900 transition-colors text-sm"></i>
-                    <span class="text-xs text-gray-500 group-hover:text-gray-900 text-center mt-0.5 transition-colors">Logo hochladen<br class="hidden sm:block">oder ablegen</span>
+              <!-- Rechts: Vorschau + Upload-Dropzone + Reset als kompakte Gruppe -->
+              <div class="flex items-center gap-2 flex-none">
+                <!-- Icon Vorschau -->
+                <div id="themeIconPreviewContainer" class="flex-none w-9 h-9 rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 relative cursor-pointer"
+                     style="background: linear-gradient(135deg, #{% if form_data and form_data.theme_bgColorCard %}{{ form_data.theme_bgColorCard }}{% else %}F0D722{% endif %} 0%, #{% if form_data and form_data.theme_bgColorSectionTop %}{{ form_data.theme_bgColorSectionTop }}{% else %}F0D722{% endif %} 100%);">
+                  <img
+                          id="themeIconPreview"
+                          src="{% if form_data and form_data.theme_icon %}data:image/png;base64,{{ form_data.theme_icon }}{% else %}{{ url_for('static', filename='BVG_Logo_07.2021.svg') }}{% endif %}"
+                          alt="Vorschau"
+                          class="w-full h-full object-contain p-1"
+                  />
+                  <div class="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 flex items-center justify-center transition-all duration-200">
+                    <i class="fas fa-camera text-white opacity-0 hover:opacity-100 transition-opacity duration-200 text-xs"></i>
                   </div>
+                </div>
+                <!-- Upload-Dropzone -->
+                <div id="themeDropZone" class="relative flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-yellow-50 hover:border-[#F0D722] transition-all duration-300 group cursor-pointer h-9 px-3 gap-1.5">
+                  <i class="fas fa-cloud-upload-alt text-gray-400 group-hover:text-gray-900 transition-colors text-xs"></i>
+                  <span class="text-xs text-gray-500 group-hover:text-gray-900 transition-colors whitespace-nowrap">Logo hochladen</span>
                   <input
                           type="file"
                           class="form-control absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -346,18 +358,17 @@
                           accept="image/*"
                   />
                 </div>
+                <!-- Reset Button -->
+                <button
+                        type="button"
+                        id="resetThemeIconBtn"
+                        class="flex-none w-9 h-9 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-all duration-200 border border-gray-200"
+                        title="Zurücksetzen"
+                        onclick="document.querySelector('input[name=default_logo]').value='BVG_Logo_07.2021.svg'"
+                >
+                  <i class="fas fa-undo text-xs"></i>
+                </button>
               </div>
-
-              <!-- Rechte Spalte: Reset Button mit besserem Hover-Effekt -->
-              <button
-                      type="button"
-                      id="resetThemeIconBtn"
-                      class="flex-none w-10 h-10 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200"
-                      title="Zurücksetzen"
-                      onclick="document.querySelector('input[name=default_logo]').value='BVG_Logo_07.2021.svg'"
-              >
-                <i class="fas fa-undo text-xs"></i>
-              </button>
             </div>
 
             <!-- Farben in einer kompakten Zeile -->
@@ -473,49 +484,30 @@
               </div>
             </div>
 
-            <!-- Kompakte Info-Zeile: Timer | Hinweis | Drucken -->
-            <div class="flex items-center justify-between w-full gap-2">
-              <div id="timerDisplay" class="hidden flex items-center gap-1.5 text-xs font-mono font-semibold text-gray-700 bg-gray-100 px-2 py-1.5 rounded-lg whitespace-nowrap">
-                <i class="fas fa-hourglass-half text-gray-500 text-[10px]"></i>
-                <span id="timeRemaining" class="text-gray-900">--:--</span>
-              </div>
-              <span class="text-xs text-gray-500 flex items-center gap-1 flex-1 justify-center min-w-0">
-                <i class="fas fa-mobile-alt text-yellow-500"></i>
-                <span class="truncate">Mit Wallet-App scannen</span>
-              </span>
-              <button
-                type="button"
-                id="printButton"
-                onclick="printCredential()"
-                class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs bg-[#F0D722] hover:brightness-90 text-black rounded-lg font-semibold transition-all duration-200 whitespace-nowrap"
-              >
-                <i class="fas fa-print"></i> Drucken
-              </button>
+            <!-- Hinweis unter QR -->
+            <div class="flex items-center justify-center gap-1.5 text-xs text-gray-500 mt-1">
+              <i class="fas fa-mobile-alt text-yellow-500"></i>
+              <span>Mit Wallet-App scannen</span>
             </div>
           </div>
           {% else %}
           <!-- BVG Mitarbeiterausweis Preview -->
           <div class="flex-1 flex flex-col items-center justify-center p-1">
-                    <div id="liveCardPreview" class="relative w-full rounded-xl overflow-hidden shadow-xl font-sans transition-all duration-300"
-                         style="background: #{% if form_data and form_data.theme_bgColorCard %}{{ form_data.theme_bgColorCard }}{% else %}F0D722{% endif %};">
+                    <div id="liveCardPreview" class="relative w-full overflow-hidden shadow-xl font-sans transition-all duration-300"
+                         style="background: #{% if form_data and form_data.theme_bgColorCard %}{{ form_data.theme_bgColorCard }}{% else %}F0D722{% endif %}; border: 2px solid #F0D722; border-radius: 5px;">
                         
-                        <!-- Header: Logo + Titel -->
-                        <div class="px-4 pt-4 pb-2 flex items-center justify-between">
-                            <div class="flex items-center gap-2.5">
-                                <img id="livePreviewLogo" 
-                                     src="{% if form_data and form_data.theme_icon %}data:image/png;base64,{{ form_data.theme_icon }}{% else %}{{ url_for('static', filename='BVG_Logo_07.2021.svg') }}{% endif %}" 
-                                     class="h-7 w-auto object-contain" alt="Logo" />
-                                <div>
-                                    <h4 id="livePreviewThemeName" class="text-[11px] font-semibold leading-tight" style="color: #{% if form_data and form_data.theme_fgColorTitle %}{{ form_data.theme_fgColorTitle }}{% else %}000000{% endif %}">
-                                        {% if form_data and form_data.theme_name %}{{ form_data.theme_name }}{% else %}Berliner Verkehrsbetriebe{% endif %}
-                                    </h4>
-                                    <p class="text-[9px] font-medium opacity-60 leading-tight" style="color: #{% if form_data and form_data.theme_fgColorTitle %}{{ form_data.theme_fgColorTitle }}{% else %}000000{% endif %}">Mitarbeiterausweis</p>
-                                </div>
+                        <!-- Header: weißer Hintergrund, Logo links, Text rechts -->
+                        <div class="px-4 pt-3 pb-3 flex items-center justify-between" style="background: #ffffff;">
+                            <img id="livePreviewLogo" 
+                                 src="{% if form_data and form_data.theme_icon %}data:image/png;base64,{{ form_data.theme_icon }}{% else %}{{ url_for('static', filename='BVG_Logo_07.2021.svg') }}{% endif %}" 
+                                 class="h-8 w-auto object-contain" alt="Logo" />
+                            <div class="text-right">
+                                <h4 id="livePreviewThemeName" class="text-[11px] font-semibold leading-tight" style="color: #000000;">
+                                    {% if form_data and form_data.theme_name %}{{ form_data.theme_name }}{% else %}Berliner Verkehrsbetriebe{% endif %}
+                                </h4>
+                                <p class="text-[9px] font-medium leading-tight" style="color: #000000; opacity: 0.65;">Mitarbeiterausweis</p>
                             </div>
                         </div>
-
-                        <!-- Trennlinie -->
-                        <div class="mx-4 border-t" style="border-color: rgba(0,0,0,0.10);"></div>
 
                         <!-- Personendaten -->
                         <div class="px-4 py-3 space-y-2">
@@ -532,23 +524,16 @@
                                          class="w-full h-full object-cover" alt="Foto" />
                                 </div>
                             </div>
-                            <!-- Personalnummer + Geburtsdatum -->
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="text-[8px] uppercase tracking-wider font-medium block leading-none" style="color: #{% if form_data and form_data.theme_fgColorTitle %}{{ form_data.theme_fgColorTitle }}{% else %}000000{% endif %}; opacity: 0.50;">Personal-Nr.</label>
-                                    <div id="livePreviewPersonalNr" class="text-[11px] font-medium leading-snug mt-0.5" style="color: #{% if form_data and form_data.theme_fgColorTitle %}{{ form_data.theme_fgColorTitle }}{% else %}000000{% endif %}">BVG-47110</div>
-                                </div>
-                                <div>
-                                    <label class="text-[8px] uppercase tracking-wider font-medium block leading-none" style="color: #{% if form_data and form_data.theme_fgColorTitle %}{{ form_data.theme_fgColorTitle }}{% else %}000000{% endif %}; opacity: 0.50;">Geburtsdatum</label>
-                                    <div class="text-[11px] font-medium leading-snug mt-0.5" style="color: #{% if form_data and form_data.theme_fgColorTitle %}{{ form_data.theme_fgColorTitle }}{% else %}000000{% endif %}">01.04.1998</div>
-                                </div>
+                            <!-- Personalnummer -->
+                            <div>
+                                <label class="text-[8px] uppercase tracking-wider font-medium block leading-none" style="color: #{% if form_data and form_data.theme_fgColorTitle %}{{ form_data.theme_fgColorTitle }}{% else %}000000{% endif %}; opacity: 0.50;">Personal-Nr.</label>
+                                <div id="livePreviewPersonalNr" class="text-[11px] font-medium leading-snug mt-0.5" style="color: #{% if form_data and form_data.theme_fgColorTitle %}{{ form_data.theme_fgColorTitle }}{% else %}000000{% endif %}">BVG-47110</div>
                             </div>
                         </div>
 
                         <!-- Footer-Leiste -->
                         <div class="px-4 py-2 flex items-center justify-between" style="background: rgba(0,0,0,0.06);">
                             <span class="text-[8px] font-medium tracking-wide uppercase" style="color: #{% if form_data and form_data.theme_fgColorTitle %}{{ form_data.theme_fgColorTitle }}{% else %}000000{% endif %}; opacity: 0.40;">Gültig bis 07/2026</span>
-                            <span class="text-[8px] font-medium" style="color: #{% if form_data and form_data.theme_fgColorTitle %}{{ form_data.theme_fgColorTitle }}{% else %}000000{% endif %}; opacity: 0.40;">BBS+ Credential</span>
                         </div>
                     </div>
 
@@ -798,6 +783,15 @@ function toggleBrandingView() {
             const timeRemaining = document.getElementById('timeRemaining');
             if (timerDisplay) {
                 timerDisplay.classList.remove('hidden');
+                timerDisplay.classList.add('flex');
+                const sep = document.getElementById('qrActionsSeparator');
+                if (sep) { sep.classList.remove('hidden'); }
+                const printBtn = document.getElementById('printButton');
+                if (printBtn) { printBtn.classList.remove('hidden'); printBtn.classList.add('flex'); }
+                const cancelBtn = document.getElementById('cancelQrBtn');
+                if (cancelBtn) { cancelBtn.classList.remove('hidden'); cancelBtn.classList.add('flex'); }
+                const backBtn = document.getElementById('backToPreviewBtn');
+                if (backBtn) { backBtn.classList.remove('hidden'); backBtn.classList.add('flex'); }
                 
                 const updateTimer = () => {
                     const now = new Date().getTime() / 1000;
@@ -837,5 +831,28 @@ function toggleBrandingView() {
         }
         {% endif %}
     });
+
+    function cancelOffer() {
+        const uuid = typeof offerUuid !== 'undefined' ? offerUuid : '';
+        if (!uuid) return;
+        const btn = document.getElementById('cancelQrBtn');
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Stoppe...'; }
+        fetch(`/cancel-offer/${uuid}`, { method: 'POST' })
+            .then(() => {
+                const qrImg = document.getElementById('picture');
+                if (qrImg) { qrImg.style.opacity = '0.2'; qrImg.src = dummyQrSvg; }
+                const overlay = document.getElementById('qrExpiredOverlay');
+                if (overlay) { overlay.classList.remove('hidden'); overlay.style.zIndex = '50'; }
+                document.getElementById('timerDisplay')?.classList.add('hidden');
+                if (btn) { btn.classList.add('hidden'); }
+            });
+    }
+
+    function backToPreview() {
+        // Formular-Daten erhalten, aber img_data entfernen → reload ohne QR
+        const form = document.getElementById('myForm');
+        // Erstelle hidden input um Vorschau zu erzwingen (kein Submit, einfach GET)
+        window.location.href = window.location.pathname;
+    }
 </script>
 {% endblock %}
