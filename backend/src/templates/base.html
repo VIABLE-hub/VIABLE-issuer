@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de" class="h-screen overflow-hidden">
+<html lang="de" class="h-full">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -107,7 +107,7 @@
   
     <style>
       body {
-        background: linear-gradient(rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.45)), url("{{ url_for('static', filename='BVG-Sitzmuster-Vielfalt.jpg') }}") no-repeat center center fixed !important;
+        background: linear-gradient(rgba(255, 252, 245, 0.65), rgba(255, 252, 245, 0.72)), url("{{ url_for('static', filename='BVG-Sitzmuster-Vielfalt.jpg') }}") no-repeat center center fixed !important;
         background-size: cover !important;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       }
@@ -140,15 +140,15 @@
     </style>
 
 </head>
-  <body class="h-full flex flex-col overflow-hidden transition-colors duration-200">
+  <body class="min-h-screen flex flex-col transition-colors duration-200">
     <!-- Modern Navigation Bar -->
-    <nav class="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm overflow-visible">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-12 overflow-visible">
+    <nav class="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm" style="overflow: visible !important;">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" style="overflow: visible !important;">
+        <div class="flex justify-between items-center h-12" style="overflow: visible !important;">
           <!-- Logo und Branding -->
-          <div class="flex items-start overflow-visible">
-            <a href="/" class="flex items-start shrink-0 overflow-visible -mt-1">
-              <img src="{{ url_for('static',filename='BVG_Logo_07.2021.svg') }}" alt="BVG Logo" class="h-20 w-auto object-contain drop-shadow-sm relative z-[60]" />
+          <div class="relative shrink-0" style="width: 64px; overflow: visible !important;">
+            <a href="/" style="position: absolute; top: -8px; left: 0; z-index: 100; display: block; overflow: visible;">
+              <img src="{{ url_for('static',filename='BVG_Logo_07.2021.svg') }}" alt="BVG Logo" style="height: 78px; width: auto; object-fit: contain; display: block; overflow: visible;" />
             </a>
           </div>
 
@@ -281,7 +281,7 @@
     {% endwith %}
 
     <!-- Main Content -->
-    <main class="flex-1 min-h-0 overflow-y-auto">
+    <main class="flex-1">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
         {% block content %}{% endblock %}
       </div>

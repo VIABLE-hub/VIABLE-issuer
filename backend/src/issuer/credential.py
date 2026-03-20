@@ -161,13 +161,12 @@ def generate_bbs_credential(
         "typ": "JWT",
     }
 
-    # Compute expiry_date for VC_validity from credentialExpiry (format "YYYY-MM")
+    # Compute expiry_date for VC_validity from credentialExpiry (format "YYYY-MM-DD")
     import calendar as _calendar
     vc_expiry_dt = None
     if credential_expiry:
-        _year, _month = int(credential_expiry[:4]), int(credential_expiry[5:7])
-        _last_day = _calendar.monthrange(_year, _month)[1]
-        vc_expiry_dt = datetime(_year, _month, _last_day, 23, 59, 59, tzinfo=timezone.utc)
+        _year, _month, _day = int(credential_expiry[:4]), int(credential_expiry[5:7]), int(credential_expiry[8:10])
+        vc_expiry_dt = datetime(_year, _month, _day, 23, 59, 59, tzinfo=timezone.utc)
 
     vc_validity = VC_validity(identifier=unique_id, credential_data=payload, expiry_date=vc_expiry_dt)
     db.session.add(vc_validity)
@@ -203,10 +202,9 @@ def generate_bbs_credential(
 def get_payload(issuer_did, decoded_token, credential_subject, uniqID, credential_expiry=None):
     import calendar
     if credential_expiry:
-        # Format: "YYYY-MM" → last day of that month, 23:59:59 UTC
-        year, month = int(credential_expiry[:4]), int(credential_expiry[5:7])
-        last_day = calendar.monthrange(year, month)[1]
-        expiry_dt = datetime(year, month, last_day, 23, 59, 59, tzinfo=timezone.utc)
+        # Format: "YYYY-MM-DD" → end of that day 23:59:59 UTC
+        year, month, day = int(credential_expiry[:4]), int(credential_expiry[5:7]), int(credential_expiry[8:10])
+        expiry_dt = datetime(year, month, day, 23, 59, 59, tzinfo=timezone.utc)
         exp_timestamp = int(expiry_dt.timestamp())
         expiration_date_str = expiry_dt.isoformat()
     else:

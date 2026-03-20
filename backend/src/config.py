@@ -50,5 +50,5 @@ class Config:
     # If set, this DID will be used as the 'iss' claim in VCs.
     # If empty, a dynamic did:key will be generated from the keys.
     # Example: "did:web:tu-berlin.de"
-    ISSUER_DID = os.environ.get("ISSUER_DID", "")
+    ISSUER_DID = os.environ.get("ISSUER_DID", "did:web:bvg.viable-project.de")
 
