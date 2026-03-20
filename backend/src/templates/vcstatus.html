@@ -9,17 +9,28 @@
 {% endblock %}
 
 {% block content %}
+<style>
+  /* Glass style matching Ausstellen page */
+  .airy-glass {
+    background: rgba(255, 255, 255, 0.88) !important;
+    backdrop-filter: blur(25px) !important;
+    -webkit-backdrop-filter: blur(25px) !important;
+    border: 1px solid rgba(255, 255, 255, 1) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.10), inset 0 0 0 1px rgba(255, 255, 255, 0.5) !important;
+    border-radius: 20px !important;
+  }
+</style>
 
-<!-- Light Section Background Container for Grouping -->
-<div class="bg-slate-50/50 rounded-xl border border-slate-100 px-6 max-w-screen-xl mx-auto mt-2 md:mt-4">
+<div class="bg-transparent">
+  <div class="max-w-7xl mx-auto px-4 py-1 pb-6">
+    <!-- Einheitlicher Glass-Container -->
+    <div class="airy-glass p-4 mt-0">
 
-  <!-- Full Width Header equivalent -->
-  <div class="no-box mx-[-1rem] sm:mx-[-1.5rem] lg:mx-[-1.5rem] mt-[-0.5rem] mb-6">
-    <div class="flex flex-col sm:flex-row sm:items-baseline space-y-1 sm:space-y-0 sm:space-x-4">
-      <h1 class="text-xl font-bold text-gray-900 leading-none">VC Status Management</h1>
-      <span class="text-sm text-gray-500 sm:border-l border-gray-300 sm:pl-4">Live-Verwaltung und Statuskontrolle ausgestellter Verifiable Credentials</span>
+    <!-- Title -->
+    <div class="mb-3">
+      <h1 class="text-lg font-bold text-gray-900">VC Status Management</h1>
+      <p class="text-xs text-gray-500 mt-0.5">Live-Verwaltung und Statuskontrolle ausgestellter Verifiable Credentials</p>
     </div>
-  </div>
 
   <!-- Error Message Banner (if present) -->
   {% if error_message %}
@@ -42,7 +53,7 @@
   {% endif %}
 
   <!-- Ultra-Compact One-Line Stats Cards -->
-  <div class="grid grid-cols-3 gap-1 mb-2">
+    <div class="grid grid-cols-3 gap-1 mb-2">
     <!-- Active VCs -->
     <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-1 relative overflow-hidden">
       <div class="absolute top-0 left-0 w-1 h-full bg-green-500"></div>
@@ -71,8 +82,8 @@
     </div>
   </div>
 
-  <!-- Ultra-Compact Search And Filter Controls -->
-  <div class="bg-white rounded-lg shadow-sm mb-1 p-1 border border-slate-200">
+    <!-- Ultra-Compact Search And Filter Controls -->
+    <div class="bg-white rounded-lg shadow-sm mb-1 p-1 border border-slate-200">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-1 md:space-y-0 md:space-x-2">
       <!-- Search Box -->
       <div class="relative flex-grow md:max-w-md w-full">
@@ -128,8 +139,8 @@
     </div>
   </div>
 
-  <!-- Ultra-Compact Table Container -->
-  <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-slate-200">
+    <!-- Ultra-Compact Table Container -->
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-slate-200">
     <div class="overflow-x-auto">
       <table class="min-w-full divide-y divide-slate-200" id="vcTable">
         <thead class="bg-slate-50">
@@ -167,6 +178,12 @@
             <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-slate-600 uppercase tracking-wider cursor-pointer" onclick="sortTable('lastAction')">
               <div class="flex items-center">
                 Letzte Aktion
+                <svg class="w-4 h-4 ml-1 sort-icon hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"></svg>
+              </div>
+            </th>
+            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-slate-600 uppercase tracking-wider cursor-pointer" onclick="sortTable('ablaufdatum')">
+              <div class="flex items-center">
+                Ablaufdatum
                 <svg class="w-4 h-4 ml-1 sort-icon hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"></svg>
               </div>
             </th>
@@ -217,6 +234,15 @@
                   {{ cred.updated_at|default('') }}
                 {% endif %}
               </td>
+              <td class="px-3 py-2 whitespace-nowrap text-sm text-slate-500">
+                {% if cred.expiry_date %}
+                  {{ cred.expiry_date.strftime('%d.%m.%Y') }}
+                {% elif cred.expiryDate and cred.expiryDate not in ['N/A', 'Parse Error', 'Error', ''] %}
+                  {{ cred.expiryDate }}
+                {% else %}
+                  <span class="text-slate-300">—</span>
+                {% endif %}
+              </td>
               <td class="px-3 py-2 whitespace-nowrap text-sm text-slate-500 text-right flex justify-center space-x-2">
                 {% if cred.validity %}
                 <button type="button" 
@@ -250,7 +276,7 @@
             {% endfor %}
           {% else %}
             <tr>
-              <td colspan="7" class="px-4 py-12 text-center text-sm text-slate-500">
+              <td colspan="8" class="px-4 py-12 text-center text-sm text-slate-500">
                 <svg class="mx-auto h-12 w-12 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
@@ -277,10 +303,10 @@
         Scrollen Sie nach rechts für die vollständige Tabelle →
       </div>
     </div>
-  </div>
+    </div>
 
-  <!-- Compact Pagination Controls -->
-  <div class="mt-4 bg-white rounded-xl shadow-sm p-4 border border-slate-200">
+    <!-- Compact Pagination Controls -->
+    <div class="mt-4 bg-white rounded-xl shadow-sm p-4 border border-slate-200">
     <div class="flex items-center justify-between">
       <div class="flex-1 flex justify-between sm:hidden">
         <button id="prev-page-mobile" class="relative inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -324,6 +350,8 @@
     </div>
   </div>
 
+    </div>
+  </div>
 </div>
 
 <script src="https://unpkg.com/@popperjs/core@2"></script>
@@ -425,7 +453,7 @@
   
   // Get column index by name
   function getColumnIndex(columnName) {
-    const headers = ['id', 'matrikelnr', 'firstName', 'lastName', 'status', 'lastAction'];
+    const headers = ['id', 'matrikelnr', 'firstName', 'lastName', 'status', 'lastAction', 'ablaufdatum'];
     return headers.indexOf(columnName);
   }
   
