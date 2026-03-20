@@ -24,12 +24,31 @@
 <div class="bg-transparent">
   <div class="max-w-7xl mx-auto px-4 py-1 pb-6">
     <!-- Einheitlicher Glass-Container -->
-    <div class="airy-glass p-4 mt-0">
+    <div class="airy-glass p-4 mt-0 flex flex-col overflow-hidden" style="height: calc(100vh - 120px);">
 
-    <!-- Title -->
-    <div class="mb-3">
-      <h1 class="text-lg font-bold text-gray-900">VC Status Management</h1>
-      <p class="text-xs text-gray-500 mt-0.5">Live-Verwaltung und Statuskontrolle ausgestellter Verifiable Credentials</p>
+    <!-- Compact Header Row: Title + Stats inline -->
+    <div class="flex items-center justify-between mb-2">
+      <div>
+        <h1 class="text-base font-bold text-gray-900 leading-tight">VC Status Management</h1>
+        <p class="text-xs text-gray-500">Live-Verwaltung ausgestellter Verifiable Credentials</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1 bg-white rounded-lg border border-slate-200 px-2 py-1 shadow-sm">
+          <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+          <span class="text-sm font-bold text-green-600" id="active-count">{{ valid_credentials }}</span>
+          <span class="text-xs text-slate-500">Aktiv</span>
+        </div>
+        <div class="flex items-center gap-1 bg-white rounded-lg border border-slate-200 px-2 py-1 shadow-sm">
+          <div class="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+          <span class="text-sm font-bold text-red-600" id="revoked-count">{{ invalid_credentials }}</span>
+          <span class="text-xs text-slate-500">Widerrufen</span>
+        </div>
+        <div class="flex items-center gap-1 bg-white rounded-lg border border-slate-200 px-2 py-1 shadow-sm">
+          <div class="w-1.5 h-1.5 rounded-full bg-blue-700"></div>
+          <span class="text-sm font-bold text-blue-700" id="total-count">{{ total_credentials }}</span>
+          <span class="text-xs text-slate-500">Gesamt</span>
+        </div>
+      </div>
     </div>
 
   <!-- Error Message Banner (if present) -->
@@ -52,36 +71,6 @@
   </div>
   {% endif %}
 
-  <!-- Ultra-Compact One-Line Stats Cards -->
-    <div class="grid grid-cols-3 gap-1 mb-2">
-    <!-- Active VCs -->
-    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-1 relative overflow-hidden">
-      <div class="absolute top-0 left-0 w-1 h-full bg-green-500"></div>
-      <div class="text-center">
-        <span class="text-lg font-bold text-green-600" id="active-count">{{ valid_credentials }}</span>
-        <span class="text-xs text-slate-600 ml-1">Aktive VCs</span>
-      </div>
-    </div>
-    
-    <!-- Revoked VCs -->
-    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-1 relative overflow-hidden">
-      <div class="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
-      <div class="text-center">
-        <span class="text-lg font-bold text-red-600" id="revoked-count">{{ invalid_credentials }}</span>
-        <span class="text-xs text-slate-600 ml-1">Widerrufene VCs</span>
-      </div>
-    </div>
-    
-    <!-- Total VCs -->
-    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-1 relative overflow-hidden">
-      <div class="absolute top-0 left-0 w-1 h-full bg-blue-700"></div>
-      <div class="text-center">
-        <span class="text-lg font-bold text-blue-700" id="total-count">{{ total_credentials }}</span>
-        <span class="text-xs text-slate-600 ml-1">Gesamt VCs</span>
-      </div>
-    </div>
-  </div>
-
     <!-- Ultra-Compact Search And Filter Controls -->
     <div class="bg-white rounded-lg shadow-sm mb-1 p-1 border border-slate-200">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-1 md:space-y-0 md:space-x-2">
@@ -92,8 +81,9 @@
             <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
           </svg>
         </div>
-        <input type="text" id="search-input" placeholder="Suche nach ID, Name, Matrikelnr..." 
+        <input type="text" id="search-input" 
                class="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md focus:ring-blue-700 focus:border-blue-700 sm:text-sm"
+               placeholder="Suche nach MitarbeiterID, Name..."
                onkeyup="filterTable()">
       </div>
       
@@ -140,8 +130,8 @@
   </div>
 
     <!-- Ultra-Compact Table Container -->
-    <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-slate-200">
-    <div class="overflow-x-auto">
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-slate-200 flex-1 flex flex-col min-h-0">
+    <div class="overflow-x-auto overflow-y-auto flex-1">
       <table class="min-w-full divide-y divide-slate-200" id="vcTable">
         <thead class="bg-slate-50">
           <tr>
@@ -153,7 +143,7 @@
             </th>
             <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-slate-600 uppercase tracking-wider cursor-pointer" onclick="sortTable('matrikelnr')">
               <div class="flex items-center">
-                Matrikelnummer
+                MitarbeiterID
                 <svg class="w-4 h-4 ml-1 sort-icon hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"></svg>
               </div>
             </th>
@@ -306,50 +296,28 @@
     </div>
 
     <!-- Compact Pagination Controls -->
-    <div class="mt-4 bg-white rounded-xl shadow-sm p-4 border border-slate-200">
-    <div class="flex items-center justify-between">
-      <div class="flex-1 flex justify-between sm:hidden">
-        <button id="prev-page-mobile" class="relative inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">
-          Zurück
-        </button>
-        <button id="next-page-mobile" class="ml-3 relative inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">
-          Weiter
-        </button>
-      </div>
-      <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-        <div>
-          <p class="text-sm text-slate-600">
-            Anzeige von 
-            <span class="font-medium" id="page-start">1</span>
-            bis
-            <span class="font-medium" id="page-end">10</span>
-            von
-            <span class="font-medium" id="total-items">{{ total_credentials }}</span>
-            Ergebnissen
-          </p>
-        </div>
-        <div>
-          <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination" id="pagination">
-            <button id="prev-page" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-slate-300 bg-white text-sm font-medium text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">
-              <span class="sr-only">Zurück</span>
-              <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-              </svg>
-            </button>
-            <!-- Page numbers will be inserted here by JavaScript -->
-            <span id="page-numbers"></span>
-            <button id="next-page" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-slate-300 bg-white text-sm font-medium text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">
-              <span class="sr-only">Weiter</span>
-              <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-              </svg>
-            </button>
-          </nav>
-        </div>
+    <div class="mt-1 flex items-center justify-between px-1 py-1">
+      <p class="text-xs text-slate-500">
+        <span id="page-start">1</span>–<span id="page-end">10</span> von <span id="total-items">{{ total_credentials }}</span>
+      </p>
+      <div class="flex items-center gap-1">
+        <button id="prev-page-mobile" class="px-2 py-1 text-xs border border-slate-300 rounded bg-white hover:bg-slate-50 disabled:opacity-40">←</button>
+        <button id="prev-page" class="px-2 py-1 text-xs border border-slate-300 rounded bg-white hover:bg-slate-50 disabled:opacity-40">‹</button>
+        <span id="page-numbers" class="flex items-center gap-1"></span>
+        <button id="next-page" class="px-2 py-1 text-xs border border-slate-300 rounded bg-white hover:bg-slate-50 disabled:opacity-40">›</button>
+        <button id="next-page-mobile" class="px-2 py-1 text-xs border border-slate-300 rounded bg-white hover:bg-slate-50 disabled:opacity-40">→</button>
       </div>
     </div>
-  </div>
 
+    <!-- Footer -->
+    <div class="mt-auto pt-2 border-t border-slate-200 flex items-center justify-between">
+      <span class="text-xs text-slate-500">BVG Verifiable Credential Issuer &mdash; VERITAS</span>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-800 font-medium">ECDSA</span>
+        <span class="px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-800 font-medium">eIDAS 2.0 konform</span>
+        <span class="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-600 font-medium">SD-JWT</span>
+      </div>
+    </div>
     </div>
   </div>
 </div>
