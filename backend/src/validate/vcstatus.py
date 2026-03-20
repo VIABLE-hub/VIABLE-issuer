@@ -478,6 +478,16 @@ def is_valid(identifier):
     if entry:
         logger.info(
             f"Found credential with validity: {entry.validity}")
+        # Check if credential has expired by date
+        if entry.expiry_date:
+            expiry = entry.expiry_date if entry.expiry_date.tzinfo else entry.expiry_date.replace(tzinfo=timezone.utc)
+            if datetime.now(tz=timezone.utc) > expiry:
+                logger.info(f"Credential {identifier} has expired at {expiry}")
+                try:
+                    record_student_id_verified(success=False, duration_seconds=duration)
+                except Exception as e:
+                    logger.warning(f"Could not record metrics: {e}")
+                return jsonify({"valid": 0})
         # Record successful verification
         try:
             record_student_id_verified(success=True, duration_seconds=duration)

@@ -87,9 +87,14 @@ def generate_bbs_credential(
         )
     credential_subject = get_credential_data(credential_data)
     logger.info(f"🔍 CREDENTIAL DEBUG - Final credential_subject: {credential_subject}")
+
+    # Extract credentialExpiry from stored VC_Offer data (format "YYYY-MM")
+    raw_offer_data = credential_data.credential_data if credential_data else {}
+    credential_expiry = raw_offer_data.get('credentialExpiry', '') if isinstance(raw_offer_data, dict) else ''
+
     # Create the Verifiable Credential payload
     uniqID = f"urn:uuid:{str(uuid4())}"
-    payload = get_payload(issuer_did, decoded_token, credential_subject, uniqID)
+    payload = get_payload(issuer_did, decoded_token, credential_subject, uniqID, credential_expiry=credential_expiry)
 
     nonce = generate_nonce(20)
     payload["nonce"] = nonce
@@ -156,7 +161,15 @@ def generate_bbs_credential(
         "typ": "JWT",
     }
 
-    vc_validity = VC_validity(identifier=unique_id, credential_data=payload)
+    # Compute expiry_date for VC_validity from credentialExpiry (format "YYYY-MM")
+    import calendar as _calendar
+    vc_expiry_dt = None
+    if credential_expiry:
+        _year, _month = int(credential_expiry[:4]), int(credential_expiry[5:7])
+        _last_day = _calendar.monthrange(_year, _month)[1]
+        vc_expiry_dt = datetime(_year, _month, _last_day, 23, 59, 59, tzinfo=timezone.utc)
+
+    vc_validity = VC_validity(identifier=unique_id, credential_data=payload, expiry_date=vc_expiry_dt)
     db.session.add(vc_validity)
     db.session.commit()
 
@@ -187,13 +200,25 @@ def generate_bbs_credential(
     ), 200
 
 
-def get_payload(issuer_did, decoded_token, credential_subject, uniqID):
+def get_payload(issuer_did, decoded_token, credential_subject, uniqID, credential_expiry=None):
+    import calendar
+    if credential_expiry:
+        # Format: "YYYY-MM" → last day of that month, 23:59:59 UTC
+        year, month = int(credential_expiry[:4]), int(credential_expiry[5:7])
+        last_day = calendar.monthrange(year, month)[1]
+        expiry_dt = datetime(year, month, last_day, 23, 59, 59, tzinfo=timezone.utc)
+        exp_timestamp = int(expiry_dt.timestamp())
+        expiration_date_str = expiry_dt.isoformat()
+    else:
+        exp_timestamp = int(datetime.now(tz=timezone.utc).timestamp()) + 60 * 60
+        expiration_date_str = (datetime.utcnow() + timedelta(hours=1)).isoformat()
+
     payload = {
         "iat": int(datetime.now(tz=timezone.utc).timestamp()) - 60,
         "iss": issuer_did,
         "sub": decoded_token.get("sub", ""),
         # 1 hour expiration
-        "exp": int(datetime.now(tz=timezone.utc).timestamp()) + 60 * 60,
+        "exp": exp_timestamp,
         "nbf": int(datetime.now(tz=timezone.utc).timestamp()),
         "jti": uniqID,
         "vc": {
@@ -208,7 +233,7 @@ def get_payload(issuer_did, decoded_token, credential_subject, uniqID):
                 "id": "https://api-conformance.ebsi.eu/trusted-schemas-registry/v3/schemas/zDpWGUBenmqXzurskry9Nsk6vq2R8thh9VSeoRqguoyMD",
                 "type": "FullJsonSchemaValidator2021",
             },
-            "expirationDate": (datetime.utcnow() + timedelta(hours=1)).isoformat(),
+            "expirationDate": expiration_date_str,
         },
     }
 

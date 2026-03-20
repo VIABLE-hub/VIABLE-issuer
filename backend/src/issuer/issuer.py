@@ -228,6 +228,7 @@ def index():
         "image": credential_data.get('image'),
         "studentId": credential_data.get('studentId'),
         "studentIdPrefix": credential_data.get('studentIdPrefix'),
+        "credentialExpiry": credential_data.get('credentialExpiry', ''),
         "theme": theme_data
     }
 
@@ -256,7 +257,8 @@ def index():
         'default_logo': default_logo,
         'profile_image': credential_data.get('image'),  # Übertrage auch das aktuelle Bild
         'theme_icon': credential_data.get('theme[icon]'),  # Übertrage auch das aktuelle Logo
-        'theme_icon_url': credential_data.get('theme_icon_url')  # Übertrage auch die URL für direkten Zugriff
+        'theme_icon_url': credential_data.get('theme_icon_url'),  # Übertrage auch die URL für direkten Zugriff
+        'credentialExpiry': credential_data.get('credentialExpiry', ''),  # Gültig bis (YYYY-MM)
     }
 
     # Load config logo as base64 for form display if no custom icon was uploaded
@@ -450,6 +452,21 @@ def get_credential_issuer_metadata():
 def get_openid_configuration():
     logger.info("Received request for openid configuration")
     return openid_configuration()
+
+
+@issuer.route("/cancel-offer/<uuid>", methods=["POST"])
+def cancel_offer(uuid):
+    """Sofort ein offenes Angebot ungültig machen (QR Code stoppen)."""
+    from src.models import VC_Offer, db
+    from datetime import datetime, timezone
+    offer = VC_Offer.query.filter_by(uuid=uuid).first()
+    if not offer:
+        return jsonify({"error": "Offer not found"}), 404
+    offer.used = True
+    offer.expires_at = datetime.now(timezone.utc)
+    db.session.commit()
+    logger.info(f"Offer {uuid} manually cancelled")
+    return jsonify({"status": "cancelled", "uuid": uuid})
 
 
 @issuer.route("/credential-offer/<Uid>", methods=["GET"])
