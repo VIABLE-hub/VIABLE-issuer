@@ -213,17 +213,23 @@
                 
             </div>
             
-            <!-- Platform Footer -->
-            <div style="margin-top: 1.5rem; text-align: center; font-size: 0.75rem; color: #6b7280;">
-                <p>Platform</p>
-                <p style="margin-top: 0.25rem;">
-                    <i class="fas fa-shield-alt" style="margin-right: 0.25rem;"></i>
-                    Enforced Authentication System
-                </p>
-            </div>
-            
         </div>
     </div>
-    
+
+    <!-- Standard BVG Footer -->
+    <footer class="bg-white border-t border-gray-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+        <div class="flex items-center justify-between">
+          <a href="/" class="flex items-center">
+            <img src="{{ url_for('static', filename='BVG_Logo_07.2021.svg') }}" alt="BVG Logo" class="h-6 w-auto object-contain" />
+          </a>
+          <div class="flex items-center gap-4 text-xs text-gray-500">
+            <a href="/about" class="hover:text-gray-700 transition-colors">Über uns</a>
+            <a href="#" class="hover:text-gray-700 transition-colors">Impressum</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
 </body>
 </html>

@@ -969,4 +969,156 @@ checkStatus('your-credential-id');
             'base_url': f"{request.scheme}://{request.host}/api/v1",
             'authentication': 'Include your API key in the Authorization header as "Bearer your-api-key"'
         }
-    }) 
+    })
+
+
+# =============================================================================
+# QR CODE GENERATOR ENDPOINTS (Settings UI + API Key access)
+# =============================================================================
+
+_ALLOWED_VERIFIER_DOMAINS = [
+    'gv.viable-project.de',
+    'localhost:8081',
+    '127.0.0.1:8081',
+]
+
+
+def _check_ui_or_api_auth():
+    """
+    Allow either session login OR API key Bearer token.
+    Returns (ok: bool, error_response_or_None).
+    """
+    import re
+    from flask_login import current_user
+    # Session auth (settings UI)
+    if current_user.is_authenticated:
+        return True, None
+    # API key auth (external integrations)
+    auth_header = request.headers.get('Authorization', '')
+    if auth_header.startswith('Bearer '):
+        api_key_value = auth_header[7:]
+        api_key = APIKey.verify_key(api_key_value)
+        if not api_key:
+            for entry in API_KEYS:
+                if entry.get('key') == api_key_value and entry.get('is_active', True):
+                    return True, None
+            return False, (jsonify({'error': 'Invalid API key'}), 401)
+        return True, None
+    return False, (jsonify({'error': 'Authentication required', 'message': 'Login or provide Bearer API key'}), 401)
+
+
+@api_integration.route('/api/v1/qr/issuance', methods=['POST'])
+def api_qr_issuance():
+    """
+    Generate an issuance QR code with employee metadata.
+    Accessible via session login (Settings UI) or API key (Bearer token).
+
+    Body (JSON):
+      mitarbeiterId  string  required  – Employee / Mitarbeiter ID
+      firstName      string  required  – First name
+      lastName       string  required  – Last name
+      department     string  optional  – Department
+      role           string  optional  – Job role
+      validity_seconds int   optional  – Offer lifetime in seconds (default 120)
+
+    Returns:
+      offer_url, qr_code (base64 PNG), expires_at
+    """
+    ok, err = _check_ui_or_api_auth()
+    if not ok:
+        return err
+
+    try:
+        data = request.get_json() or {}
+
+        mitarbeiter_id = (data.get('mitarbeiterId') or data.get('employeeId') or '').strip()
+        first_name = data.get('firstName', '').strip()
+        last_name = data.get('lastName', '').strip()
+
+        missing = [f for f, v in [('mitarbeiterId', mitarbeiter_id), ('firstName', first_name), ('lastName', last_name)] if not v]
+        if missing:
+            return jsonify({'error': 'Missing required fields', 'required': ['mitarbeiterId', 'firstName', 'lastName'], 'missing': missing}), 400
+
+        validity_seconds = max(30, int(data.get('validity_seconds', 120)))
+
+        credential_data = {
+            'type': ['VerifiableCredential', 'BVGMitarbeiterCredential'],
+            'credentialSubject': {
+                'id': f"did:mitarbeiter:{mitarbeiter_id}",
+                'mitarbeiterId': mitarbeiter_id,
+                'firstName': first_name,
+                'lastName': last_name,
+                'department': data.get('department', ''),
+                'role': data.get('role', ''),
+            },
+            'issuer': 'system',
+            'issuanceDate': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        }
+
+        from .issuer.offer import get_offer_url
+        from .issuer.qr_codes import generate_qr_code
+
+        offer_url, _offer_uuid, expires_at = get_offer_url(credential_data, validity_seconds)
+        qr_b64 = generate_qr_code(offer_url)
+
+        return jsonify({
+            'success': True,
+            'offer_url': offer_url,
+            'qr_code': {'data': qr_b64, 'format': 'png', 'encoding': 'base64'},
+            'expires_at': expires_at.isoformat() if expires_at else None,
+            'credential_subject': credential_data['credentialSubject'],
+        })
+
+    except Exception as e:
+        logging.error(f"Error generating issuance QR: {e}")
+        return jsonify({'error': 'Failed to generate issuance QR', 'message': str(e)}), 500
+
+
+@api_integration.route('/api/v1/qr/verification', methods=['POST'])
+def api_qr_verification():
+    """
+    Generate a verification QR code pointing to the verifier service.
+    Default verifier domain: gv.viable-project.de.
+    Accessible via session login (Settings UI) or API key (Bearer token).
+
+    Body (JSON, all optional):
+      verifier_domain  string  – Target verifier domain (default: gv.viable-project.de)
+
+    Returns:
+      verification_url, qr_code (base64 PNG)
+    """
+    ok, err = _check_ui_or_api_auth()
+    if not ok:
+        return err
+
+    try:
+        import re
+        data = request.get_json() or {}
+        verifier_domain = data.get('verifier_domain', 'gv.viable-project.de').strip()
+
+        # Security: only allow known trusted domains
+        is_viable_subdomain = bool(re.match(r'^[a-z0-9\-]+\.viable-project\.de(:\d{1,5})?$', verifier_domain))
+        is_localhost = verifier_domain in ('localhost:8081', '127.0.0.1:8081', 'localhost', '127.0.0.1')
+        if not (is_viable_subdomain or is_localhost):
+            return jsonify({
+                'error': 'Invalid verifier domain',
+                'message': 'Only *.viable-project.de subdomains or localhost are allowed',
+                'allowed_example': 'gv.viable-project.de',
+            }), 400
+
+        scheme = 'http' if is_localhost else 'https'
+        verification_url = f"{scheme}://{verifier_domain}"
+
+        from .issuer.qr_codes import generate_qr_code
+        qr_b64 = generate_qr_code(verification_url)
+
+        return jsonify({
+            'success': True,
+            'verification_url': verification_url,
+            'verifier_domain': verifier_domain,
+            'qr_code': {'data': qr_b64, 'format': 'png', 'encoding': 'base64'},
+        })
+
+    except Exception as e:
+        logging.error(f"Error generating verification QR: {e}")
+        return jsonify({'error': 'Failed to generate verification QR', 'message': str(e)}), 500 
