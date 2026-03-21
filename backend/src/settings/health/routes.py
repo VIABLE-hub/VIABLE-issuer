@@ -1,4 +1,4 @@
-from flask import request, jsonify, render_template
+from flask import request, jsonify, render_template, current_app
 import logging
 import json
 import psutil
@@ -7,6 +7,7 @@ import platform
 import datetime
 import os
 import sqlite3
+from sqlalchemy import text
 from ... import db
 from ...models import SystemSettings, VC_validity
 from ..core import APP_START_TIME
@@ -194,7 +195,7 @@ def get_database_health():
         
         # Test database connection
         try:
-            db.session.execute("SELECT 1")
+            db.session.execute(text("SELECT 1"))
             db_status = "healthy"
             message = "Connected"
         except Exception as e:
@@ -219,13 +220,14 @@ def get_database_health():
         }
 
 def get_service_health(service_type):
-    """Get health information for a service"""
+    """Get health information for a service by checking registered Flask routes."""
     try:
-        # Determine endpoint based on service type
         if service_type == "issuer":
-            endpoint = "/issuer/healthcheck"
+            blueprint_name = "issuer"
+            endpoint_path = "/issuer"
         elif service_type == "verifier":
-            endpoint = "/verifier/healthcheck"
+            blueprint_name = "verifier"
+            endpoint_path = "/verifier"
         else:
             return {
                 "status": "error",
@@ -233,22 +235,20 @@ def get_service_health(service_type):
                 "endpoint": "unknown",
                 "response_time": 0
             }
-        
-        # Get base URL from current app config
-        base_url = "http://localhost:8080"  # Default fallback
-        
-        # Test connection to endpoint
-        url = f"{base_url}{endpoint}"
-        result = common_utils.test_http_connection(url)
-        
-        # Determine status based on result
-        status = "healthy" if result["status"] == "success" else "error"
-        
+
+        # Check if the blueprint/module is registered in the app instead of
+        # making an outbound TCP connection (which fails when server uses HTTPS).
+        app = current_app._get_current_object()
+        is_registered = any(
+            rule.rule.startswith(endpoint_path)
+            for rule in app.url_map.iter_rules()
+        )
+        status = "operational" if is_registered else "not_registered"
         return {
             "status": status,
-            "endpoint": url,
-            "response_time": result["latency"],
-            "message": result["message"]
+            "endpoint": endpoint_path,
+            "response_time": 0,
+            "message": "Route registered" if is_registered else "Route not found"
         }
     except Exception as e:
         logger.error(f"Error getting {service_type} health: {e}")
