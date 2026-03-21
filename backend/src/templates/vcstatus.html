@@ -19,12 +19,14 @@
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.10), inset 0 0 0 1px rgba(255, 255, 255, 0.5) !important;
     border-radius: 20px !important;
   }
+  /* Prevent page-level scrolling — everything scrolls inside the glass */
+  body { overflow-y: hidden !important; }
 </style>
 
 <div class="bg-transparent">
-  <div class="max-w-7xl mx-auto px-4 py-1 pb-6">
+  <div class="max-w-7xl mx-auto px-4 pt-1 pb-0">
     <!-- Einheitlicher Glass-Container -->
-    <div class="airy-glass p-4 mt-0 flex flex-col overflow-hidden" style="height: calc(100vh - 120px);">
+    <div class="airy-glass p-4 mt-0 flex flex-col overflow-hidden" style="height: calc(100vh - 4.5rem);">
 
     <!-- Compact Header Row: Title + Stats inline -->
     <div class="flex items-center justify-between mb-2">
@@ -310,12 +312,11 @@
     </div>
 
     <!-- Footer -->
-    <div class="mt-auto pt-2 border-t border-slate-200 flex items-center justify-between">
-      <span class="text-xs text-slate-500">BVG Verifiable Credential Issuer &mdash; VERITAS</span>
-      <div class="flex items-center gap-2">
-        <span class="px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-800 font-medium">ECDSA</span>
-        <span class="px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-800 font-medium">eIDAS 2.0 konform</span>
-        <span class="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-600 font-medium">SD-JWT</span>
+    <div class="pt-2 border-t border-slate-200 flex items-center justify-between">
+      <span class="text-xs text-slate-500">© BVG 2025 &middot; Powered by OID4VCI + SD-JWT</span>
+      <div class="flex items-center gap-1.5">
+        <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+        <span class="text-xs text-slate-500">System aktiv</span>
       </div>
     </div>
     </div>
