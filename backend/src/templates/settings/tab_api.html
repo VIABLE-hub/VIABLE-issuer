@@ -915,9 +915,124 @@
               }
             }
           }
+        },
+
+        "/api/v1/qr/issuance": {
+          "post": {
+            "tags": ["QR Codes"],
+            "summary": "Generate issuance QR code",
+            "description": "Generates an openid-credential-offer:// QR code for the BVG Wallet App. Accessible via session login or API key (Bearer token).",
+            "security": [{"BearerAuth": []}],
+            "requestBody": {
+              "required": true,
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "required": ["mitarbeiterId", "firstName", "lastName"],
+                    "properties": {
+                      "mitarbeiterId": {"type": "string", "example": "BVG-12345", "description": "Mitarbeiter / Employee ID"},
+                      "firstName":     {"type": "string", "example": "Max"},
+                      "lastName":      {"type": "string", "example": "Mustermann"},
+                      "department":    {"type": "string", "example": "IT", "description": "Optional department"},
+                      "role":          {"type": "string", "example": "Busfahrer", "description": "Optional job role"},
+                      "validity_seconds": {"type": "integer", "minimum": 30, "maximum": 86400, "default": 120, "description": "Offer lifetime in seconds"}
+                    }
+                  }
+                }
+              }
+            },
+            "responses": {
+              "200": {
+                "description": "Issuance QR code generated",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "success":    {"type": "boolean"},
+                        "offer_url":  {"type": "string", "example": "openid-credential-offer://..."},
+                        "qr_code": {
+                          "type": "object",
+                          "properties": {
+                            "data":     {"type": "string", "description": "Base64-encoded PNG"},
+                            "format":   {"type": "string", "example": "png"},
+                            "encoding": {"type": "string", "example": "base64"}
+                          }
+                        },
+                        "expires_at":          {"type": "string", "format": "date-time"},
+                        "credential_subject":  {"type": "object"}
+                      }
+                    }
+                  }
+                }
+              },
+              "400": {"description": "Missing required fields"},
+              "401": {"description": "Unauthorized"},
+              "500": {"description": "Internal server error"}
+            }
+          }
+        },
+
+        "/api/v1/qr/verification": {
+          "post": {
+            "tags": ["QR Codes"],
+            "summary": "Generate verification QR code",
+            "description": "Generates a QR code pointing to the verifier service. Only *.viable-project.de subdomains or localhost are allowed as target domain.",
+            "security": [{"BearerAuth": []}],
+            "requestBody": {
+              "required": false,
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "verifier_domain": {
+                        "type": "string",
+                        "example": "gv.viable-project.de",
+                        "description": "Target verifier domain. Must be a *.viable-project.de subdomain or localhost."
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "responses": {
+              "200": {
+                "description": "Verification QR code generated",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "success":           {"type": "boolean"},
+                        "verification_url":  {"type": "string", "example": "https://gv.viable-project.de"},
+                        "verifier_domain":   {"type": "string"},
+                        "qr_code": {
+                          "type": "object",
+                          "properties": {
+                            "data":     {"type": "string", "description": "Base64-encoded PNG"},
+                            "format":   {"type": "string", "example": "png"},
+                            "encoding": {"type": "string", "example": "base64"}
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "400": {"description": "Invalid or disallowed verifier domain"},
+              "401": {"description": "Unauthorized"},
+              "500": {"description": "Internal server error"}
+            }
+          }
         }
       },
       "tags": [
+        {
+          "name": "QR Codes",
+          "description": "Generate QR codes for issuance and verification flows"
+        },
         {
           "name": "Credentials",
           "description": "Operations for managing verifiable credentials"
@@ -982,4 +1097,112 @@
       display: none;
     }
   }
-</style> 
+</style>
+
+<script>
+function qrGenerator() {
+  return {
+    issuance: {
+      mitarbeiterId: '',
+      firstName: '',
+      lastName: '',
+      department: '',
+      role: '',
+      validity_seconds: 120,
+      loading: false,
+      qrData: null,
+      expiresAt: null,
+      offerUrl: null,
+      error: null,
+    },
+    verification: {
+      domain: 'gv.viable-project.de',
+      loading: false,
+      qrData: null,
+      url: null,
+      error: null,
+    },
+
+    init() {
+      // nothing to pre-load
+    },
+
+    async generateIssuanceQR() {
+      this.issuance.loading = true;
+      this.issuance.error = null;
+      this.issuance.qrData = null;
+      try {
+        const resp = await fetch('/api/v1/qr/issuance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mitarbeiterId:    this.issuance.mitarbeiterId,
+            firstName:        this.issuance.firstName,
+            lastName:         this.issuance.lastName,
+            department:       this.issuance.department || undefined,
+            role:             this.issuance.role || undefined,
+            validity_seconds: parseInt(this.issuance.validity_seconds) || 120,
+          }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          this.issuance.error = data.error || `Fehler ${resp.status}`;
+          return;
+        }
+        this.issuance.qrData    = data.qr_code?.data ?? null;
+        this.issuance.expiresAt = data.expires_at ?? null;
+        this.issuance.offerUrl  = data.offer_url ?? null;
+      } catch (e) {
+        this.issuance.error = e.message;
+      } finally {
+        this.issuance.loading = false;
+      }
+    },
+
+    async generateVerificationQR() {
+      this.verification.loading = true;
+      this.verification.error = null;
+      this.verification.qrData = null;
+      try {
+        const resp = await fetch('/api/v1/qr/verification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ verifier_domain: this.verification.domain }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          this.verification.error = data.error || `Fehler ${resp.status}`;
+          return;
+        }
+        this.verification.qrData = data.qr_code?.data ?? null;
+        this.verification.url    = data.verification_url ?? null;
+      } catch (e) {
+        this.verification.error = e.message;
+      } finally {
+        this.verification.loading = false;
+      }
+    },
+
+    downloadQR(type) {
+      const imgData = type === 'issuance' ? this.issuance.qrData : this.verification.qrData;
+      if (!imgData) return;
+      const link = document.createElement('a');
+      link.href = 'data:image/png;base64,' + imgData;
+      link.download = `bvg-qr-${type}-${Date.now()}.png`;
+      link.click();
+    },
+
+    copyOfferUrl() {
+      if (this.issuance.offerUrl) {
+        navigator.clipboard.writeText(this.issuance.offerUrl).catch(() => {});
+      }
+    },
+
+    copyVerificationUrl() {
+      if (this.verification.url) {
+        navigator.clipboard.writeText(this.verification.url).catch(() => {});
+      }
+    },
+  };
+}
+</script> 
