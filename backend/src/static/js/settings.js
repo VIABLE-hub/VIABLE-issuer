@@ -108,6 +108,7 @@ document.addEventListener('alpine:init', () => {
     didMatchDetails: null,
     keyInventoryData: [],
     keyInventoryLoading: false,
+    keyInventoryError: null,
     keyGenerating: false,
     keyStatistics: {
       total: 0,
@@ -226,13 +227,8 @@ document.addEventListener('alpine:init', () => {
         }
       });
 
-      // Auto-refresh functionality when window gains focus (for key updates)
-      window.addEventListener('focus', () => {
-        if (this.activeTab === 'keys' && !this.keyInventoryLoading) {
-          console.log('🔑 Window focused - refreshing key inventory');
-          this.loadKeyInventory();
-        }
-      });
+      // Note: window focus auto-refresh removed to prevent duplicate error toasts.
+      // User can manually refresh via the Refresh button in the Keys tab.
 
       // Performance optimization: debounce window resize events
       let resizeTimeout;
@@ -2684,7 +2680,7 @@ document.addEventListener('alpine:init', () => {
                 this.showNotification('DID Document generated and saved.', 'success');
             })
             .catch(err => {
-                 this.showNotification(err.message, 'error');
+                 this.showNotification(`DID-Dokument Fehler: ${err.message}`, 'error');
             });
     },
 
