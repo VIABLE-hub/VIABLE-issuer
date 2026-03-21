@@ -79,7 +79,6 @@ def login():
     except Exception as e:
         logger.warning(f"Could not record auth success metric: {e}")
     login_user(user, remember=True, duration=timedelta(hours=1))
-    flash('Logged in successfully!', category='success')
     logger.info(f"Login Success: {name}")
     
     # Redirect to next page if provided
