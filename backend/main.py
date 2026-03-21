@@ -21,24 +21,46 @@ def get_local_ip():
 
 def get_ssl_context():
     """Get SSL context based on environment (Docker vs development)"""
-    # DOCKER NETWORK FIX: Use Docker-specific SSL certificates if available
+    import logging
+    logger = logging.getLogger(__name__)
+
+    # Docker mode: use Docker-specific SSL certificates
     if os.environ.get('DOCKER_MODE') == 'true':
         ssl_cert_path = os.environ.get('SSL_CERT_PATH', '/app/docker-cert.pem')
         ssl_key_path = os.environ.get('SSL_KEY_PATH', '/app/docker-key.pem')
-        
-        # Check if Docker SSL certificates exist
         if os.path.exists(ssl_cert_path) and os.path.exists(ssl_key_path):
-            import logging
-            logging.getLogger(__name__).info(f"Using Docker SSL certificates: {ssl_cert_path}")
+            logger.info(f"Using Docker SSL certificates: {ssl_cert_path}")
             return (ssl_cert_path, ssl_key_path)
         else:
-            import logging
-            logging.getLogger(__name__).warning("Docker SSL certificates not found, falling back to adhoc")
+            logger.warning("Docker SSL certificates not found, falling back to adhoc")
             return "adhoc"
-    else:
-        # Development mode: use adhoc certificates
-        import logging
-        logging.getLogger(__name__).info("Using adhoc SSL certificates for development")
+
+    # Development mode: prefer a persistent self-signed certificate so the
+    # browser only needs to trust it once (adhoc regenerates on every restart,
+    # which breaks fetch() calls after a server restart).
+    instance_dir = os.path.join(os.path.dirname(__file__), 'instance')
+    dev_cert = os.path.join(instance_dir, 'ssl_cert.pem')
+    dev_key  = os.path.join(instance_dir, 'ssl_key.pem')
+
+    if os.path.exists(dev_cert) and os.path.exists(dev_key):
+        logger.info(f"Using persistent dev SSL certificate: {dev_cert}")
+        return (dev_cert, dev_key)
+
+    # Generate a persistent cert if none exists yet
+    try:
+        import subprocess
+        os.makedirs(instance_dir, exist_ok=True)
+        subprocess.run([
+            'openssl', 'req', '-x509', '-newkey', 'rsa:2048',
+            '-keyout', dev_key, '-out', dev_cert,
+            '-days', '3650', '-nodes',
+            '-subj', '/CN=localhost/O=VERITAS Dev',
+            '-addext', 'subjectAltName=DNS:localhost,IP:127.0.0.1',
+        ], check=True, capture_output=True)
+        logger.info(f"Generated persistent dev SSL certificate: {dev_cert}")
+        return (dev_cert, dev_key)
+    except Exception as e:
+        logger.warning(f"Could not generate persistent SSL cert ({e}), falling back to adhoc")
         return "adhoc"
 
 def get_server_configuration():
@@ -61,7 +83,7 @@ def get_server_configuration():
     else:
         # Development mode configuration
         host = "0.0.0.0"
-        ssl_context = "adhoc"
+        ssl_context = get_ssl_context()
         logger.info("Development mode detected")
         logger.info(f"Binding to: {host}:{FLASK_PORT}")
         logger.info(f"SSL Context: {ssl_context}")

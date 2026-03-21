@@ -29,26 +29,51 @@ def register_routes(blueprint):
         """Get database status"""
         try:
             # Get database information
-            db_info = db_utils.get_database_info()
-            
+            raw = db_utils.get_database_info()
+
+            # Normalise field names so the frontend gets what it expects
+            db_info = {
+                "engine":    raw.get("type", "sqlite").upper(),
+                "version":   "3.x",
+                "status":    "Connected",
+                "location":  raw.get("path", ""),
+                "type":      raw.get("type", "sqlite"),
+                "size":      raw.get("size", "0 B"),
+                "size_bytes": 0,
+                "tables": {
+                    "count": len(raw.get("tables", [])),
+                    "list":  raw.get("tables", []),
+                },
+                "table_info": raw.get("table_info", {}),
+                "credentials": {
+                    "total_issued": raw.get("table_info", {}).get("vc_validity", 0),
+                    "active":       0,
+                    "revoked":      0,
+                },
+                "created":       raw.get("created", ""),
+                "modified":      raw.get("modified", ""),
+                "last_optimize": "Never",
+            }
+
             # Get last backup time
             success, backups = db_utils.list_database_backups()
             last_backup = backups[0] if success and backups else None
-            
-            # Create response
+            db_info["last_backup"] = last_backup["datetime"] if last_backup else "Never"
+
             response = {
                 "status": "success",
                 "database": db_info,
                 "last_backup": last_backup
             }
-            
+
             return jsonify(response)
         except Exception as e:
             logger.error(f"Error getting database status: {e}")
             return jsonify({
-                "status": "error", 
+                "status": "error",
                 "message": str(e),
                 "database": {
+                    "engine": "Unknown",
                     "type": "unknown",
                     "size": "unknown"
                 },
