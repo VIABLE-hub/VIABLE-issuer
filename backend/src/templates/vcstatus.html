@@ -74,60 +74,46 @@
   {% endif %}
 
     <!-- Ultra-Compact Search And Filter Controls -->
-    <div class="bg-white rounded-lg shadow-sm mb-1 p-1 border border-slate-200">
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-1 md:space-y-0 md:space-x-2">
+    <div class="bg-white rounded-lg shadow-sm mb-1 border border-slate-200 px-2 py-1">
+    <div class="flex flex-row items-center gap-1.5 flex-wrap">
       <!-- Search Box -->
-      <div class="relative flex-grow md:max-w-md w-full">
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <svg class="h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+      <div class="relative flex-grow min-w-0">
+        <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+          <svg class="h-3 w-3 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
           </svg>
         </div>
-        <input type="text" id="search-input" 
-               class="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md focus:ring-blue-700 focus:border-blue-700 sm:text-sm"
+        <input type="text" id="search-input"
+               class="block w-full pl-7 pr-2 py-0.5 text-xs border border-slate-300 rounded focus:ring-[#F0D722] focus:border-[#F0D722]"
                placeholder="Suche nach MitarbeiterID, Name..."
                onkeyup="filterTable()">
       </div>
-      
-      <div class="flex flex-wrap gap-1 items-center">
-        <!-- Status Filter Dropdown -->
-        <div class="relative w-full md:w-auto">
-          <select id="status-filter" 
-                  class="block w-full pl-3 pr-10 py-2 text-base border border-slate-300 focus:outline-none focus:ring-blue-700 focus:border-blue-700 sm:text-sm rounded-md"
-                  onchange="filterTable()">
-            <option value="all">Alle Status</option>
-            <option value="active">Aktiv</option>
-            <option value="revoked">Zurückgezogen</option>
-          </select>
-        </div>
-        
-        <!-- Items per page Dropdown -->
-        <div class="relative w-full md:w-auto">
-          <select id="items-per-page" 
-                  class="block w-full pl-3 pr-10 py-2 text-base border border-slate-300 focus:outline-none focus:ring-blue-700 focus:border-blue-700 sm:text-sm rounded-md"
-                  onchange="changeItemsPerPage()">
-            <option value="10">10 pro Seite</option>
-            <option value="50">50 pro Seite</option>
-            <option value="100">100 pro Seite</option>
-          </select>
-        </div>
-
-        <!-- Export CSV Button -->
-        <a href="/vcstatus/export/csv" class="w-full md:w-auto inline-flex justify-center items-center px-3 py-2 border border-slate-300 rounded-md shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-700">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          Export CSV
-        </a>
-
-        <!-- Refresh Button -->
-        <a href="/vcstatus" class="w-full md:w-auto inline-flex justify-center items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-700">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          Aktualisieren
-        </a>
-      </div>
+      <!-- Status Filter -->
+      <select id="status-filter"
+              class="py-0.5 pl-2 pr-6 text-xs border border-slate-300 rounded focus:outline-none focus:ring-[#F0D722] focus:border-[#F0D722]"
+              onchange="filterTable()">
+        <option value="all">Alle Status</option>
+        <option value="active">Aktiv</option>
+        <option value="revoked">Zurückgezogen</option>
+      </select>
+      <!-- Items per page -->
+      <select id="items-per-page"
+              class="py-0.5 pl-2 pr-6 text-xs border border-slate-300 rounded focus:outline-none focus:ring-[#F0D722] focus:border-[#F0D722]"
+              onchange="changeItemsPerPage()">
+        <option value="10">10 / Seite</option>
+        <option value="50">50 / Seite</option>
+        <option value="100">100 / Seite</option>
+      </select>
+      <!-- Export CSV -->
+      <a href="/vcstatus/export/csv" class="inline-flex items-center px-2 py-0.5 text-xs border border-slate-300 rounded text-slate-700 bg-white hover:bg-slate-50">
+        <svg class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        CSV
+      </a>
+      <!-- Refresh -->
+      <a href="/vcstatus" class="inline-flex items-center px-2 py-0.5 text-xs border border-transparent rounded text-white bg-blue-700 hover:bg-blue-800">
+        <svg class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        Aktualisieren
+      </a>
     </div>
   </div>
 
@@ -312,7 +298,7 @@
     </div>
 
     <!-- Footer -->
-    <div class="pt-2 border-t border-slate-200 flex items-center justify-between">
+    <div class="mt-auto pt-2 border-t border-slate-200 flex items-center justify-between flex-shrink-0">
       <span class="text-xs text-slate-500">© BVG 2025 &middot; Powered by OID4VCI + SD-JWT</span>
       <div class="flex items-center gap-1.5">
         <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
