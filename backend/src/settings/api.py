@@ -316,9 +316,16 @@ def openapi_spec():
     return jsonify(spec)
 
 
+@api_settings.route('/api-portal', methods=['GET'])
+@login_required
+def api_portal():
+    from flask import render_template
+    return render_template('api_portal.html')
+
+
 @api_settings.route('/docs', methods=['GET'])
 def api_docs():
     return jsonify({
-        'swagger_ui': '/settings',
+        'swagger_ui': '/api-portal',
         'openapi_spec': '/api/openapi.json',
     })

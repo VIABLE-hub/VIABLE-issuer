@@ -1,0 +1,400 @@
+{% extends "base.html" %}
+{% block title %}API Portal{% endblock %}
+
+{% block content %}
+<style>
+  .airy-glass {
+    background: rgba(255, 255, 255, 0.88) !important;
+    backdrop-filter: blur(25px) !important;
+    -webkit-backdrop-filter: blur(25px) !important;
+    border: 1px solid rgba(255, 255, 255, 1) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.10), inset 0 0 0 1px rgba(255, 255, 255, 0.5) !important;
+    border-radius: 20px !important;
+  }
+  .ap-panel {
+    background: rgba(255,255,255,0.60);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.5);
+  }
+  /* ── Swagger UI customization ──────────────────────────────────── */
+  #swagger-ui .swagger-ui .info { margin: 0; padding: 8px 0 4px; }
+  #swagger-ui .swagger-ui .info .title { font-size: 1rem; font-weight: 700; color: #1f2937; }
+  #swagger-ui .swagger-ui .info .description { font-size: 0.75rem; color: #6b7280; }
+  #swagger-ui .swagger-ui .scheme-container { padding: 8px 0; background: transparent; box-shadow: none; }
+  #swagger-ui .swagger-ui .opblock-tag { font-size: 0.8rem; font-weight: 600; border-bottom: 1px solid #e5e7eb; }
+  #swagger-ui .swagger-ui .opblock { border-radius: 8px; margin-bottom: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  #swagger-ui .swagger-ui .opblock-summary { padding: 6px 10px; }
+  #swagger-ui .swagger-ui .opblock-summary-description { font-size: 0.75rem; }
+  #swagger-ui .swagger-ui .btn { border-radius: 6px; font-size: 0.75rem; }
+  #swagger-ui .swagger-ui .servers > label { font-size: 0.75rem; }
+  #swagger-ui .swagger-ui select, #swagger-ui .swagger-ui input[type=text] {
+    font-size: 0.75rem; border-radius: 6px; padding: 4px 8px;
+  }
+  #swagger-ui .swagger-ui .authorize svg { fill: #7c3aed; }
+  #swagger-ui .swagger-ui .btn.authorize { border-color: #7c3aed; color: #7c3aed; }
+  #swagger-ui .swagger-ui .btn.authorize:hover { background: #7c3aed; color: white; }
+  #swagger-ui .swagger-ui .opblock.opblock-post .opblock-summary-method { background: #059669; }
+  #swagger-ui .swagger-ui .opblock.opblock-get .opblock-summary-method { background: #2563eb; }
+  #swagger-ui .swagger-ui .topbar { display: none; }
+
+  /* Key reveal animation */
+  .key-reveal { animation: fadeSlide 0.3s ease; }
+  @keyframes fadeSlide { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+</style>
+
+<div class="max-w-full mx-auto px-4 py-0 -mt-3">
+  <div x-data="apiPortal()" x-init="init()" class="airy-glass p-4 mt-0 flex flex-col overflow-hidden" style="height: calc(100vh - 6.25rem);">
+
+    <!-- ── Header ─────────────────────────────────────────────────── -->
+    <div class="flex items-center justify-between mb-3 flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <div>
+          <h1 class="text-base font-bold text-gray-900 leading-tight flex items-center gap-2">
+            <i class="fas fa-code text-purple-600 text-sm"></i>
+            API Portal
+          </h1>
+          <p class="text-xs text-gray-500">Swagger UI · API-Key-Verwaltung</p>
+        </div>
+        <!-- Key Badges -->
+        <div class="flex gap-2 ml-2">
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+            <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+            <span x-text="activeKeyCount"></span> aktiv
+          </span>
+          <span x-show="totalKeyCount !== activeKeyCount" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
+            <span x-text="totalKeyCount"></span> gesamt
+          </span>
+        </div>
+      </div>
+      <!-- Toggle Key Panel -->
+      <button @click="showKeyPanel = !showKeyPanel"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+              :class="showKeyPanel ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'">
+        <i class="fas fa-key text-xs"></i>
+        API-Keys
+        <i class="fas text-xs" :class="showKeyPanel ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+      </button>
+    </div>
+
+    <!-- ── Main Split Layout ───────────────────────────────────────── -->
+    <div class="flex gap-3 flex-1 min-h-0">
+
+      <!-- ── LEFT: API Key Management (collapsible) ──────────────── -->
+      <div x-show="showKeyPanel"
+           x-transition:enter="transition ease-out duration-200"
+           x-transition:enter-start="opacity-0 -translate-x-4"
+           x-transition:enter-end="opacity-100 translate-x-0"
+           x-transition:leave="transition ease-in duration-150"
+           x-transition:leave-start="opacity-100 translate-x-0"
+           x-transition:leave-end="opacity-0 -translate-x-4"
+           class="w-80 flex-shrink-0 flex flex-col gap-2 overflow-y-auto">
+
+        <!-- Key List Panel -->
+        <div class="ap-panel p-3 flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-semibold text-gray-700 uppercase tracking-wide flex items-center gap-1.5">
+              <i class="fas fa-list text-purple-600 text-xs"></i>
+              Meine API-Keys
+            </h3>
+            <button @click="loadApiKeys()" :disabled="loadingKeys"
+                    class="text-gray-400 hover:text-purple-600 transition-colors text-xs" title="Aktualisieren">
+              <i class="fas fa-sync-alt" :class="loadingKeys ? 'animate-spin' : ''"></i>
+            </button>
+          </div>
+
+          <!-- Error -->
+          <div x-show="keyError" class="bg-red-50 border border-red-200 rounded-lg p-2 text-xs text-red-700 flex items-center gap-2">
+            <i class="fas fa-exclamation-circle text-red-500"></i>
+            <span x-text="keyError"></span>
+            <button @click="loadApiKeys()" class="ml-auto text-red-500 hover:text-red-700 underline">Retry</button>
+          </div>
+
+          <!-- Loading -->
+          <div x-show="loadingKeys && !keyError" class="py-4 text-center text-xs text-gray-400">
+            <i class="fas fa-spinner fa-spin mr-1"></i>Laden…
+          </div>
+
+          <!-- Empty -->
+          <div x-show="!loadingKeys && !keyError && apiKeys.length === 0" class="py-4 text-center text-xs text-gray-400">
+            <i class="fas fa-key text-gray-300 text-2xl mb-1 block"></i>
+            Noch keine API-Keys
+          </div>
+
+          <!-- Key List -->
+          <div x-show="!loadingKeys && apiKeys.length > 0" class="space-y-1.5">
+            <template x-for="key in apiKeys" :key="key.id">
+              <div class="rounded-lg p-2.5 border transition-all"
+                   :class="key.is_active ? 'bg-white border-gray-200 hover:border-purple-200' : 'bg-gray-50 border-gray-200 opacity-60'">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                            :class="key.is_active ? 'bg-green-500' : 'bg-gray-400'"></span>
+                      <p class="text-xs font-semibold text-gray-800 truncate" x-text="key.name"></p>
+                    </div>
+                    <p class="text-xs text-gray-400 ml-3 font-mono truncate" x-text="key.prefix + '...'"></p>
+                    <div class="flex flex-wrap gap-1 ml-3 mt-1">
+                      <template x-for="scope in (key.scopes || [])" :key="scope">
+                        <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-700" x-text="scope"></span>
+                      </template>
+                    </div>
+                  </div>
+                  <button x-show="key.is_active"
+                          @click="revokeKey(key.id)"
+                          class="flex-shrink-0 p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all text-xs"
+                          title="Widerrufen">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+                <div class="mt-1.5 ml-3 text-[10px] text-gray-400 flex gap-2">
+                  <span x-show="key.usage_count > 0">
+                    <i class="fas fa-chart-bar mr-0.5"></i><span x-text="key.usage_count"></span>×
+                  </span>
+                  <span x-show="key.last_used_at">
+                    <i class="fas fa-clock mr-0.5"></i>
+                    <span x-text="key.last_used_at ? new Date(key.last_used_at).toLocaleDateString('de') : ''"></span>
+                  </span>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- Generate New Key Panel -->
+        <div class="ap-panel p-3 flex flex-col gap-2">
+          <h3 class="text-xs font-semibold text-gray-700 uppercase tracking-wide flex items-center gap-1.5">
+            <i class="fas fa-plus text-purple-600 text-xs"></i>
+            Neuen Key generieren
+          </h3>
+
+          <div class="space-y-2">
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-0.5">Name *</label>
+              <input x-model="newKey.name" type="text" placeholder="z.B. Wallet-Integration"
+                     class="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-200 bg-white/80">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-0.5">Scope</label>
+              <select x-model="newKey.scope"
+                      class="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-200 bg-white/80">
+                <option value="issuer">Aussteller (issuer)</option>
+                <option value="verifier">Verifier</option>
+                <option value="admin">Admin (alle Scopes)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-0.5">Beschreibung</label>
+              <input x-model="newKey.description" type="text" placeholder="Optional"
+                     class="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-200 bg-white/80">
+            </div>
+            <button @click="generateKey()"
+                    :disabled="generatingKey || !newKey.name.trim()"
+                    class="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all"
+                    :class="generatingKey || !newKey.name.trim()
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-purple-600 hover:bg-purple-700 text-white shadow-sm hover:shadow-md'">
+              <i class="fas" :class="generatingKey ? 'fa-spinner fa-spin' : 'fa-key'"></i>
+              <span x-text="generatingKey ? 'Generieren…' : 'Key generieren'"></span>
+            </button>
+          </div>
+
+          <!-- Key Reveal Banner -->
+          <div x-show="revealedKey" x-transition class="key-reveal bg-green-50 border border-green-200 rounded-lg p-2.5">
+            <p class="text-xs font-semibold text-green-800 mb-1 flex items-center gap-1">
+              <i class="fas fa-check-circle text-green-600"></i>
+              Einmalig sichtbar – jetzt kopieren!
+            </p>
+            <div class="flex items-center gap-1.5">
+              <code class="flex-1 text-xs bg-white border border-green-300 rounded px-2 py-1 font-mono text-green-800 break-all" x-text="revealedKey"></code>
+              <button @click="copyKey(revealedKey)" title="Kopieren"
+                      class="flex-shrink-0 p-1.5 rounded-lg bg-green-100 hover:bg-green-200 text-green-700 transition-all">
+                <i class="fas fa-copy text-xs"></i>
+              </button>
+            </div>
+            <button @click="revealedKey = null" class="mt-1.5 text-[10px] text-green-600 hover:text-green-800 underline">
+              Ausblenden (nicht mehr abrufbar)
+            </button>
+          </div>
+        </div>
+
+        <!-- Auth Info Card -->
+        <div class="ap-panel p-3">
+          <h3 class="text-xs font-semibold text-gray-700 uppercase tracking-wide flex items-center gap-1.5 mb-2">
+            <i class="fas fa-shield-alt text-blue-500 text-xs"></i>
+            Authentifizierung
+          </h3>
+          <p class="text-xs text-gray-500 mb-2">API-Key als Bearer-Token mitschicken:</p>
+          <code class="block text-xs bg-gray-800 text-green-400 rounded-lg p-2 font-mono leading-relaxed">
+            Authorization: Bearer stvc_...
+          </code>
+          <p class="text-xs text-gray-400 mt-1.5">
+            <i class="fas fa-info-circle mr-1"></i>
+            Im Swagger UI oben rechts auf <strong class="text-purple-600">Authorize</strong> klicken.
+          </p>
+        </div>
+      </div>
+
+      <!-- ── RIGHT: Swagger UI ────────────────────────────────────── -->
+      <div class="flex-1 ap-panel overflow-hidden flex flex-col min-w-0">
+        <div class="flex items-center justify-between px-3 py-2 border-b border-gray-100 flex-shrink-0">
+          <h3 class="text-xs font-semibold text-gray-700 uppercase tracking-wide flex items-center gap-1.5">
+            <i class="fas fa-book-open text-purple-600 text-xs"></i>
+            API-Dokumentation
+          </h3>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-gray-400">OpenAPI 3.0</span>
+            <a href="/api/openapi.json" target="_blank"
+               class="text-xs text-purple-600 hover:text-purple-800 flex items-center gap-1">
+              <i class="fas fa-external-link-alt text-xs"></i>
+              JSON
+            </a>
+          </div>
+        </div>
+        <div id="swagger-ui" class="flex-1 overflow-y-auto px-2 py-1"></div>
+      </div>
+
+    </div>
+
+    <!-- ── Toast ──────────────────────────────────────────────────── -->
+    <div x-show="toast.visible"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 translate-y-2"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-end="opacity-0 translate-y-2"
+         class="fixed bottom-5 right-5 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-xl text-sm font-medium"
+         :class="toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'">
+      <i class="fas" :class="toast.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'"></i>
+      <span x-text="toast.message"></span>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<!-- Swagger UI -->
+<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.18.2/swagger-ui.css" />
+<script src="https://unpkg.com/swagger-ui-dist@5.18.2/swagger-ui-bundle.js"></script>
+
+<script>
+function apiPortal() {
+  return {
+    // State
+    showKeyPanel: true,
+    apiKeys: [],
+    loadingKeys: false,
+    keyError: null,
+    newKey: { name: '', scope: 'issuer', description: '' },
+    generatingKey: false,
+    revealedKey: null,
+    toast: { visible: false, message: '', type: 'success', _timer: null },
+
+    // Computed
+    get activeKeyCount() { return this.apiKeys.filter(k => k.is_active).length; },
+    get totalKeyCount() { return this.apiKeys.length; },
+
+    // ── Init ──────────────────────────────────────────────────────
+    init() {
+      this.loadApiKeys();
+      this.$nextTick(() => this._initSwagger());
+    },
+
+    _initSwagger() {
+      if (typeof SwaggerUIBundle === 'undefined') {
+        // CDN not loaded yet — retry once
+        setTimeout(() => this._initSwagger(), 800);
+        return;
+      }
+      SwaggerUIBundle({
+        url: '/api/openapi.json',
+        dom_id: '#swagger-ui',
+        presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
+        layout: 'BaseLayout',
+        tryItOutEnabled: true,
+        persistAuthorization: true,
+        displayRequestDuration: true,
+        filter: true,
+        deepLinking: true,
+        validatorUrl: null,
+      });
+    },
+
+    // ── API Keys ──────────────────────────────────────────────────
+    async loadApiKeys() {
+      this.loadingKeys = true;
+      this.keyError = null;
+      try {
+        const res = await fetch('/api/keys/list');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || 'Fehler beim Laden');
+        this.apiKeys = data.keys || [];
+      } catch (e) {
+        this.keyError = e.message;
+      } finally {
+        this.loadingKeys = false;
+      }
+    },
+
+    async generateKey() {
+      if (!this.newKey.name.trim()) return;
+      this.generatingKey = true;
+      this.revealedKey = null;
+      try {
+        const res = await fetch('/api/keys/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: this.newKey.name.trim(),
+            scope: this.newKey.scope,
+            description: this.newKey.description.trim() || undefined,
+          }),
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || 'Generierung fehlgeschlagen');
+        this.revealedKey = data.key || data.api_key;
+        this.newKey = { name: '', scope: 'issuer', description: '' };
+        await this.loadApiKeys();
+        this.showToast('API-Key erfolgreich generiert', 'success');
+      } catch (e) {
+        this.showToast('Fehler: ' + e.message, 'error');
+      } finally {
+        this.generatingKey = false;
+      }
+    },
+
+    async revokeKey(keyId) {
+      if (!confirm('API-Key wirklich widerrufen? Dies kann nicht rückgängig gemacht werden.')) return;
+      try {
+        const res = await fetch(`/api/keys/revoke/${keyId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason: 'Manuell widerrufen im API Portal' }),
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || 'Widerruf fehlgeschlagen');
+        await this.loadApiKeys();
+        this.showToast('API-Key widerrufen', 'success');
+      } catch (e) {
+        this.showToast('Fehler: ' + e.message, 'error');
+      }
+    },
+
+    copyKey(value) {
+      navigator.clipboard.writeText(value).then(() => {
+        this.showToast('In Zwischenablage kopiert', 'success');
+      }).catch(() => {
+        this.showToast('Kopieren fehlgeschlagen', 'error');
+      });
+    },
+
+    showToast(message, type = 'success') {
+      if (this.toast._timer) clearTimeout(this.toast._timer);
+      this.toast = { visible: true, message, type, _timer: null };
+      this.toast._timer = setTimeout(() => { this.toast.visible = false; }, 3500);
+    },
+  };
+}
+</script>
+{% endblock %}
