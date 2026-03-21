@@ -72,6 +72,8 @@ document.addEventListener('alpine:init', () => {
     apiKeysLoading: false,
     apiKeyGenerating: false,
     newKeyName: '',
+    newKeyScope: 'issuer',
+    newKeyDescription: '',
     newApiKey: null,
     keyRevoking: false,
     
@@ -1231,7 +1233,9 @@ document.addEventListener('alpine:init', () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          name: this.newKeyName.trim()
+          name:        this.newKeyName.trim(),
+          scope:       this.newKeyScope || 'issuer',
+          description: this.newKeyDescription || '',
         }),
         credentials: 'same-origin'
       })

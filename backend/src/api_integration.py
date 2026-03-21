@@ -15,7 +15,6 @@ from uuid import uuid4
 from . import db
 from .models import APIKey, AuditLog, VC_validity, VC_Offer, SystemSettings
 from .settings.settings import get_current_user_email
-from .settings.api import API_KEYS
 
 # Create blueprint for API integration
 api_integration = Blueprint('api_integration', __name__)
@@ -49,32 +48,6 @@ def require_api_key(required_scope=None):
             
             # Verify API key using database model
             api_key = APIKey.verify_key(api_key_value)
-            
-            # If not found in database, check the in-memory list from settings/api.py
-            if not api_key:
-                # Try to find the key in the in-memory list
-                for key_entry in API_KEYS:
-                    if key_entry.get('key') == api_key_value and key_entry.get('is_active', True):
-                        # Create a mock APIKey object with the necessary methods
-                        class MockAPIKey:
-                            def __init__(self, key_data):
-                                self.name = key_data.get('name', 'API Key')
-                                self.key_id = key_data.get('id', '')
-                                # Map permissions to scopes for compatibility
-                                self.scopes = key_data.get('permissions', [])
-                                self.allowed_ips = []
-                                self.rate_limit_per_hour = 1000
-                                self.is_active = key_data.get('is_active', True)
-                            
-                            def has_scope(self, scope):
-                                # Check if the scope is in the permissions list or if the key has admin permissions
-                                return scope in self.scopes or 'admin' in self.scopes
-                            
-                            def check_rate_limit(self):
-                                return True
-                        
-                        api_key = MockAPIKey(key_entry)
-                        break
             
             if not api_key:
                 return jsonify({
@@ -999,9 +972,6 @@ def _check_ui_or_api_auth():
         api_key_value = auth_header[7:]
         api_key = APIKey.verify_key(api_key_value)
         if not api_key:
-            for entry in API_KEYS:
-                if entry.get('key') == api_key_value and entry.get('is_active', True):
-                    return True, None
             return False, (jsonify({'error': 'Invalid API key'}), 401)
         return True, None
     return False, (jsonify({'error': 'Authentication required', 'message': 'Login or provide Bearer API key'}), 401)

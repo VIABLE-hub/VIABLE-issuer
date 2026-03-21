@@ -1,1107 +1,299 @@
-<!-- API Integration Tab -->
-<div class="space-y-6">
+<!-- API Tab – compact one-pager -->
+<div class="h-full flex flex-col gap-3">
 
-  <!-- =====================================================================
-       QR Code Generator
-       ===================================================================== -->
-  <div x-data="qrGenerator()" x-init="init()" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
-      <svg class="w-5 h-5 mr-2 text-[#F0D722]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.24M16.243 7.757l1.414-1.414M6.343 17.657l-1.414 1.414M6.343 6.343L4.929 4.929M17.657 17.657l1.414 1.414M12 4a8 8 0 100 16A8 8 0 0012 4z"/>
-      </svg>
-      QR Code Generator
-    </h3>
+  <!-- ══════════════════════════════════════════════════════════════════
+       ROW 1 (flex-1): API Keys (left)  +  QR Generator (right)
+       ══════════════════════════════════════════════════════════════════ -->
+  <div class="flex gap-3 flex-1 min-h-0">
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- ── LEFT: API Key Management ─────────────────────────────────── -->
+    <div class="flex-1 settings-panel p-3 flex flex-col min-w-0 overflow-hidden">
+      <div class="flex items-center justify-between mb-2 flex-shrink-0">
+        <h4 class="text-xs font-semibold text-gray-700 uppercase tracking-wide">API Keys</h4>
+        <span class="text-xs text-gray-400" x-text="apiKeys.length + ' Key(s)'"></span>
+      </div>
 
-      <!-- ---- Issuance QR ---- -->
-      <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
-        <h4 class="font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-green-500"></span>
-          Ausstellen – Issuance QR
-        </h4>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Erstellt einen <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">openid-credential-offer://</code> Link für die BVG Wallet App.</p>
+      <!-- Table (scrollable) -->
+      <div class="flex-1 overflow-y-auto min-h-0 mb-2">
+        <div x-show="apiKeysLoading" class="flex justify-center py-4">
+          <svg class="animate-spin h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+        </div>
+        <div x-show="!apiKeysLoading && apiKeys.length === 0" class="text-center py-6 text-xs text-gray-400">
+          Noch keine API Keys vorhanden.
+        </div>
+        <table x-show="!apiKeysLoading && apiKeys.length > 0" class="w-full text-xs">
+          <thead>
+            <tr class="border-b border-gray-100">
+              <th class="text-left py-1 pr-2 font-medium text-gray-500">Name</th>
+              <th class="text-left py-1 pr-2 font-medium text-gray-500 hidden sm:table-cell">Key</th>
+              <th class="text-left py-1 pr-2 font-medium text-gray-500 hidden md:table-cell">Scope</th>
+              <th class="text-left py-1 pr-2 font-medium text-gray-500 hidden md:table-cell">Nutzungen</th>
+              <th class="text-center py-1 font-medium text-gray-500">Status</th>
+              <th class="text-center py-1 font-medium text-gray-500"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="key in apiKeys" :key="key.id">
+              <tr class="border-b border-gray-50 hover:bg-gray-50/50">
+                <td class="py-1.5 pr-2 font-medium text-gray-800" x-text="key.name"></td>
+                <td class="py-1.5 pr-2 font-mono text-gray-500 hidden sm:table-cell">
+                  <div class="flex items-center gap-1">
+                    <span x-text="key.masked_key"></span>
+                    <button x-show="key.key" @click="copyToClipboard(key.key)" title="Kopieren"
+                            class="text-gray-400 hover:text-gray-600">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+                <td class="py-1.5 pr-2 hidden md:table-cell">
+                  <template x-for="sc in (key.scopes || [])" :key="sc">
+                    <span class="inline-block mr-0.5 mb-0.5 px-1 py-0 rounded text-[10px] bg-blue-50 text-blue-700" x-text="sc"></span>
+                  </template>
+                </td>
+                <td class="py-1.5 pr-2 text-gray-500 hidden md:table-cell" x-text="key.usage_count || 0"></td>
+                <td class="py-1.5 text-center">
+                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium"
+                        :class="key.is_active ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'">
+                    <span class="w-1.5 h-1.5 rounded-full" :class="key.is_active ? 'bg-green-500' : 'bg-red-400'"></span>
+                    <span x-text="key.is_active ? 'Aktiv' : 'Widerrufen'"></span>
+                  </span>
+                </td>
+                <td class="py-1.5 text-center">
+                  <button x-show="key.is_active"
+                          @click="revokeApiKey(key.id)"
+                          :disabled="keyRevoking"
+                          title="Widerrufen"
+                          class="text-red-400 hover:text-red-600 disabled:opacity-30">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
 
-        <form @submit.prevent="generateIssuanceQR()" class="space-y-3">
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">MitarbeiterID *</label>
-              <input type="text" x-model="issuance.mitarbeiterId" placeholder="Z. B. BVG-12345" required
-                class="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-2 py-1.5 focus:ring-[#F0D722] focus:border-[#F0D722]">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Vorname *</label>
-              <input type="text" x-model="issuance.firstName" placeholder="Max" required
-                class="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-2 py-1.5 focus:ring-[#F0D722] focus:border-[#F0D722]">
-            </div>
+      <!-- Generate form (flex-shrink-0 → always visible) -->
+      <div class="border-t border-gray-100 pt-2 flex-shrink-0">
+        <p class="text-xs font-medium text-gray-600 mb-1.5">Neuen Key erstellen</p>
+        <form @submit.prevent="generateNewApiKey()" class="space-y-1.5">
+          <input type="text" x-model="newKeyName" required placeholder="Name, z. B. HIS-Integration"
+                 class="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:ring-[#F0D722] focus:border-[#F0D722] outline-none">
+          <input type="text" x-model="newKeyDescription" placeholder="Beschreibung (optional)"
+                 class="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:ring-[#F0D722] focus:border-[#F0D722] outline-none">
+          <div class="flex gap-2">
+            <select x-model="newKeyScope"
+                    class="flex-1 text-xs border border-gray-200 rounded px-2 py-1.5 focus:ring-[#F0D722] focus:border-[#F0D722] outline-none bg-white">
+              <option value="issuer">Issuer (Ausstellen)</option>
+              <option value="verifier">Verifier (Prüfen)</option>
+              <option value="admin">Admin (Alles)</option>
+            </select>
+            <button type="submit" :disabled="apiKeyGenerating"
+                    class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded bg-[#F0D722] text-gray-900 hover:bg-yellow-300 transition-colors disabled:opacity-50">
+              <svg x-show="apiKeyGenerating" class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+              <span x-text="apiKeyGenerating ? '…' : 'Generieren'"></span>
+            </button>
           </div>
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Nachname *</label>
-              <input type="text" x-model="issuance.lastName" placeholder="Mustermann" required
-                class="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-2 py-1.5 focus:ring-[#F0D722] focus:border-[#F0D722]">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Abteilung</label>
-              <input type="text" x-model="issuance.department" placeholder="Optional"
-                class="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-2 py-1.5 focus:ring-[#F0D722] focus:border-[#F0D722]">
-            </div>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Rolle</label>
-              <input type="text" x-model="issuance.role" placeholder="Optional"
-                class="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-2 py-1.5 focus:ring-[#F0D722] focus:border-[#F0D722]">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Gültigkeit (Sek.)</label>
-              <input type="number" x-model="issuance.validity_seconds" min="30" max="86400" value="120"
-                class="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-2 py-1.5 focus:ring-[#F0D722] focus:border-[#F0D722]">
-            </div>
-          </div>
-          <button type="submit" :disabled="issuance.loading"
-            class="w-full py-2 px-4 text-sm font-medium rounded bg-[#F0D722] text-gray-900 hover:bg-yellow-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2">
-            <svg x-show="issuance.loading" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-            </svg>
-            <span x-text="issuance.loading ? 'Generiere…' : 'QR Code generieren'"></span>
-          </button>
         </form>
 
-        <!-- Issuance QR Result -->
-        <div x-show="issuance.qrData" x-transition class="mt-4 text-center">
-          <div class="inline-block p-3 bg-white rounded-xl shadow border border-gray-200">
-            <img :src="'data:image/png;base64,' + issuance.qrData" alt="Issuance QR" class="w-48 h-48 mx-auto">
-          </div>
-          <p class="text-xs text-gray-500 mt-2">
-            Gültig bis: <span class="font-medium" x-text="issuance.expiresAt ? new Date(issuance.expiresAt).toLocaleTimeString('de-DE') : '–'"></span>
-          </p>
-          <div class="flex justify-center gap-2 mt-2">
-            <button @click="downloadQR('issuance')" class="text-xs px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600">
-              ⬇ Download
-            </button>
-            <button @click="copyOfferUrl()" class="text-xs px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600">
-              📋 URL kopieren
+        <!-- New key reveal banner -->
+        <div x-show="newApiKey" x-transition
+             class="mt-2 p-2 rounded-lg bg-yellow-50 border border-yellow-200">
+          <p class="text-[10px] text-yellow-700 font-medium mb-1">⚠ Nur jetzt sichtbar – jetzt kopieren!</p>
+          <div class="flex items-center gap-1">
+            <input type="text" readonly :value="newApiKey" id="new-api-key-field"
+                   class="flex-1 text-xs font-mono bg-white border border-yellow-200 rounded px-2 py-1 text-gray-800 focus:outline-none">
+            <button @click="copyToClipboard(newApiKey)"
+                    class="px-2 py-1 text-[10px] rounded bg-yellow-200 hover:bg-yellow-300 text-yellow-900 font-medium whitespace-nowrap">Kopieren</button>
+            <button @click="newApiKey = null" class="text-gray-400 hover:text-gray-600 ml-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
             </button>
           </div>
         </div>
-        <p x-show="issuance.error" x-text="issuance.error" class="mt-2 text-xs text-red-600 dark:text-red-400"></p>
+
+        <!-- Auth hint -->
+        <p class="mt-1.5 text-[10px] text-gray-400">
+          Header: <code class="bg-gray-100 px-1 rounded">Authorization: Bearer stvc_xxx</code>
+        </p>
+      </div>
+    </div>
+
+    <!-- ── RIGHT: QR Code Generator ──────────────────────────────────── -->
+    <div class="w-80 flex-shrink-0 settings-panel p-3 flex flex-col min-h-0 overflow-hidden"
+         x-data="qrGenerator()" x-init="init()">
+      <h4 class="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2 flex-shrink-0">QR-Code Generator</h4>
+
+      <!-- Tab switch -->
+      <div class="flex gap-1 mb-2 flex-shrink-0">
+        <button @click="qrTab = 'issuance'"
+                :class="qrTab === 'issuance' ? 'bg-[#F0D722] text-gray-900 font-semibold' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+                class="flex-1 text-xs py-1 rounded transition-colors">Ausstellen</button>
+        <button @click="qrTab = 'verification'"
+                :class="qrTab === 'verification' ? 'bg-blue-600 text-white font-semibold' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+                class="flex-1 text-xs py-1 rounded transition-colors">Verifizieren</button>
       </div>
 
-      <!-- ---- Verification QR ---- -->
-      <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
-        <h4 class="font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-blue-600"></span>
-          Verifizierung – Verification QR
-        </h4>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Erstellt einen QR Code, der zur Verifizierer-Domain <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">gv.viable-project.de</code> führt.</p>
-
-        <div class="space-y-3">
+      <!-- Issuance Form -->
+      <div x-show="qrTab === 'issuance'" class="flex flex-col flex-1 min-h-0 overflow-y-auto gap-1.5">
+        <div class="grid grid-cols-2 gap-1.5">
           <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Verifizierer-Domain</label>
-            <input type="text" x-model="verification.domain" placeholder="gv.viable-project.de"
-              class="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-2 py-1.5 focus:ring-blue-600 focus:border-blue-600 font-mono">
-            <p class="text-xs text-gray-400 mt-0.5">Nur <code>*.viable-project.de</code> Subdomains erlaubt.</p>
+            <label class="block text-[10px] text-gray-500 mb-0.5">MitarbeiterID *</label>
+            <input type="text" x-model="issuance.mitarbeiterId" placeholder="BVG-12345" required
+                   class="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:ring-[#F0D722] focus:border-[#F0D722] outline-none">
           </div>
+          <div>
+            <label class="block text-[10px] text-gray-500 mb-0.5">Vorname *</label>
+            <input type="text" x-model="issuance.firstName" placeholder="Max" required
+                   class="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:ring-[#F0D722] focus:border-[#F0D722] outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] text-gray-500 mb-0.5">Nachname *</label>
+            <input type="text" x-model="issuance.lastName" placeholder="Mustermann" required
+                   class="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:ring-[#F0D722] focus:border-[#F0D722] outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] text-gray-500 mb-0.5">Abteilung</label>
+            <input type="text" x-model="issuance.department" placeholder="Fahrbetrieb"
+                   class="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:ring-[#F0D722] focus:border-[#F0D722] outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] text-gray-500 mb-0.5">Rolle</label>
+            <input type="text" x-model="issuance.role" placeholder="Busfahrer"
+                   class="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:ring-[#F0D722] focus:border-[#F0D722] outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] text-gray-500 mb-0.5">Gültigkeit (s)</label>
+            <input type="number" x-model="issuance.validity_seconds" min="30" max="86400"
+                   class="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:ring-[#F0D722] focus:border-[#F0D722] outline-none">
+          </div>
+        </div>
 
-          <button @click="generateVerificationQR()" :disabled="verification.loading"
-            class="w-full py-2 px-4 text-sm font-medium rounded bg-blue-700 text-white hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2">
-            <svg x-show="verification.loading" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-            </svg>
-            <span x-text="verification.loading ? 'Generiere…' : 'Verification QR generieren'"></span>
-          </button>
-        </div>
-
-        <!-- Verification QR Result -->
-        <div x-show="verification.qrData" x-transition class="mt-4 text-center">
-          <div class="inline-block p-3 bg-white rounded-xl shadow border border-gray-200">
-            <img :src="'data:image/png;base64,' + verification.qrData" alt="Verification QR" class="w-48 h-48 mx-auto">
-          </div>
-          <p class="text-xs text-gray-500 mt-2">
-            URL: <a :href="verification.url" target="_blank" class="text-blue-600 underline font-mono" x-text="verification.url"></a>
-          </p>
-          <div class="flex justify-center gap-2 mt-2">
-            <button @click="downloadQR('verification')" class="text-xs px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600">
-              ⬇ Download
-            </button>
-            <button @click="copyVerificationUrl()" class="text-xs px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600">
-              📋 URL kopieren
-            </button>
-          </div>
-        </div>
-        <p x-show="verification.error" x-text="verification.error" class="mt-2 text-xs text-red-600 dark:text-red-400"></p>
-      </div>
-    </div>
-  </div>
-
-  <!-- API Key Management -->
-  <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="text-lg font-medium text-gray-900 dark:text-white flex items-center">
-        <svg class="w-5 h-5 mr-2 text-berlin-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 21H5v-6l2.257-2.257A6 6 0 1119 9z"></path>
-        </svg>
-        API Key Management
-      </h3>
-      
-      <!-- API Key Management Status -->
-      <div class="flex items-center">
-        <span class="px-2 py-1 text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 rounded-md">
-          Ready for use
-        </span>
-      </div>
-    </div>
-    
-    <div class="space-y-4">
-      <div x-show="apiKeysLoading" class="flex justify-center py-4">
-        <svg class="animate-spin h-8 w-8 text-berlin-blue" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-      </div>
-      
-      <template x-if="!apiKeysLoading">
-        <div>
-          <div class="mt-6">
-            <!-- API Keys Table -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
-              <h4 class="text-md font-semibold text-gray-900 dark:text-white mb-4">API Keys</h4>
-              
-              <div x-show="apiKeysLoading" class="flex justify-center py-6">
-                <svg class="animate-spin h-5 w-5 text-berlin-blue" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              </div>
-              
-              <div x-show="!apiKeysLoading" class="overflow-x-auto">
-                <table class="min-w-full api-keys-table" x-show="apiKeys.length > 0">
-                  <thead>
-                    <tr class="bg-gray-50 dark:bg-gray-700">
-                      <th class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-left">Name</th>
-                      <th class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-left mobile-hidden">Key</th>
-                      <th class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-left mobile-hidden">Status</th>
-                      <th class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-left mobile-hidden">Created</th>
-                      <th class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    <template x-for="key in apiKeys" :key="key.id">
-                      <tr>
-                        <td class="text-gray-900 dark:text-white font-medium" x-text="key.name"></td>
-                        <td class="mobile-hidden">
-                          <div class="flex items-center">
-                            <span class="text-gray-500 dark:text-gray-400 text-sm font-mono truncate max-w-xs" x-text="key.masked_key"></span>
-                            <div class="flex ml-2">
-                              <button @click="copyToClipboard(key.key)" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 mr-2" title="Copy API key" x-show="key.key">
-                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
-                              </svg>
-                            </button>
-                            </div>
-                          </div>
-                        </td>
-                        <td class="mobile-hidden">
-                          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium" 
-                                :class="key.is_active ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'">
-                            <span class="w-1.5 h-1.5 rounded-full mr-1" :class="key.is_active ? 'bg-green-500' : 'bg-red-500'"></span>
-                            <span x-text="key.is_active ? 'Active' : 'Revoked'"></span>
-                          </span>
-                        </td>
-                        <td class="text-gray-500 dark:text-gray-400 text-sm mobile-hidden" x-text="formatDate(key.created_at)"></td>
-                        <td class="text-center">
-                          <button x-show="key.is_active" 
-                                  @click="revokeApiKey(key.id)" 
-                                  :disabled="keyRevoking"
-                                  class="inline-flex items-center p-1 border border-transparent text-xs leading-4 font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                            </svg>
-                          </button>
-                          <span x-show="!key.is_active" class="text-gray-500 dark:text-gray-400 text-xs">Revoked</span>
-                        </td>
-                      </tr>
-                    </template>
-                  </tbody>
-                </table>
-              </div>
-              
-              <div x-show="apiKeys.length === 0" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg text-center">
-                <p class="text-gray-600 dark:text-gray-400">No API keys found. Generate a key below to get started.</p>
-              </div>
-            </div>
-          </div>
-          
-          <div class="mt-6">
-            <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Generate New API Key</h5>
-            <form @submit.prevent="generateNewApiKey()" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div class="col-span-1 sm:col-span-2">
-                <input 
-                  type="text" 
-                  x-model="newKeyName" 
-                  placeholder="Key Name (e.g. 'Production API Key')" 
-                  required
-                  class="block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md shadow-sm focus:ring-berlin-blue focus:border-berlin-blue sm:text-sm"
-                >
-              </div>
-              <div class="col-span-1">
-                <button 
-                  type="submit"
-                  :disabled="apiKeyGenerating"
-                  class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-berlin-blue hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-berlin-blue transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <svg x-show="apiKeyGenerating" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span x-text="apiKeyGenerating ? 'Generating...' : 'Generate Key'"></span>
-                </button>
-              </div>
-            </form>
-            
-            <!-- API Key Modal -->
-            <div x-show="newApiKey" class="mt-4 p-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
-              <div class="flex justify-between items-center mb-2">
-                <h6 class="font-medium text-gray-800 dark:text-gray-200">Your New API Key</h6>
-                <button @click="newApiKey = null" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                  </svg>
-                </button>
-              </div>
-              <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded p-3 mb-3">
-                <p class="text-xs text-yellow-800 dark:text-yellow-200">
-                  <svg class="inline-block w-4 h-4 mr-1 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                  </svg>
-                  Save this key now! It will not be shown again.
-                </p>
-              </div>
-              <div class="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded p-2">
-                <input 
-                  type="text" 
-                  id="api-key-display" 
-                  readonly 
-                  :value="newApiKey" 
-                  class="block w-full bg-transparent border-0 text-sm font-mono text-gray-900 dark:text-white focus:ring-0"
-                />
-                <button 
-                  @click="copyToClipboard(newApiKey)" 
-                  class="ml-2 p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded"
-                  title="Copy to clipboard"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
-                  </svg>
-                </button>
-              </div>
-              <div class="mt-3">
-                <button 
-                  @click="copyToClipboard(newApiKey)" 
-                  class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded bg-berlin-blue text-white hover:bg-blue-700 transition-colors"
-                >
-                  <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
-                  </svg>
-                  Copy to Clipboard
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </template>
-    </div>
-  </div>
-  
-  <!-- API Documentation Section -->
-  <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
-      <svg class="w-5 h-5 mr-2 text-berlin-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-      </svg>
-      API Documentation
-    </h3>
-    
-    <!-- Swagger UI Container -->
-    <div id="swagger-ui" class="mt-4"></div>
-    
-    <!-- API Endpoints Quick Reference -->
-    <div class="mt-6 space-y-4">
-      <h4 class="font-medium text-gray-800 dark:text-gray-200">Quick Reference</h4>
-      
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Credential Management -->
-        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
-          <h5 class="font-medium text-gray-800 dark:text-gray-200 mb-2 flex items-center">
-            <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-            Credential Management
-          </h5>
-          <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-            <li>• <code class="text-xs bg-gray-200 dark:bg-gray-800 px-1 rounded">POST /api/v1/credentials/issue</code> - Issue credential</li>
-            <li>• <code class="text-xs bg-gray-200 dark:bg-gray-800 px-1 rounded">POST /api/v1/credentials/verify</code> - Verify credential</li>
-            <li>• <code class="text-xs bg-gray-200 dark:bg-gray-800 px-1 rounded">GET /api/v1/credentials/status/{id}</code> - Check status</li>
-            <li>• <code class="text-xs bg-gray-200 dark:bg-gray-800 px-1 rounded">GET /api/credentials</code> - List all credentials</li>
-            <li>• <code class="text-xs bg-gray-200 dark:bg-gray-800 px-1 rounded">POST /api/credential/{identifier}/revoke</code> - Revoke a credential</li>
-            <li>• <code class="text-xs bg-gray-200 dark:bg-gray-800 px-1 rounded">POST /api/credential/{identifier}/restore</code> - Restore a revoked credential</li>
-            <li>• <code class="text-xs bg-gray-200 dark:bg-gray-800 px-1 rounded">POST /api/credential/{identifier}/delete</code> - Delete a credential</li>
-          </ul>
-        </div>
-        
-        <!-- System & Health -->
-        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
-          <h5 class="font-medium text-gray-800 dark:text-gray-200 mb-2 flex items-center">
-            <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-            System & Health
-          </h5>
-          <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-            <li>• <code class="text-xs bg-gray-200 dark:bg-gray-800 px-1 rounded">GET /api/v1/system/health</code> - System health</li>
-            <li>• <code class="text-xs bg-gray-200 dark:bg-gray-800 px-1 rounded">GET /api/system/health</code> - Detailed health</li>
-            <li>• <code class="text-xs bg-gray-200 dark:bg-gray-800 px-1 rounded">GET /settings/api/healthcheck</code> - API healthcheck</li>
-            <li>• <code class="text-xs bg-gray-200 dark:bg-gray-800 px-1 rounded">GET /health/system</code> - System metrics</li>
-          </ul>
-        </div>
-      </div>
-      
-      <!-- Authentication Note -->
-      <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-        <div class="flex items-start">
-          <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        <button @click="generateIssuanceQR()" :disabled="issuance.loading"
+                class="w-full py-1.5 text-xs font-medium rounded bg-[#F0D722] text-gray-900 hover:bg-yellow-300 transition-colors disabled:opacity-50 flex items-center justify-center gap-1">
+          <svg x-show="issuance.loading" class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
           </svg>
-          <div>
-            <h6 class="font-medium text-blue-800 dark:text-blue-200 mb-1">API Authentication</h6>
-            <p class="text-sm text-blue-700 dark:text-blue-300">
-              Generated API keys can be used to access all endpoints. Include your API key in the Authorization header: 
-              <code class="text-xs bg-blue-100 dark:bg-blue-800 px-1 rounded">Authorization: Bearer YOUR_API_KEY</code>
-            </p>
+          <span x-text="issuance.loading ? 'Generiere…' : 'QR generieren'"></span>
+        </button>
+
+        <p x-show="issuance.error" x-text="issuance.error" class="text-[10px] text-red-500"></p>
+
+        <!-- QR Result -->
+        <div x-show="issuance.qrData" x-transition class="flex flex-col items-center gap-1 mt-1">
+          <div class="p-2 bg-white rounded-lg border border-gray-200 shadow-sm">
+            <img :src="'data:image/png;base64,' + issuance.qrData" alt="Issuance QR" class="w-32 h-32">
+          </div>
+          <p class="text-[10px] text-gray-400">Gültig bis: <span class="font-medium text-gray-600" x-text="issuance.expiresAt ? new Date(issuance.expiresAt).toLocaleTimeString('de-DE') : '–'"></span></p>
+          <div class="flex gap-1">
+            <button @click="downloadQR('issuance')" class="text-[10px] px-2 py-0.5 rounded bg-gray-100 hover:bg-gray-200">⬇ Download</button>
+            <button @click="copyOfferUrl()" class="text-[10px] px-2 py-0.5 rounded bg-gray-100 hover:bg-gray-200">📋 URL</button>
           </div>
         </div>
       </div>
+
+      <!-- Verification Form -->
+      <div x-show="qrTab === 'verification'" class="flex flex-col flex-1 min-h-0 gap-1.5">
+        <div>
+          <label class="block text-[10px] text-gray-500 mb-0.5">Verifizierer-Domain</label>
+          <input type="text" x-model="verification.domain" placeholder="gv.viable-project.de"
+                 class="w-full text-xs font-mono border border-gray-200 rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500 outline-none">
+          <p class="text-[10px] text-gray-400 mt-0.5">Nur <code>*.viable-project.de</code> oder localhost</p>
+        </div>
+
+        <button @click="generateVerificationQR()" :disabled="verification.loading"
+                class="w-full py-1.5 text-xs font-medium rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-1">
+          <svg x-show="verification.loading" class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+          <span x-text="verification.loading ? 'Generiere…' : 'QR generieren'"></span>
+        </button>
+
+        <p x-show="verification.error" x-text="verification.error" class="text-[10px] text-red-500"></p>
+
+        <div x-show="verification.qrData" x-transition class="flex flex-col items-center gap-1">
+          <div class="p-2 bg-white rounded-lg border border-gray-200 shadow-sm">
+            <img :src="'data:image/png;base64,' + verification.qrData" alt="Verification QR" class="w-32 h-32">
+          </div>
+          <a :href="verification.url" target="_blank" class="text-[10px] text-blue-600 underline font-mono truncate max-w-full" x-text="verification.url"></a>
+          <div class="flex gap-1">
+            <button @click="downloadQR('verification')" class="text-[10px] px-2 py-0.5 rounded bg-gray-100 hover:bg-gray-200">⬇ Download</button>
+            <button @click="copyVerificationUrl()" class="text-[10px] px-2 py-0.5 rounded bg-gray-100 hover:bg-gray-200">📋 URL</button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       ROW 2: Swagger UI (collapsible, fixed height)
+       ══════════════════════════════════════════════════════════════════ -->
+  <div class="settings-panel flex-shrink-0" x-data="{ swaggerOpen: false }">
+    <button @click="swaggerOpen = !swaggerOpen; if(swaggerOpen && !window._swaggerInitialized) initSwagger()"
+            class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-white/40 transition-colors rounded-t-lg">
+      <span class="flex items-center gap-2">
+        <svg class="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        Swagger UI – API Tester
+        <span class="text-[10px] text-gray-400 font-normal">(Bearer-Token aus API Keys eintragen)</span>
+      </span>
+      <svg class="w-4 h-4 transition-transform" :class="swaggerOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </button>
+    <div x-show="swaggerOpen" x-transition class="border-t border-gray-100" style="height: 420px; overflow-y: auto;">
+      <div id="swagger-ui" class="text-xs"></div>
+    </div>
+  </div>
+
 </div>
 
-<!-- Initialize Swagger UI -->
+<!-- Swagger CSS + JS -->
+<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.18.2/swagger-ui.css">
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // OpenAPI specification for StudentVC API
-    const spec = {
-      "openapi": "3.0.3",
-      "info": {
-        "title": "StudentVC API",
-        "description": "API for managing student verifiable credentials, issuance, verification, and system health monitoring",
-        "version": "1.0.0",
-        "contact": {
-          "name": "StudentVC Support",
-          "url": "https://github.com/your-org/studentvc"
-        }
-      },
-      "servers": [
-        {
-          "url": window.location.origin,
-          "description": "Current server"
-        }
-      ],
-      "security": [
-        {
-          "BearerAuth": []
-        }
-      ],
-      "components": {
-        "securitySchemes": {
-          "BearerAuth": {
-            "type": "http",
-            "scheme": "bearer",
-            "bearerFormat": "JWT",
-            "description": "Enter your API key generated from the API Keys section above"
-          }
-        },
-        "schemas": {
-          "Credential": {
-            "type": "object",
-            "properties": {
-              "credential_id": {"type": "string", "example": "urn:uuid:12345678-1234-5678-9012-123456789012"},
-              "offer_url": {"type": "string", "format": "uri", "example": "https://server.com/offer/12345"},
-              "status": {"type": "string", "enum": ["issued", "active", "revoked"], "example": "issued"},
-              "credential_type": {"type": "array", "items": {"type": "string"}, "example": ["VerifiableCredential", "UniversityDegreeCredential"]},
-              "subject": {"type": "object", "example": {"id": "did:student:12345", "firstName": "John", "lastName": "Doe"}},
-              "issued_at": {"type": "string", "format": "date-time"},
-              "issuer": {"type": "string", "example": "University of Example"}
-            }
-          },
-          "HealthStatus": {
-            "type": "object",
-            "properties": {
-              "overall_status": {"type": "string", "enum": ["healthy", "warning", "critical"], "example": "healthy"},
-              "timestamp": {"type": "string", "format": "date-time"},
-              "services": {
-                "type": "object",
-                "properties": {
-                  "database": {"type": "string", "example": "operational"},
-                  "issuer": {"type": "string", "example": "operational"},
-                  "verifier": {"type": "string", "example": "operational"}
-                }
-              },
-              "system": {
-                "type": "object",
-                "properties": {
-                  "cpu_usage": {"type": "number", "format": "float", "example": 25.5},
-                  "memory_usage": {"type": "number", "format": "float", "example": 67.2},
-                  "disk_usage": {"type": "number", "format": "float", "example": 45.8}
-                }
-              }
-            }
-          }
-        }
-      },
-      "paths": {
-        "/api/v1/credentials/issue": {
-          "post": {
-            "tags": ["Credentials"],
-            "summary": "Issue a new credential",
-            "description": "Creates a new verifiable credential for a student",
-            "security": [{"BearerAuth": []}],
-            "requestBody": {
-              "required": true,
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "object",
-                    "required": ["subject"],
-                    "properties": {
-                      "subject": {
-                        "type": "object",
-                        "required": ["firstName", "lastName", "studentId"],
-                        "properties": {
-                          "firstName": {"type": "string", "example": "John"},
-                          "lastName": {"type": "string", "example": "Doe"},
-                          "studentId": {"type": "string", "example": "S123456"},
-                          "studyProgram": {"type": "string", "example": "Computer Science"},
-                          "degree": {"type": "string", "example": "Bachelor"},
-                          "university": {"type": "string", "example": "University of Example"},
-                          "graduationDate": {"type": "string", "format": "date", "example": "2024-06-15"}
-                        }
-                      }
-                    }
-                  },
-                  "examples": {
-                    "student_credential": {
-                      "summary": "Basic Student Credential",
-                      "value": {
-                        "subject": {
-                          "firstName": "John",
-                          "lastName": "Doe",
-                          "studentId": "S123456",
-                          "studyProgram": "Computer Science",
-                          "degree": "Bachelor",
-                          "university": "University of Example",
-                          "graduationDate": "2024-06-15"
-                        }
-                      }
-                    },
-                    "graduate_credential": {
-                      "summary": "Graduate Credential",
-                      "value": {
-                        "subject": {
-                          "firstName": "Jane",
-                          "lastName": "Smith",
-                          "studentId": "G789012",
-                          "studyProgram": "Data Science",
-                          "degree": "Master",
-                          "university": "University of Example",
-                          "graduationDate": "2024-05-20"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            "responses": {
-              "200": {
-                "description": "Credential issued successfully",
-                "content": {
-                  "application/json": {
-                    "schema": {
-                      "type": "object",
-                      "properties": {
-                        "success": {"type": "boolean", "example": true},
-                        "credential_id": {"type": "string", "example": "urn:uuid:123e4567-e89b-12d3-a456-426614174000"},
-                        "offer_url": {"type": "string"},
-                        "qr_code": {"type": "string", "description": "Base64 encoded QR code image"}
-                      }
-                    }
-                  }
-                }
-              },
-              "400": {"description": "Invalid request"},
-              "401": {"description": "Unauthorized"},
-              "500": {"description": "Server error"}
-            }
-          }
-        },
-        "/api/v1/credentials/verify": {
-          "post": {
-            "tags": ["Credentials"],
-            "summary": "Verify a credential or presentation",
-            "description": "Verifies the authenticity and validity of a verifiable credential or presentation",
-            "security": [{"BearerAuth": []}],
-            "requestBody": {
-              "required": true,
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "object",
-                    "properties": {
-                      "credential": {"type": "object", "description": "The verifiable credential to verify"},
-                      "presentation": {"type": "object", "description": "The verifiable presentation to verify"}
-                    }
-                  },
-                  "examples": {
-                    "verify_presentation": {
-                      "summary": "Verify BBS+ Presentation",
-                      "value": {
-                        "presentation": {
-                          "@context": [
-                            "https://www.w3.org/2018/credentials/v1",
-                            "https://www.w3.org/2018/credentials/examples/v1"
-                          ],
-                          "type": ["VerifiablePresentation"],
-                          "verifiableCredential": {
-                            "@context": [
-                              "https://www.w3.org/2018/credentials/v1",
-                              "https://www.w3.org/2018/credentials/examples/v1"
-                            ],
-                            "id": "urn:uuid:123e4567-e89b-12d3-a456-426614174000",
-                            "type": ["VerifiableCredential", "StudentCredential"],
-                            "issuer": "did:web:example.university",
-                            "issuanceDate": "2024-01-01T19:23:24Z",
-                            "credentialSubject": {
-                              "id": "did:student:S123456",
-                              "firstName": "John",
-                              "lastName": "Doe",
-                              "studentId": "S123456"
-                            },
-                            "proof": {
-                              "type": "BbsBlsSignatureProof2020",
-                              "created": "2024-01-01T19:23:24Z",
-                              "verificationMethod": "did:web:example.university#bbs-key",
-                              "proofPurpose": "assertionMethod",
-                              "proofValue": "base64-encoded-proof-value"
-                            }
-                          },
-                          "proof": {
-                            "type": "Ed25519Signature2018",
-                            "created": "2024-01-01T19:23:24Z",
-                            "challenge": "1f44d55f-f161-4938-a659-f8026467f126",
-                            "domain": "example.org",
-                            "proofPurpose": "authentication",
-                            "verificationMethod": "did:student:S123456#keys-1",
-                            "proofValue": "base64-encoded-proof-value"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            "responses": {
-              "200": {
-                "description": "Verification result",
-                "content": {
-                  "application/json": {
-                    "schema": {
-                      "type": "object",
-                      "properties": {
-                        "success": {"type": "boolean", "example": true},
-                        "data": {
-                          "type": "object",
-                          "properties": {
-                            "verification_result": {"type": "string", "example": "success"},
-                            "verified_at": {"type": "string", "format": "date-time"},
-                            "steps_completed": {"type": "integer", "example": 8},
-                            "steps_passed": {"type": "integer", "example": 8},
-                            "message": {"type": "string"}
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              "400": {"description": "Invalid request"},
-              "401": {"description": "Unauthorized"},
-              "500": {"description": "Server error"}
-            }
-          }
-        },
-        "/api/v1/credentials/status/{credential_id}": {
-          "get": {
-            "tags": ["Credentials"],
-            "summary": "Check credential status",
-            "description": "Retrieves the current status of a specific credential (active, revoked, etc.)",
-            "security": [{"BearerAuth": []}],
-            "parameters": [
-              {
-                "name": "credential_id",
-                "in": "path",
-                "required": true,
-                "schema": {"type": "string"},
-                "example": "urn:uuid:12345678-1234-5678-9012-123456789012",
-                "description": "Unique identifier of the credential"
-              }
-            ],
-            "responses": {
-              "200": {
-                "description": "Credential status retrieved",
-                "content": {
-                  "application/json": {
-                    "schema": {
-                      "type": "object",
-                      "properties": {
-                        "success": {"type": "boolean"},
-                        "data": {
-                          "type": "object",
-                          "properties": {
-                            "credential_id": {"type": "string"},
-                            "status": {"type": "string", "enum": ["active", "revoked", "not_found"]},
-                            "valid": {"type": "boolean"},
-                            "checked_at": {"type": "string", "format": "date-time"}
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "/api/credentials": {
-          "get": {
-            "tags": ["Credentials"],
-            "summary": "List all credentials",
-            "description": "Retrieves a list of all credentials in the system",
-            "security": [{"BearerAuth": []}],
-            "responses": {
-              "200": {
-                "description": "List of credentials",
-                "content": {
-                  "application/json": {
-                    "schema": {
-                      "type": "object",
-                      "properties": {
-                        "success": {"type": "boolean"},
-                        "count": {"type": "integer"},
-                        "credentials": {
-                          "type": "array",
-                          "items": {"$ref": "#/components/schemas/Credential"}
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "/api/v1/system/health": {
-          "get": {
-            "tags": ["System"],
-            "summary": "Get system health status",
-            "description": "Returns comprehensive health information about the system and services",
-            "security": [{"BearerAuth": []}],
-            "responses": {
-              "200": {
-                "description": "System health status",
-                "content": {
-                  "application/json": {
-                    "schema": {
-                      "type": "object",
-                      "properties": {
-                        "success": {"type": "boolean"},
-                        "data": {"$ref": "#/components/schemas/HealthStatus"}
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "/api/system/health": {
-          "get": {
-            "tags": ["System"],
-            "summary": "Get detailed system health",
-            "description": "Returns detailed system health metrics including CPU, memory, disk usage, and more",
-            "responses": {
-              "200": {
-                "description": "Detailed system health",
-                "content": {
-                  "application/json": {
-                    "schema": {"$ref": "#/components/schemas/HealthStatus"}
-                  }
-                }
-              }
-            }
-          }
-        },
-        "/settings/api/healthcheck": {
-          "get": {
-            "tags": ["System"],
-            "summary": "Simple API healthcheck",
-            "description": "Simple endpoint to verify API connectivity",
-            "responses": {
-              "200": {
-                "description": "API is healthy",
-                "content": {
-                  "application/json": {
-                    "schema": {
-                      "type": "object",
-                      "properties": {
-                        "success": {"type": "boolean", "example": true},
-                        "status": {"type": "string", "example": "healthy"},
-                        "timestamp": {"type": "string", "format": "date-time"}
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "/api/credential/{identifier}/revoke": {
-          "post": {
-            "tags": ["Credentials"],
-            "summary": "Revoke a credential",
-            "description": "Revokes a specific credential by its identifier",
-            "security": [{"BearerAuth": []}],
-            "parameters": [
-              {
-                "name": "identifier",
-                "in": "path",
-                "required": true,
-                "description": "Credential identifier",
-                "schema": {"type": "string"},
-                "example": "urn:uuid:123e4567-e89b-12d3-a456-426614174000"
-              }
-            ],
-            "requestBody": {
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "object",
-                    "properties": {
-                      "reason": {
-                        "type": "string",
-                        "description": "Reason for revocation"
-                      },
-                      "revoked_by": {
-                        "type": "string",
-                        "description": "Entity that revoked the credential"
-                      }
-                    }
-                  },
-                  "example": {
-                    "reason": "User requested revocation",
-                    "revoked_by": "admin"
-                  }
-                }
-              }
-            },
-            "responses": {
-              "200": {
-                "description": "Credential revoked successfully",
-                "content": {
-                  "application/json": {
-                    "schema": {
-                      "type": "object",
-                      "properties": {
-                        "success": {"type": "boolean"},
-                        "message": {"type": "string"},
-                        "identifier": {"type": "string"},
-                        "status": {"type": "string"},
-                        "revoked_at": {"type": "string", "format": "date-time"}
-                      }
-                    }
-                  }
-                }
-              },
-              "404": {
-                "description": "Credential not found"
-              }
-            }
-          }
-        },
-        
-        "/api/credential/{identifier}/restore": {
-          "post": {
-            "tags": ["Credentials"],
-            "summary": "Restore a revoked credential",
-            "description": "Restores (unrevokes) a previously revoked credential",
-            "security": [{"BearerAuth": []}],
-            "parameters": [
-              {
-                "name": "identifier",
-                "in": "path",
-                "required": true,
-                "description": "Credential identifier",
-                "schema": {"type": "string"},
-                "example": "urn:uuid:123e4567-e89b-12d3-a456-426614174000"
-              }
-            ],
-            "responses": {
-              "200": {
-                "description": "Credential restored successfully",
-                "content": {
-                  "application/json": {
-                    "schema": {
-                      "type": "object",
-                      "properties": {
-                        "success": {"type": "boolean"},
-                        "message": {"type": "string"},
-                        "identifier": {"type": "string"},
-                        "status": {"type": "string"}
-                      }
-                    }
-                  }
-                }
-              },
-              "404": {
-                "description": "Credential not found"
-              }
-            }
-          }
-        },
-        
-        "/api/credential/{identifier}/delete": {
-          "post": {
-            "tags": ["Credentials"],
-            "summary": "Delete a credential",
-            "description": "Permanently deletes a credential from the system",
-            "security": [{"BearerAuth": []}],
-            "parameters": [
-              {
-                "name": "identifier",
-                "in": "path",
-                "required": true,
-                "description": "Credential identifier",
-                "schema": {"type": "string"},
-                "example": "urn:uuid:123e4567-e89b-12d3-a456-426614174000"
-              }
-            ],
-            "responses": {
-              "200": {
-                "description": "Credential deleted successfully",
-                "content": {
-                  "application/json": {
-                    "schema": {
-                      "type": "object",
-                      "properties": {
-                        "success": {"type": "boolean"},
-                        "message": {"type": "string"},
-                        "identifier": {"type": "string"}
-                      }
-                    }
-                  }
-                }
-              },
-              "404": {
-                "description": "Credential not found"
-              }
-            }
-          }
-        },
-
-        "/api/v1/qr/issuance": {
-          "post": {
-            "tags": ["QR Codes"],
-            "summary": "Generate issuance QR code",
-            "description": "Generates an openid-credential-offer:// QR code for the BVG Wallet App. Accessible via session login or API key (Bearer token).",
-            "security": [{"BearerAuth": []}],
-            "requestBody": {
-              "required": true,
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "object",
-                    "required": ["mitarbeiterId", "firstName", "lastName"],
-                    "properties": {
-                      "mitarbeiterId": {"type": "string", "example": "BVG-12345", "description": "Mitarbeiter / Employee ID"},
-                      "firstName":     {"type": "string", "example": "Max"},
-                      "lastName":      {"type": "string", "example": "Mustermann"},
-                      "department":    {"type": "string", "example": "IT", "description": "Optional department"},
-                      "role":          {"type": "string", "example": "Busfahrer", "description": "Optional job role"},
-                      "validity_seconds": {"type": "integer", "minimum": 30, "maximum": 86400, "default": 120, "description": "Offer lifetime in seconds"}
-                    }
-                  }
-                }
-              }
-            },
-            "responses": {
-              "200": {
-                "description": "Issuance QR code generated",
-                "content": {
-                  "application/json": {
-                    "schema": {
-                      "type": "object",
-                      "properties": {
-                        "success":    {"type": "boolean"},
-                        "offer_url":  {"type": "string", "example": "openid-credential-offer://..."},
-                        "qr_code": {
-                          "type": "object",
-                          "properties": {
-                            "data":     {"type": "string", "description": "Base64-encoded PNG"},
-                            "format":   {"type": "string", "example": "png"},
-                            "encoding": {"type": "string", "example": "base64"}
-                          }
-                        },
-                        "expires_at":          {"type": "string", "format": "date-time"},
-                        "credential_subject":  {"type": "object"}
-                      }
-                    }
-                  }
-                }
-              },
-              "400": {"description": "Missing required fields"},
-              "401": {"description": "Unauthorized"},
-              "500": {"description": "Internal server error"}
-            }
-          }
-        },
-
-        "/api/v1/qr/verification": {
-          "post": {
-            "tags": ["QR Codes"],
-            "summary": "Generate verification QR code",
-            "description": "Generates a QR code pointing to the verifier service. Only *.viable-project.de subdomains or localhost are allowed as target domain.",
-            "security": [{"BearerAuth": []}],
-            "requestBody": {
-              "required": false,
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "object",
-                    "properties": {
-                      "verifier_domain": {
-                        "type": "string",
-                        "example": "gv.viable-project.de",
-                        "description": "Target verifier domain. Must be a *.viable-project.de subdomain or localhost."
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            "responses": {
-              "200": {
-                "description": "Verification QR code generated",
-                "content": {
-                  "application/json": {
-                    "schema": {
-                      "type": "object",
-                      "properties": {
-                        "success":           {"type": "boolean"},
-                        "verification_url":  {"type": "string", "example": "https://gv.viable-project.de"},
-                        "verifier_domain":   {"type": "string"},
-                        "qr_code": {
-                          "type": "object",
-                          "properties": {
-                            "data":     {"type": "string", "description": "Base64-encoded PNG"},
-                            "format":   {"type": "string", "example": "png"},
-                            "encoding": {"type": "string", "example": "base64"}
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              "400": {"description": "Invalid or disallowed verifier domain"},
-              "401": {"description": "Unauthorized"},
-              "500": {"description": "Internal server error"}
-            }
-          }
-        }
-      },
-      "tags": [
-        {
-          "name": "QR Codes",
-          "description": "Generate QR codes for issuance and verification flows"
-        },
-        {
-          "name": "Credentials",
-          "description": "Operations for managing verifiable credentials"
-        },
-        {
-          "name": "System",
-          "description": "System health and monitoring endpoints"
-        }
-      ]
-    };
-
-    // Initialize Swagger UI
+window._swaggerInitialized = false;
+function initSwagger() {
+  if (window._swaggerInitialized) return;
+  window._swaggerInitialized = true;
+  const script = document.createElement('script');
+  script.src = 'https://unpkg.com/swagger-ui-dist@5.18.2/swagger-ui-bundle.js';
+  script.onload = function() {
     SwaggerUIBundle({
-      url: '',
-      spec: spec,
-      dom_id: '#swagger-ui',
-      deepLinking: true,
-      presets: [
-        SwaggerUIBundle.presets.apis,
-        SwaggerUIStandalonePreset
-      ],
-      plugins: [
-        SwaggerUIBundle.plugins.DownloadUrl
-      ],
-      layout: "StandaloneLayout",
+      url:          '/api/openapi.json',
+      dom_id:       '#swagger-ui',
+      presets:      [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
+      layout:       'BaseLayout',
+      deepLinking:  true,
       tryItOutEnabled: true,
-      supportedSubmitMethods: ['get', 'post', 'put', 'delete'],
-      onComplete: function() {
-        console.log('🔑 StudentVC API Documentation loaded');
+      requestInterceptor: (req) => {
+        // auto-inject API key from the list if available
+        return req;
       },
-      requestInterceptor: function(request) {
-        // Add base URL if not present
-        if (!request.url.startsWith('http')) {
-          request.url = window.location.origin + request.url;
-        }
-        return request;
-      }
     });
-  });
+  };
+  document.head.appendChild(script);
+}
 </script>
-
-<!-- API Keys Table Styles -->
-<style>
-  .api-keys-table th {
-    padding: 0.5rem !important;
-    font-size: 0.7rem !important;
-  }
-  .api-keys-table td {
-    padding: 0.5rem !important;
-    font-size: 0.8rem !important;
-    vertical-align: middle;
-  }
-  .api-keys-table .revoke-btn {
-    color: #dc2626;
-    cursor: pointer;
-  }
-  .api-keys-table .revoke-btn:hover {
-    color: #b91c1c;
-  }
-  @media (max-width: 640px) {
-    .api-keys-table .mobile-hidden {
-      display: none;
-    }
-  }
-</style>
 
 <script>
 function qrGenerator() {
   return {
+    qrTab: 'issuance',
     issuance: {
       mitarbeiterId: '',
       firstName: '',
@@ -1123,9 +315,7 @@ function qrGenerator() {
       error: null,
     },
 
-    init() {
-      // nothing to pre-load
-    },
+    init() {},
 
     async generateIssuanceQR() {
       this.issuance.loading = true;
@@ -1145,10 +335,7 @@ function qrGenerator() {
           }),
         });
         const data = await resp.json();
-        if (!resp.ok) {
-          this.issuance.error = data.error || `Fehler ${resp.status}`;
-          return;
-        }
+        if (!resp.ok) { this.issuance.error = data.error || `Fehler ${resp.status}`; return; }
         this.issuance.qrData    = data.qr_code?.data ?? null;
         this.issuance.expiresAt = data.expires_at ?? null;
         this.issuance.offerUrl  = data.offer_url ?? null;
@@ -1170,10 +357,7 @@ function qrGenerator() {
           body: JSON.stringify({ verifier_domain: this.verification.domain }),
         });
         const data = await resp.json();
-        if (!resp.ok) {
-          this.verification.error = data.error || `Fehler ${resp.status}`;
-          return;
-        }
+        if (!resp.ok) { this.verification.error = data.error || `Fehler ${resp.status}`; return; }
         this.verification.qrData = data.qr_code?.data ?? null;
         this.verification.url    = data.verification_url ?? null;
       } catch (e) {
@@ -1184,25 +368,15 @@ function qrGenerator() {
     },
 
     downloadQR(type) {
-      const imgData = type === 'issuance' ? this.issuance.qrData : this.verification.qrData;
-      if (!imgData) return;
-      const link = document.createElement('a');
-      link.href = 'data:image/png;base64,' + imgData;
-      link.download = `bvg-qr-${type}-${Date.now()}.png`;
-      link.click();
+      const d = type === 'issuance' ? this.issuance.qrData : this.verification.qrData;
+      if (!d) return;
+      const a = document.createElement('a');
+      a.href = 'data:image/png;base64,' + d;
+      a.download = `bvg-qr-${type}-${Date.now()}.png`;
+      a.click();
     },
-
-    copyOfferUrl() {
-      if (this.issuance.offerUrl) {
-        navigator.clipboard.writeText(this.issuance.offerUrl).catch(() => {});
-      }
-    },
-
-    copyVerificationUrl() {
-      if (this.verification.url) {
-        navigator.clipboard.writeText(this.verification.url).catch(() => {});
-      }
-    },
+    copyOfferUrl() { if (this.issuance.offerUrl) navigator.clipboard.writeText(this.issuance.offerUrl).catch(() => {}); },
+    copyVerificationUrl() { if (this.verification.url) navigator.clipboard.writeText(this.verification.url).catch(() => {}); },
   };
 }
-</script> 
+</script>
