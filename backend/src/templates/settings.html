@@ -22,12 +22,16 @@
     border-radius: 12px;
     border: 1px solid rgba(255,255,255,0.5);
   }
+  /* Settings: true one-pager without body scrolling */
+  html, body { overflow: hidden !important; }
+  main.flex-1 { overflow: hidden !important; padding: 0 !important; display: flex !important; flex-direction: column !important; }
+  main.flex-1 > div { height: 100% !important; padding: 0.5rem 1rem !important; display: flex !important; flex-direction: column !important; }
 </style>
 
 <!-- Settings Component - Main Container -->
-<div class="bg-transparent">
-  <div class="max-w-7xl mx-auto px-4 py-0 -mt-3">
-    <div x-data="settings" x-init="didWebDomain='{{ did_domain }}'; init()" class="airy-glass p-4 mt-0 flex flex-col overflow-hidden" style="height: calc(100vh - 6.25rem);">
+<div class="bg-transparent" style="flex: 1; min-height: 0; display: flex; flex-direction: column;">
+  <div class="max-w-7xl mx-auto w-full" style="flex: 1; min-height: 0; display: flex; flex-direction: column;">
+    <div x-data="settings" x-init="didWebDomain='{{ did_domain }}'; init()" class="airy-glass p-4 flex flex-col overflow-hidden" style="flex: 1; min-height: 0;">
 
       <!-- Compact Header -->
       <div class="mb-3">
