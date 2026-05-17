@@ -68,7 +68,10 @@ def demo_login():
     next_url = request.args.get("next")
     if next_url and next_url.startswith("/"):
         return redirect(next_url)
-    return redirect(url_for("home.index"))
+    target = url_for("home.index")
+    if request.args.get("embed"):
+        target += "?embed=1"
+    return redirect(target)
 
 
 def register_demo_routes(app):
