@@ -182,7 +182,7 @@
     const resetThemeIconBtn = document.getElementById('resetThemeIconBtn');
     const themeIconPreviewContainer = document.getElementById('themeIconPreviewContainer');
     const themeDropZone = document.getElementById('themeDropZone');
-    const defaultThemeIconSrc = '{{ url_for("static", filename="studentVC-logo-sora-cropped-darkmode.png") }}';
+    const defaultThemeIconSrc = '{{ url_for("static", filename="viable-credentials-logo-sora-cropped-darkmode.png") }}';
     
     // Helper function to prevent default browser behavior - moved up to ensure it's available
     function preventDefaults(e) {
@@ -444,7 +444,7 @@
       <html lang="de">
       <head>
         <meta charset="UTF-8">
-        <title>StudentVC für ${firstName} ${lastName}</title>
+        <title>VIABLE Credentials für ${firstName} ${lastName}</title>
         <style>
           body {
             font-family: Arial, sans-serif;
@@ -570,7 +570,7 @@
           
           <div class="footer">
             <p>Dieses Dokument wurde am ${new Date().toLocaleDateString('de-DE')} um ${new Date().toLocaleTimeString('de-DE')} generiert.</p>
-            <p>Powered by StudentVC BBS+ Verifiable Credentials</p>
+            <p>Powered by VIABLE Credentials BBS+ Verifiable Credentials</p>
           </div>
           
           <div class="no-print" style="margin-top: 30px; text-align: center;">
@@ -894,7 +894,7 @@
           return;
       }
 
-      const themeName = document.getElementById('theme_name').value || 'StudentVC';
+      const themeName = document.getElementById('theme_name').value || 'VIABLE Credentials';
 
       // Build cards from the results - find student details from csvStudentData
       const cardsHtml = results.map(result => {

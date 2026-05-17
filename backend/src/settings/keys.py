@@ -187,7 +187,7 @@ def generate_new_key(key_type, purpose="General Purpose", validity_days=365):
                 x509.NameAttribute(NameOID.COUNTRY_NAME, "DE"),
                 x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Berlin"),
                 x509.NameAttribute(NameOID.LOCALITY_NAME, "Berlin"),
-                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "StudentVC"),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "VIABLE Credentials"),
                 x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
             ])
             

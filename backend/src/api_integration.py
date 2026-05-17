@@ -601,7 +601,7 @@ def api_documentation():
     <!DOCTYPE html>
     <html>
     <head>
-        <title>StudentVC API Documentation</title>
+        <title>VIABLE Credentials API Documentation</title>
         <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@3.52.5/swagger-ui.css" />
         <style>
             body { margin: 0; padding: 0; }
@@ -644,12 +644,12 @@ def openapi_spec():
     spec = {
         "openapi": "3.0.0",
         "info": {
-            "title": "StudentVC API Integration",
-            "description": "REST API for university system integration with StudentVC platform",
+            "title": "VIABLE Credentials API Integration",
+            "description": "REST API for university system integration with VIABLE Credentials platform",
             "version": "1.0.0",
             "contact": {
-                "name": "StudentVC Support",
-                "email": "support@studentvc.example.com"
+                "name": "VIABLE Credentials Support",
+                "email": "support@viable-credentials.example.com"
             }
         },
         "servers": [
@@ -950,7 +950,7 @@ checkStatus('your-credential-id');
 # =============================================================================
 
 _ALLOWED_VERIFIER_DOMAINS = [
-    'gv.viable-project.de',
+    'viable-id.com',
     'localhost:8081',
     '127.0.0.1:8081',
 ]
@@ -1012,7 +1012,7 @@ def api_qr_issuance():
         validity_seconds = max(30, int(data.get('validity_seconds', 120)))
 
         credential_data = {
-            'type': ['VerifiableCredential', 'BVGMitarbeiterCredential'],
+            'type': ['VerifiableCredential', 'VIABLEMitarbeiterCredential'],
             'credentialSubject': {
                 'id': f"did:mitarbeiter:{mitarbeiter_id}",
                 'mitarbeiterId': mitarbeiter_id,
@@ -1048,11 +1048,11 @@ def api_qr_issuance():
 def api_qr_verification():
     """
     Generate a verification QR code pointing to the verifier service.
-    Default verifier domain: gv.viable-project.de.
+    Default verifier domain: viable-id.com.
     Accessible via session login (Settings UI) or API key (Bearer token).
 
     Body (JSON, all optional):
-      verifier_domain  string  – Target verifier domain (default: gv.viable-project.de)
+      verifier_domain  string  – Target verifier domain (default: viable-id.com)
 
     Returns:
       verification_url, qr_code (base64 PNG)
@@ -1064,7 +1064,7 @@ def api_qr_verification():
     try:
         import re
         data = request.get_json() or {}
-        verifier_domain = data.get('verifier_domain', 'gv.viable-project.de').strip()
+        verifier_domain = data.get('verifier_domain', 'viable-id.com').strip()
 
         # Security: only allow known trusted domains
         is_viable_subdomain = bool(re.match(r'^[a-z0-9\-]+\.viable-project\.de(:\d{1,5})?$', verifier_domain))
@@ -1072,8 +1072,8 @@ def api_qr_verification():
         if not (is_viable_subdomain or is_localhost):
             return jsonify({
                 'error': 'Invalid verifier domain',
-                'message': 'Only *.viable-project.de subdomains or localhost are allowed',
-                'allowed_example': 'gv.viable-project.de',
+                'message': 'Only *.viable-id.com subdomains or localhost are allowed',
+                'allowed_example': 'viable-id.com',
             }), 400
 
         scheme = 'http' if is_localhost else 'https'

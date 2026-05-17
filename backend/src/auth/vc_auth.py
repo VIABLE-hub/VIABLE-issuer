@@ -1,7 +1,7 @@
 """
 Verifiable Credential Authentication Module
 
-This module provides VC-based authentication for StudentVC platform.
+This module provides VC-based authentication for VIABLE Credentials platform.
 Students can login using their verifiable credentials instead of passwords.
 
 Architecture:
@@ -10,7 +10,7 @@ Architecture:
 - Session-based authentication flow
 - BBS+ signature verification
 
-Author: StudentVC Team
+Author: VIABLE Credentials Team
 Version: 1.0.0
 """
 

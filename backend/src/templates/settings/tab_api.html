@@ -150,7 +150,7 @@
         <div class="grid grid-cols-2 gap-1.5">
           <div>
             <label class="block text-[10px] text-gray-500 mb-0.5">MitarbeiterID *</label>
-            <input type="text" x-model="issuance.mitarbeiterId" placeholder="BVG-12345" required
+            <input type="text" x-model="issuance.mitarbeiterId" placeholder="VIABLE-12345" required
                    class="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:ring-[#F0D722] focus:border-[#F0D722] outline-none">
           </div>
           <div>
@@ -208,9 +208,9 @@
       <div x-show="qrTab === 'verification'" class="flex flex-col flex-1 min-h-0 gap-1.5">
         <div>
           <label class="block text-[10px] text-gray-500 mb-0.5">Verifizierer-Domain</label>
-          <input type="text" x-model="verification.domain" placeholder="gv.viable-project.de"
+          <input type="text" x-model="verification.domain" placeholder="viable-id.com"
                  class="w-full text-xs font-mono border border-gray-200 rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500 outline-none">
-          <p class="text-[10px] text-gray-400 mt-0.5">Nur <code>*.viable-project.de</code> oder localhost</p>
+          <p class="text-[10px] text-gray-400 mt-0.5">Nur <code>*.viable-id.com</code> oder localhost</p>
         </div>
 
         <button @click="generateVerificationQR()" :disabled="verification.loading"
@@ -308,7 +308,7 @@ function qrGenerator() {
       error: null,
     },
     verification: {
-      domain: 'gv.viable-project.de',
+      domain: 'viable-id.com',
       loading: false,
       qrData: null,
       url: null,
@@ -372,7 +372,7 @@ function qrGenerator() {
       if (!d) return;
       const a = document.createElement('a');
       a.href = 'data:image/png;base64,' + d;
-      a.download = `bvg-qr-${type}-${Date.now()}.png`;
+      a.download = `viable-qr-${type}-${Date.now()}.png`;
       a.click();
     },
     copyOfferUrl() { if (this.issuance.offerUrl) navigator.clipboard.writeText(this.issuance.offerUrl).catch(() => {}); },

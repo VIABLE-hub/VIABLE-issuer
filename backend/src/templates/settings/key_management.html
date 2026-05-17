@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Schlüsselverwaltung - StudentVC</title>
+    <title>Schlüsselverwaltung - VIABLE Credentials</title>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -672,10 +672,10 @@
                                 key_count: 1,
                                 verification_keys: 1,
                                 active_key: {
-                                    key_identifier: 'did:web:' + window.location.hostname + ':studentvc',
+                                    key_identifier: 'did:web:' + window.location.hostname + ':viable-credentials',
                                     created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
                                     key_metadata: {
-                                        did: 'did:web:' + window.location.hostname + ':studentvc'
+                                        did: 'did:web:' + window.location.hostname + ':viable-credentials'
                                     }
                                 }
                             },

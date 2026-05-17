@@ -344,6 +344,6 @@ The order matters for:
 
 ---
 
-**Maintained by:** StudentVC Development Team  
+**Maintained by:** VIABLE Credentials Development Team  
 **Last Review:** November 8, 2025
 

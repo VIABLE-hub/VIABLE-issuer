@@ -1,5 +1,5 @@
 /**
- * StudentVC Settings Component
+ * VIABLE Credentials Settings Component
  * Vanilla JS implementation replacing Alpine.js
  */
 

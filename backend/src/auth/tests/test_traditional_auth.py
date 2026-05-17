@@ -8,7 +8,7 @@ Tests the username/password authentication flow including:
 - Session management
 - Error handling
 
-Author: StudentVC Team
+Author: VIABLE Credentials Team
 """
 
 import pytest
@@ -58,7 +58,7 @@ class TestLoginPage:
         """Test that login page loads successfully"""
         rv = client.get('/login')
         assert rv.status_code == 200
-        assert b'StudentVC' in rv.data
+        assert b'VIABLE Credentials' in rv.data
     
     def test_login_page_has_form(self, client):
         """Test that login page contains form elements"""

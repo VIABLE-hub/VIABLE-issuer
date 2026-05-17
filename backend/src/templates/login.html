@@ -29,7 +29,7 @@
 
         body {
             background: linear-gradient(rgba(255, 252, 245, 0.70), rgba(255, 252, 245, 0.75)),
-                        url("{{ url_for('static', filename='BVG-Sitzmuster-Vielfalt.jpg') }}")
+                        url("{{ url_for('static', filename='VIABLE-Sitzmuster-Vielfalt.jpg') }}")
                         no-repeat center center fixed;
             background-size: cover;
             display: flex;
@@ -51,8 +51,8 @@
             overflow: hidden;
         }
 
-        /* BVG Yellow top stripe */
-        .bvg-stripe {
+        /* VIABLE Yellow top stripe */
+        .viable-stripe {
             height: 4px;
             background: #F0D722;
         }
@@ -76,7 +76,7 @@
             display: block;
         }
 
-        .bvg-slogan {
+        .viable-slogan {
             font-size: 0.8125rem;
             font-weight: 600;
             color: #374151;
@@ -84,7 +84,7 @@
             text-transform: uppercase;
         }
 
-        .bvg-subtitle {
+        .viable-subtitle {
             font-size: 0.75rem;
             color: #9ca3af;
             margin-top: 0.25rem;
@@ -267,15 +267,15 @@
 
     <!-- Centered Login Card -->
     <div class="login-card">
-        <div class="bvg-stripe"></div>
+        <div class="viable-stripe"></div>
 
         <div class="card-body">
 
-            <!-- BVG Logo + Slogan -->
+            <!-- VIABLE Logo + Slogan -->
             <div class="logo-section">
-                <img src="{{ url_for('static', filename='BVG_Logo_07.2021.svg') }}" alt="BVG Logo" />
-                <p class="bvg-slogan">Weil wir dich lieben.</p>
-                <p class="bvg-subtitle">Digitale Identität – sicher &amp; souverän</p>
+                <img src="{{ url_for('static', filename='VIABLE_Logo_07.2021.svg') }}" alt="VIABLE Logo" />
+                <p class="viable-slogan">Weil wir dich lieben.</p>
+                <p class="viable-subtitle">Digitale Identität – sicher &amp; souverän</p>
             </div>
 
             <!-- Form Heading -->
@@ -318,7 +318,7 @@
                     <div class="form-group">
                         <label class="form-label">E-Mail-Adresse</label>
                         <input type="email" name="name" required autofocus
-                            placeholder="demo@bvg.de"
+                            placeholder="demo@viable.de"
                             class="form-input" />
                     </div>
 
@@ -382,7 +382,7 @@
 
         <!-- Card Footer -->
         <div class="card-footer">
-            <p>© 2026 VIABLE – Berliner Verkehrsbetriebe (BVG) &nbsp;·&nbsp; Session: 12 h</p>
+            <p>© 2026 VIABLE – Berliner Verkehrsbetriebe (VIABLE) &nbsp;·&nbsp; Session: 12 h</p>
         </div>
 
     </div><!-- /.login-card -->

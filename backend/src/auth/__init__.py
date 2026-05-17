@@ -1,5 +1,5 @@
 """
-Authentication Module for StudentVC
+Authentication Module for VIABLE Credentials
 
 This module provides a modular, extensible authentication system supporting:
 - Traditional username/password authentication
@@ -13,7 +13,7 @@ Architecture:
 - Shared authentication interfaces
 - Comprehensive logging and error handling
 
-Author: StudentVC Team for Educational Purposes
+Author: VIABLE Credentials Team for Educational Purposes
 Version: 2.0.0
 """
 

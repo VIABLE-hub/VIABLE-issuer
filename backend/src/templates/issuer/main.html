@@ -241,7 +241,7 @@
                           class="form-control w-full border border-gray-300 px-2 py-1.5 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0D722] focus:border-transparent form-element-height transition-all duration-200"
                           id="studentIdPrefix"
                           name="studentIdPrefix"
-                          placeholder="BVG"
+                          placeholder="VIABLE"
                           value="{% if form_data and form_data.studentIdPrefix %}{{ form_data.studentIdPrefix }}{% endif %}"
                   />
                 </div>
@@ -328,7 +328,7 @@
           <div class="form-group space-y-3">
 
             <!-- Verstecktes Feld für Standard-Logo-Wert -->
-            <input type="hidden" name="default_logo" value="{% if form_data and form_data.default_logo %}{{ form_data.default_logo }}{% else %}BVG_Logo_07.2021.svg{% endif %}" />
+            <input type="hidden" name="default_logo" value="{% if form_data and form_data.default_logo %}{{ form_data.default_logo }}{% else %}VIABLE_Logo_07.2021.svg{% endif %}" />
 
             <!-- Theme Name + Icon Upload in einer Zeile -->
             <div class="flex items-center gap-3">
@@ -351,7 +351,7 @@
                      style="background: linear-gradient(135deg, #{% if form_data and form_data.theme_bgColorCard %}{{ form_data.theme_bgColorCard }}{% else %}F0D722{% endif %} 0%, #{% if form_data and form_data.theme_bgColorSectionTop %}{{ form_data.theme_bgColorSectionTop }}{% else %}F0D722{% endif %} 100%);">
                   <img
                           id="themeIconPreview"
-                          src="{% if form_data and form_data.theme_icon %}data:image/png;base64,{{ form_data.theme_icon }}{% else %}{{ url_for('static', filename='BVG_Logo_07.2021.svg') }}{% endif %}"
+                          src="{% if form_data and form_data.theme_icon %}data:image/png;base64,{{ form_data.theme_icon }}{% else %}{{ url_for('static', filename='VIABLE_Logo_07.2021.svg') }}{% endif %}"
                           alt="Vorschau"
                           class="w-full h-full object-contain p-1"
                   />
@@ -377,7 +377,7 @@
                         id="resetThemeIconBtn"
                         class="flex-none w-9 h-9 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-all duration-200 border border-gray-200"
                         title="Zurücksetzen"
-                        onclick="document.querySelector('input[name=default_logo]').value='BVG_Logo_07.2021.svg'"
+                        onclick="document.querySelector('input[name=default_logo]').value='VIABLE_Logo_07.2021.svg'"
                 >
                   <i class="fas fa-undo text-xs"></i>
                 </button>
@@ -518,7 +518,7 @@
             </div>
           </div>
           {% else %}
-          <!-- BVG Mitarbeiterausweis Preview -->
+          <!-- VIABLE Mitarbeiterausweis Preview -->
           <div class="flex-1 flex flex-col items-center justify-center p-1">
                     <div id="liveCardPreview" class="relative w-full overflow-hidden shadow-xl font-sans transition-all duration-300"
                          style="background: #{% if form_data and form_data.theme_bgColorCard %}{{ form_data.theme_bgColorCard }}{% else %}F0D722{% endif %}; border: 2px solid #F0D722; border-radius: 5px;">
@@ -526,7 +526,7 @@
                         <!-- Header: weißer Hintergrund, Logo links, Text rechts -->
                         <div class="px-4 pt-3 pb-3 flex items-center justify-between" style="background: #ffffff;">
                             <img id="livePreviewLogo" 
-                                 src="{% if form_data and form_data.theme_icon %}data:image/png;base64,{{ form_data.theme_icon }}{% else %}{{ url_for('static', filename='BVG_Logo_07.2021.svg') }}{% endif %}" 
+                                 src="{% if form_data and form_data.theme_icon %}data:image/png;base64,{{ form_data.theme_icon }}{% else %}{{ url_for('static', filename='VIABLE_Logo_07.2021.svg') }}{% endif %}" 
                                  class="h-14 w-auto" alt="Logo" />
                             <div class="text-right">
                                 <h4 id="livePreviewThemeName" class="text-[11px] font-semibold leading-tight" style="color: #000000;">
@@ -547,7 +547,7 @@
                                     </div>
                                     <div>
                                         <label class="text-[8px] uppercase tracking-wider font-medium block leading-none" style="color: #000000; opacity: 0.50;">Personal-Nr.</label>
-                                        <div id="livePreviewPersonalNr" class="text-[11px] font-medium leading-snug mt-0.5" style="color: #000000;">BVG-47110</div>
+                                        <div id="livePreviewPersonalNr" class="text-[11px] font-medium leading-snug mt-0.5" style="color: #000000;">VIABLE-47110</div>
                                     </div>
                                 </div>
                                 <!-- Passfoto -->
@@ -629,10 +629,10 @@
             };
 
             const updatePersonalNr = () => {
-                const prefix = document.getElementById('studentIdPrefix')?.value || 'BVG';
+                const prefix = document.getElementById('studentIdPrefix')?.value || 'VIABLE';
                 const nr = document.getElementById('studentId')?.value || '';
                 const el = document.getElementById('livePreviewPersonalNr');
-                if(el) el.innerText = nr ? `${prefix}-${nr}` : 'BVG-47110';
+                if(el) el.innerText = nr ? `${prefix}-${nr}` : 'VIABLE-47110';
             };
 
             const updateExpiry = () => {
@@ -661,7 +661,7 @@
             document.getElementById('expiryFontSize')?.addEventListener('input', updateExpiry);
             document.getElementById('bg_color_card')?.addEventListener('input', updateCardBg);
             document.getElementById('bg_color_section_top')?.addEventListener('input', updateCardBg);
-            // fg_color_title: Preview-Farbe bleibt immer schwarz (BVG-Karte)
+            // fg_color_title: Preview-Farbe bleibt immer schwarz (VIABLE-Karte)
             document.getElementById('theme_name')?.addEventListener('input', updateThemeName);
         });
         </script>

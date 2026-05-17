@@ -2,7 +2,7 @@
 Traditional Username/Password Authentication
 
 This module handles traditional authentication with username and password.
-Part of the modular StudentVC authentication system.
+Part of the modular VIABLE Credentials authentication system.
 """
 
 from flask import render_template, request, flash, redirect, url_for, current_app, session

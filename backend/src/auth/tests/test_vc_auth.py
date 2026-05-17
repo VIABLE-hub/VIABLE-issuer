@@ -8,7 +8,7 @@ Tests the VC-based authentication flow including:
 - Session management
 - Real-time updates via Socket.IO
 
-Author: StudentVC Team
+Author: VIABLE Credentials Team
 """
 
 import pytest

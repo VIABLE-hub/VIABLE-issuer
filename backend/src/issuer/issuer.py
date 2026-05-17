@@ -74,7 +74,7 @@ def index():
             branding = vc_template.get("credentialSubject", {}).get("credentialBranding", {})
 
             # Get values
-            system_logo = branding.get("vcLogo", 'BVG_Logo_07.2021.svg')
+            system_logo = branding.get("vcLogo", 'VIABLE_Logo_07.2021.svg')
             branding_bg_card = branding.get("bgColorCard", "").lstrip('#') or 'F0D722'
             branding_bg_top = branding.get("bgColorSectionTop", "").lstrip('#') or 'F0D722'
             branding_bg_bot = branding.get("bgColorSectionBot", "").lstrip('#') or ''
@@ -87,7 +87,7 @@ def index():
             system_logo_url = None
             try:
                 # Assuming logos are in static/img/
-                if system_logo and system_logo != 'BVG_Logo_07.2021.svg':
+                if system_logo and system_logo != 'VIABLE_Logo_07.2021.svg':
                     system_logo_path = os.path.join(current_app.static_folder, 'img', system_logo)
                     if os.path.exists(system_logo_path):
                         with open(system_logo_path, 'rb') as f:
@@ -143,14 +143,14 @@ def index():
 
         # Use system logo, fallback to form data, then to default
         system_logo = branding.get("vcLogo")
-        default_logo = credential_data.get('default_logo', system_logo or 'BVG_Logo_07.2021.svg')
+        default_logo = credential_data.get('default_logo', system_logo or 'VIABLE_Logo_07.2021.svg')
 
         logger.info(f"🎓 VC BRANDING - Using config")
         logger.info(f"🎓 VC BRANDING - Logo: {system_logo}")
         logger.info(f"🎓 VC BRANDING - Final logo: {default_logo}")
     except Exception as e:
         # Fallback to original logic if system fails
-        default_logo = credential_data.get('default_logo', 'BVG_Logo_07.2021.svg')
+        default_logo = credential_data.get('default_logo', 'VIABLE_Logo_07.2021.svg')
         logger.info(f"🎓 ERROR - Fallback to default logo: {default_logo}, Error: {e}")
 
     default_profile = 'student.png'  # Immer student.png als Standard
@@ -268,7 +268,7 @@ def index():
             branding = vc_template.get("credentialSubject", {}).get("credentialBranding", {})
             system_logo = branding.get("vcLogo")
 
-            if system_logo and system_logo != 'BVG_Logo_07.2021.svg':
+            if system_logo and system_logo != 'VIABLE_Logo_07.2021.svg':
                 # Assuming static/img/
                 logo_path = os.path.join(current_app.static_folder, 'img', system_logo)
                 if os.path.exists(logo_path):
@@ -747,13 +747,13 @@ def generate_student_qr(student_id):
     try:
         # Get default images
         placeholder_logo, placeholder_profile = get_placeholders(
-            'BVG_Logo_07.2021.svg',
+            'VIABLE_Logo_07.2021.svg',
             'student.png'
         )
 
         # Get tenant theme
         theme_data = {
-            "name": "StudentVC",
+            "name": "VIABLE Credentials",
             "icon": system_logo,
             "bgColorCard": "F0D722",
             "bgColorSectionTop": "F0D722",
@@ -830,12 +830,12 @@ def generate_bulk_qr():
 
     # Get defaults
     placeholder_logo, placeholder_profile = get_placeholders(
-        'BVG_Logo_07.2021.svg',
+        'VIABLE_Logo_07.2021.svg',
         'student.png'
     )
 
     theme_data = {
-        "name": "StudentVC",
+        "name": "VIABLE Credentials",
         "icon": placeholder_logo,
         "bgColorCard": "F0D722",
         "bgColorSectionTop": "F0D722",

@@ -1,5 +1,5 @@
 """
-Key Management Service for StudentVC
+Key Management Service for VIABLE Credentials
 Handles cryptographic key lifecycle, rotation, and registry management.
 """
 

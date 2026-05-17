@@ -1,4 +1,4 @@
-"""Prometheus metrics for StudentVC - Student ID Card focused"""
+"""Prometheus metrics for VIABLE Credentials - Student ID Card focused"""
 from prometheus_client import Counter, Histogram, Gauge, Info, generate_latest, REGISTRY
 from flask import Blueprint, Response, request as flask_request, g
 import time
@@ -10,28 +10,28 @@ logger = logging.getLogger("LOGGER")
 # CREDENTIAL ISSUANCE METRICS
 # ============================================================================
 # System Status Metrics
-studentvc_up = Gauge('studentvc_up', 'StudentVC Service Status')
-studentvc_up.set(1)
+viable-credentials_up = Gauge('viable-credentials_up', 'VIABLE Credentials Service Status')
+viable-credentials_up.set(1)
 
 # Application Uptime
 app_start_time = time.time()
-studentvc_uptime = Gauge('studentvc_uptime_seconds', 'Time since application process started')
-studentvc_uptime.set_function(lambda: time.time() - app_start_time)
+viable-credentials_uptime = Gauge('viable-credentials_uptime_seconds', 'Time since application process started')
+viable-credentials_uptime.set_function(lambda: time.time() - app_start_time)
 
 # Key Management Metrics (File-based)
-signing_key_age_days = Gauge('studentvc_signing_key_age_days', 'Age of signing keys in days (Filesystem)', ['type'])
+signing_key_age_days = Gauge('viable-credentials_signing_key_age_days', 'Age of signing keys in days (Filesystem)', ['type'])
 
 # Key Registry Metrics (Database-based)
-key_registry_count = Gauge('studentvc_key_registry_count', 'Number of keys in registry', ['status', 'type'])
-key_registry_expiring_soon = Gauge('studentvc_key_registry_expiring_soon', 'Active keys expiring within 30 days', ['type'])
+key_registry_count = Gauge('viable-credentials_key_registry_count', 'Number of keys in registry', ['status', 'type'])
+key_registry_expiring_soon = Gauge('viable-credentials_key_registry_expiring_soon', 'Active keys expiring within 30 days', ['type'])
 
-did_web_status = Gauge('studentvc_did_web_status', 'Status of DID:Web configuration (1=Valid/Verified, 0=Invalid/Mismatch)')
+did_web_status = Gauge('viable-credentials_did_web_status', 'Status of DID:Web configuration (1=Valid/Verified, 0=Invalid/Mismatch)')
 
 # DID Information
-did_info = Info('studentvc_issuer', 'StudentVC Issuer Configuration Information')
+did_info = Info('viable-credentials_issuer', 'VIABLE Credentials Issuer Configuration Information')
 
 studentid_issued_total = Gauge(
-    'studentvc_credentials_issued_total',
+    'viable-credentials_credentials_issued_total',
     'Total Student ID Cards issued'
 )
 
@@ -108,7 +108,7 @@ def check_did_configuration_cached():
     return _did_check_cache['status']
 
 studentid_issued_duration = Histogram(
-    'studentvc_credential_issuance_duration_seconds',
+    'viable-credentials_credential_issuance_duration_seconds',
     'Student ID Card issuance latency in seconds',
     buckets=(0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0)
 )
@@ -117,17 +117,17 @@ studentid_issued_duration = Histogram(
 # CREDENTIAL VERIFICATION METRICS
 # ============================================================================
 studentid_verified_success = Counter(
-    'studentvc_credentials_verified_success_total',
+    'viable-credentials_credentials_verified_success_total',
     'Total successful Student ID Card verifications'
 )
 
 studentid_verified_failed = Counter(
-    'studentvc_credentials_verified_failed_total',
+    'viable-credentials_credentials_verified_failed_total',
     'Total failed Student ID Card verifications'
 )
 
 studentid_verification_duration = Histogram(
-    'studentvc_credential_verification_duration_seconds',
+    'viable-credentials_credential_verification_duration_seconds',
     'Student ID Card verification latency in seconds',
     buckets=(0.01, 0.05, 0.1, 0.25, 0.5, 1.0)
 )
@@ -136,12 +136,12 @@ studentid_verification_duration = Histogram(
 # CREDENTIAL STATE METRICS
 # ============================================================================
 studentid_valid_count = Gauge(
-    'studentvc_valid_credentials_total',
+    'viable-credentials_valid_credentials_total',
     'Number of valid Student ID Cards'
 )
 
 studentid_revoked_total = Gauge(
-    'studentvc_credentials_revoked_total',
+    'viable-credentials_credentials_revoked_total',
     'Total Student ID Cards revoked'
 )
 
@@ -149,7 +149,7 @@ studentid_revoked_total = Gauge(
 # AUTHENTICATION METRICS
 # ============================================================================
 auth_attempts_total = Counter(
-    'studentvc_auth_attempts_total',
+    'viable-credentials_auth_attempts_total',
     'Total authentication attempts',
     ['result']
 )
@@ -158,14 +158,14 @@ auth_attempts_total = Counter(
 # REQUEST TRACKING METRICS
 # ============================================================================
 request_duration = Histogram(
-    'studentvc_request_duration_seconds',
+    'viable-credentials_request_duration_seconds',
     'HTTP request duration in seconds',
     ['method', 'endpoint'],
     buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0)
 )
 
 request_count = Counter(
-    'studentvc_requests_total',
+    'viable-credentials_requests_total',
     'Total HTTP requests',
     ['method', 'endpoint', 'status']
 )

@@ -1,4 +1,4 @@
-# Key Usage Explanation for StudentVC System
+# Key Usage Explanation for VIABLE Credentials System
 
 ## 🔐 BBS+ Keys (BBS+ Credential Signing)
 
@@ -14,7 +14,7 @@
 - **Unlinkability**: Each presentation looks different (can't track user across verifications)
 - **Zero-Knowledge**: Proves you have a valid credential without revealing all data
 
-### In StudentVC:
+### In VIABLE Credentials:
 ```
 Issuer → Signs full credential with BBS+ private key
 Wallet → Creates ZK proof revealing only selected fields  
@@ -47,7 +47,7 @@ did:key:zXwpQjZaoASZf1Q9mhhx4o...
 
 ```
 1. ISSUANCE:
-   StudentVC Issuer
+   VIABLE Credentials Issuer
    ├── Creates credential with student data
    ├── Signs with BBS+ private key (enables selective disclosure)
    └── Wraps in JWT signed with Ed25519 key (proves issuer identity)
@@ -60,7 +60,7 @@ did:key:zXwpQjZaoASZf1Q9mhhx4o...
    └── Sends proof to verifier
 
 3. VERIFICATION:
-   StudentVC Verifier
+   VIABLE Credentials Verifier
    ├── Resolves issuer DID → gets Ed25519 public key
    ├── Verifies JWT signature (authentic issuer?)
    ├── Extracts BBS+ public key from credential

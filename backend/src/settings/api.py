@@ -117,9 +117,9 @@ def openapi_spec():
     spec = {
         'openapi': '3.0.3',
         'info': {
-            'title': 'BVG VERITAS API',
+            'title': 'VIABLE VERITAS API',
             'description': (
-                'API zum Ausstellen & Verifizieren von BVG-Mitarbeiter-Credentials '
+                'API zum Ausstellen & Verifizieren von VIABLE-Mitarbeiter-Credentials '
                 '(OID4VCI + SD-JWT).\n\n'
                 '**Authentifizierung:** API-Key aus dem Einstellungen-Tab als '
                 'Bearer-Token:\n```\nAuthorization: Bearer stvc_xxx\n```'
@@ -141,7 +141,7 @@ def openapi_spec():
                     'type': 'object',
                     'required': ['mitarbeiterId', 'firstName', 'lastName'],
                     'properties': {
-                        'mitarbeiterId': {'type': 'string', 'example': 'BVG-12345'},
+                        'mitarbeiterId': {'type': 'string', 'example': 'VIABLE-12345'},
                         'firstName':     {'type': 'string', 'example': 'Max'},
                         'lastName':      {'type': 'string', 'example': 'Mustermann'},
                         'department':    {'type': 'string', 'example': 'Fahrbetrieb'},
@@ -189,7 +189,7 @@ def openapi_spec():
                     'summary': 'Issuance-QR generieren',
                     'description': (
                         'Erstellt einen `openid-credential-offer://`-Link + QR-Code '
-                        'für die BVG Wallet App.\n\n'
+                        'für die VIABLE Wallet App.\n\n'
                         'Scope erforderlich: `qr:issuance`'
                     ),
                     'requestBody': {
@@ -226,7 +226,7 @@ def openapi_spec():
                                     'properties': {
                                         'verifier_domain': {
                                             'type': 'string',
-                                            'default': 'gv.viable-project.de',
+                                            'default': 'viable-id.com',
                                         }
                                     },
                                 }
