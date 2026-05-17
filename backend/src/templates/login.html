@@ -1,290 +1,258 @@
 <!DOCTYPE html>
-<html lang="de" class="h-full">
+<html lang="en" class="h-full">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Anmelden – VIABLE</title>
+    <title>Sign In — VIABLE</title>
 
-    <!-- TailwindCSS Production Build -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
-
-    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-
-    <!-- Socket.IO for VC login status updates -->
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-
-    <!-- Inter Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --navy:        #003154;
+            --navy-deep:   #001a30;
+            --navy-mid:    #004070;
+            --accent:      #0ea472;
+            --accent-soft: rgba(14,164,114,0.15);
+            --surface:     rgba(255,255,255,0.04);
+            --border:      rgba(255,255,255,0.09);
+            --text-primary: #f1f5f9;
+            --text-muted:   #94a3b8;
+        }
 
         html, body {
             min-height: 100vh;
-            font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--navy-deep);
         }
 
+        /* ── Background mesh ── */
         body {
-            background: linear-gradient(rgba(255, 252, 245, 0.70), rgba(255, 252, 245, 0.75)),
-                        url("{{ url_for('static', filename='VIABLE-Sitzmuster-Vielfalt.jpg') }}")
-                        no-repeat center center fixed;
-            background-size: cover;
+            background:
+                radial-gradient(ellipse 80% 60% at 10% 0%,   rgba(14,164,114,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 90% 100%, rgba(0,49,84,0.8)     0%, transparent 70%),
+                linear-gradient(160deg, #001a30 0%, #003154 45%, #001a30 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 2rem 1rem;
+            min-height: 100vh;
         }
 
+        /* ── Card ── */
         .login-card {
             width: 100%;
-            max-width: 440px;
-            background: rgba(255, 255, 255, 0.82);
-            backdrop-filter: blur(22px);
-            -webkit-backdrop-filter: blur(22px);
-            border: 1px solid rgba(255, 255, 255, 0.7);
-            border-radius: 1rem;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.18), 0 0 0 1px rgba(240,215,34,0.12);
+            max-width: 420px;
+            background: rgba(0, 25, 50, 0.72);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border: 1px solid var(--border);
+            border-radius: 1.25rem;
+            box-shadow:
+                0 0 0 1px rgba(14,164,114,0.1),
+                0 32px 64px -16px rgba(0,0,0,0.6),
+                inset 0 1px 0 rgba(255,255,255,0.06);
             overflow: hidden;
         }
 
-        /* VIABLE Yellow top stripe */
-        .viable-stripe {
-            height: 4px;
-            background: #F0D722;
+        /* ── Accent bar ── */
+        .viable-bar {
+            height: 3px;
+            background: linear-gradient(90deg, #0ea472 0%, #0b8a5e 60%, transparent 100%);
         }
 
-        .card-body {
-            padding: 2rem 2rem 1.5rem;
-        }
+        .card-body { padding: 2.25rem 2rem 1.75rem; }
 
-        /* Logo section */
+        /* ── Wordmark ── */
         .logo-section {
             text-align: center;
-            margin-bottom: 1.75rem;
-            padding-bottom: 1.25rem;
-            border-bottom: 1px solid rgba(0,0,0,0.07);
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
         }
-
-        .logo-section img {
-            height: 72px;
-            width: auto;
-            margin: 0 auto 0.75rem auto;
-            display: block;
-        }
-
-        .viable-slogan {
-            font-size: 0.8125rem;
-            font-weight: 600;
-            color: #374151;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-        }
-
-        .viable-subtitle {
-            font-size: 0.75rem;
-            color: #9ca3af;
-            margin-top: 0.25rem;
-        }
-
-        /* Form section heading */
-        .form-heading {
-            text-align: center;
-            margin-bottom: 1.25rem;
-        }
-        .form-heading h2 {
-            font-size: 1.25rem;
+        .wordmark {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.75rem;
             font-weight: 700;
-            color: #111827;
-            margin-bottom: 0.25rem;
+            letter-spacing: -0.04em;
+            color: var(--text-primary);
         }
-        .form-heading p {
-            font-size: 0.8125rem;
-            color: #6b7280;
+        .wordmark span { color: var(--accent); }
+        .tagline {
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-top: 0.4rem;
         }
 
-        /* Input fields */
+        /* ── Section heading ── */
+        .form-heading { text-align: center; margin-bottom: 1.5rem; }
+        .form-heading h2 {
+            font-size: 1.125rem; font-weight: 600;
+            color: var(--text-primary); margin-bottom: 0.2rem;
+        }
+        .form-heading p { font-size: 0.8rem; color: var(--text-muted); }
+
+        /* ── Labels & inputs ── */
         .form-group { margin-bottom: 1rem; }
         .form-label {
-            display: block;
-            font-size: 0.8125rem;
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 0.375rem;
+            display: block; font-size: 0.8rem; font-weight: 500;
+            color: var(--text-muted); margin-bottom: 0.375rem;
+            letter-spacing: 0.02em;
         }
         .form-input {
             width: 100%;
             padding: 0.625rem 0.875rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.5rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 0.625rem;
             font-size: 0.875rem;
-            background: rgba(255,255,255,0.9);
-            color: #111827;
-            transition: border-color 0.15s, box-shadow 0.15s;
+            color: var(--text-primary);
+            font-family: inherit;
+            transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
         }
+        .form-input::placeholder { color: rgba(148,163,184,0.5); }
         .form-input:focus {
             outline: none;
-            border-color: #F0D722;
-            box-shadow: 0 0 0 3px rgba(240,215,34,0.2);
+            border-color: var(--accent);
+            background: rgba(14,164,114,0.06);
+            box-shadow: 0 0 0 3px rgba(14,164,114,0.15);
         }
         .form-input[readonly] {
-            background: #f9fafb;
-            color: #6b7280;
-            cursor: not-allowed;
+            color: var(--text-muted); cursor: default;
+            background: rgba(255,255,255,0.02);
         }
         .form-hint {
-            margin-top: 0.3rem;
-            font-size: 0.6875rem;
-            color: #9ca3af;
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
+            margin-top: 0.3rem; font-size: 0.7rem;
+            color: rgba(148,163,184,0.6);
+            display: flex; align-items: center; gap: 0.3rem;
         }
 
-        /* Buttons */
+        /* ── Buttons ── */
         .btn-primary {
-            width: 100%;
-            padding: 0.75rem 1.25rem;
-            border-radius: 0.5rem;
-            font-weight: 700;
-            font-size: 0.9rem;
-            border: none;
-            cursor: pointer;
-            background: #F0D722;
-            color: #111827;
+            width: 100%; padding: 0.75rem 1.25rem;
+            border: none; border-radius: 0.625rem;
+            font-family: inherit; font-size: 0.9rem; font-weight: 600;
+            cursor: pointer; letter-spacing: 0.01em;
+            background: linear-gradient(135deg, #0ea472 0%, #0b8a5e 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(14,164,114,0.35);
             transition: all 0.2s;
-            box-shadow: 0 4px 6px -1px rgba(240,215,34,0.3);
         }
         .btn-primary:hover {
-            background: #e6cd1f;
             transform: translateY(-1px);
-            box-shadow: 0 8px 15px -3px rgba(240,215,34,0.4);
+            box-shadow: 0 8px 20px rgba(14,164,114,0.45);
         }
+        .btn-primary:active { transform: translateY(0); }
 
-        .btn-outline {
-            width: 100%;
-            padding: 0.75rem 1.25rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            font-size: 0.875rem;
-            cursor: pointer;
-            background: transparent;
-            color: #111827;
-            border: 2px solid #F0D722;
+        .btn-ghost {
+            width: 100%; padding: 0.7rem 1.25rem;
+            border: 1px solid var(--border); border-radius: 0.625rem;
+            font-family: inherit; font-size: 0.875rem; font-weight: 500;
+            cursor: pointer; background: var(--surface);
+            color: var(--text-primary);
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
             transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
         }
-        .btn-outline:hover {
-            background: rgba(240,215,34,0.12);
+        .btn-ghost:hover {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+            color: #0ea472;
         }
 
-        /* OR divider */
+        /* ── Divider ── */
         .or-divider {
-            margin: 1.25rem 0;
-            text-align: center;
-            position: relative;
+            margin: 1.25rem 0; text-align: center; position: relative;
         }
         .or-divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0; right: 0;
-            height: 1px;
-            background: #e5e7eb;
+            content: ''; position: absolute; top: 50%; left: 0; right: 0;
+            height: 1px; background: var(--border);
         }
         .or-divider span {
-            position: relative;
-            background: rgba(255,255,255,0.95);
-            padding: 0 0.75rem;
-            color: #9ca3af;
-            font-size: 0.75rem;
-            font-weight: 500;
+            position: relative; padding: 0 0.75rem;
+            background: rgba(0,25,50,0.72);
+            font-size: 0.72rem; color: var(--text-muted); font-weight: 500;
         }
 
-        /* Flash messages */
-        .flash-error   { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
-        .flash-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
-        .flash-info    { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+        /* ── Flash messages ── */
+        .flash-error   { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
+        .flash-success { background: rgba(14,164,114,0.1); border: 1px solid rgba(14,164,114,0.3); color: #6ee7b7; }
+        .flash-info    { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); color: #93c5fd; }
         .flash-msg {
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            margin-bottom: 0.5rem;
+            padding: 0.7rem 0.875rem; border-radius: 0.5rem;
+            font-size: 0.8125rem; margin-bottom: 0.5rem;
         }
 
-        /* VC QR section */
+        /* ── QR section ── */
         .qr-box {
-            background: rgba(249,250,251,0.9);
-            border: 1px solid #e5e7eb;
-            border-radius: 0.5rem;
-            padding: 1.5rem;
-            text-align: center;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem; padding: 1.5rem; text-align: center;
         }
         .qr-image-wrapper {
-            width: 200px;
-            height: 200px;
-            margin: 0 auto 1rem;
-            background: white;
-            border: 2px solid #e5e7eb;
-            border-radius: 0.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            width: 192px; height: 192px; margin: 0 auto 1rem;
+            background: #ffffff; border-radius: 0.625rem;
+            display: flex; align-items: center; justify-content: center;
             padding: 0.5rem;
         }
+        .qr-label {
+            font-size: 0.875rem; font-weight: 600;
+            color: var(--text-primary); margin-bottom: 1rem;
+        }
+        .qr-sub {
+            font-size: 0.75rem; color: var(--text-muted);
+            line-height: 1.6; margin-bottom: 1rem;
+        }
 
-        /* Card footer */
+        /* ── Card footer ── */
         .card-footer {
-            border-top: 1px solid rgba(0,0,0,0.07);
-            padding: 0.875rem 2rem;
-            text-align: center;
-            background: rgba(249,250,251,0.6);
+            border-top: 1px solid var(--border);
+            padding: 0.875rem 2rem; text-align: center;
+            background: rgba(0,0,0,0.15);
         }
-        .card-footer p { font-size: 0.6875rem; color: #9ca3af; margin: 0; }
+        .card-footer p {
+            font-size: 0.6875rem; color: rgba(148,163,184,0.5); margin: 0;
+        }
 
-        /* Page footer */
-        .page-footer {
-            margin-top: 1.25rem;
-            text-align: center;
-        }
+        /* ── Page footer ── */
+        .page-footer { margin-top: 1.25rem; text-align: center; }
         .page-footer a {
-            font-size: 0.75rem;
-            color: #6b7280;
-            text-decoration: none;
-            margin: 0 0.5rem;
+            font-size: 0.75rem; color: var(--text-muted);
+            text-decoration: none; margin: 0 0.5rem;
             transition: color 0.15s;
         }
-        .page-footer a:hover { color: #111827; }
+        .page-footer a:hover { color: var(--accent); }
     </style>
 </head>
 <body>
 
-    <!-- Centered Login Card -->
     <div class="login-card">
-        <div class="viable-stripe"></div>
-
+        <div class="viable-bar"></div>
         <div class="card-body">
 
-            <!-- VIABLE Logo + Slogan -->
+            <!-- Wordmark -->
             <div class="logo-section">
-                <img src="{{ url_for('static', filename='VIABLE_Logo_07.2021.svg') }}" alt="VIABLE Logo" />
-                <p class="viable-slogan">Weil wir dich lieben.</p>
-                <p class="viable-subtitle">Digitale Identität – sicher &amp; souverän</p>
+                <div class="wordmark">VIABL<span>E</span></div>
+                <p class="tagline">Identity Infrastructure</p>
             </div>
 
-            <!-- Form Heading -->
+            <!-- Heading -->
             <div class="form-heading">
-                <h2>Anmelden</h2>
-                <p>VIABLE – Berliner Verkehrsbetriebe</p>
+                <h2>Sign In</h2>
+                <p>VIABLE Credentials Platform</p>
             </div>
 
-            <!-- Flash Messages -->
+            <!-- Flash messages -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     <div style="margin-bottom: 1rem;">
@@ -297,139 +265,114 @@
                 {% endif %}
             {% endwith %}
 
-            <!-- Username/Password Form Section -->
+            <!-- Username/Password section -->
             <div id="username-password-section" style="transition: opacity 0.3s ease, transform 0.3s ease;">
                 <form action="/login" method="post">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
-                    <!-- System (readonly) -->
                     <div class="form-group">
                         <label class="form-label">System</label>
                         <input type="text" readonly
                             value="{% if university_name %}{{ university_name }}{% else %}VIABLE{% endif %}"
                             class="form-input" />
-                        <p class="form-hint">
-                            <i class="fas fa-lock" style="font-size: 0.6rem;"></i>
-                            Automatisch zugewiesen
-                        </p>
+                        <p class="form-hint"><i class="fas fa-lock" style="font-size:0.6rem;"></i> Auto-assigned</p>
                     </div>
 
-                    <!-- E-Mail -->
                     <div class="form-group">
-                        <label class="form-label">E-Mail-Adresse</label>
+                        <label class="form-label">Email address</label>
                         <input type="email" name="name" required autofocus
-                            placeholder="demo@viable.de"
+                            placeholder="admin@viable-id.com"
                             class="form-input" />
                     </div>
 
-                    <!-- Passwort -->
-                    <div class="form-group" style="margin-bottom: 1.25rem;">
-                        <label class="form-label">Passwort</label>
+                    <div class="form-group" style="margin-bottom:1.25rem;">
+                        <label class="form-label">Password</label>
                         <input type="password" name="password" required
-                            placeholder="Passwort eingeben"
+                            placeholder="Enter password"
                             class="form-input" />
                     </div>
 
-                    <button type="submit" class="btn-primary">
-                        Anmelden
-                    </button>
+                    <button type="submit" class="btn-primary">Sign In</button>
                 </form>
 
-                <div class="or-divider"><span>ODER</span></div>
+                <div class="or-divider"><span>or</span></div>
 
-                <!-- Login with VC Button -->
-                <button type="button" onclick="switchToVC()" class="btn-outline">
+                <button type="button" onclick="switchToVC()" class="btn-ghost">
                     <i class="fas fa-qrcode"></i>
-                    <span>Mit Verifiable Credential anmelden</span>
+                    <span>Sign in with Verifiable Credential</span>
                 </button>
             </div>
 
-            <!-- VC QR Code Section (Hidden by default) -->
-            <div id="vc-qr-section" style="display: none; opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease;">
+            <!-- VC QR section -->
+            <div id="vc-qr-section" style="display:none; opacity:0; transition: opacity 0.3s ease, transform 0.3s ease;">
                 <div class="qr-box">
-                    <p style="font-size: 0.875rem; color: #374151; font-weight: 600; margin-bottom: 1rem;">
-                        <i class="fas fa-mobile-alt" style="margin-right: 0.5rem; color: #F0D722;"></i>
-                        Mit Wallet scannen
+                    <p class="qr-label">
+                        <i class="fas fa-mobile-alt" style="margin-right:0.4rem; color:#0ea472;"></i>
+                        Scan with VIABLE Wallet
                     </p>
 
                     {% if vc_qr_code %}
                     <div class="qr-image-wrapper">
                         <img src="data:image/png;base64,{{ vc_qr_code }}"
                              alt="VC Login QR Code"
-                             style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                             style="max-width:100%; max-height:100%; object-fit:contain;">
                     </div>
                     {% else %}
                     <div class="qr-image-wrapper">
-                        <i class="fas fa-qrcode" style="font-size: 2.5rem; color: #9ca3af;"></i>
+                        <i class="fas fa-qrcode" style="font-size:2.5rem; color:#94a3b8;"></i>
                     </div>
                     {% endif %}
 
-                    <p style="font-size: 0.75rem; color: #6b7280; line-height: 1.5; margin-bottom: 1rem;">
-                        Öffne deine VIABLE Wallet-App und scanne den QR-Code,
-                        um dich mit deinem Verifiable Credential anzumelden.
-                    </p>
+                    <p class="qr-sub">Open your VIABLE Wallet and scan the QR code to authenticate with your Verifiable Credential.</p>
 
-                    <div class="or-divider"><span>ODER</span></div>
+                    <div class="or-divider"><span>or</span></div>
 
-                    <button type="button" onclick="switchToPassword()" class="btn-outline">
+                    <button type="button" onclick="switchToPassword()" class="btn-ghost">
                         <i class="fas fa-key"></i>
-                        <span>Mit Passwort anmelden</span>
+                        <span>Sign in with password</span>
                     </button>
                 </div>
             </div>
 
         </div><!-- /.card-body -->
 
-        <!-- Card Footer -->
         <div class="card-footer">
-            <p>© 2026 VIABLE – Berliner Verkehrsbetriebe (VIABLE) &nbsp;·&nbsp; Session: 12 h</p>
+            <p>© 2026 VIABLE Identity Infrastructure GmbH i.Gr. &nbsp;·&nbsp; Session: 12 h</p>
         </div>
-
     </div><!-- /.login-card -->
 
-    <!-- Page Footer Links -->
     <div class="page-footer">
-        <a href="/about">Über uns</a>
-        <a href="#">Impressum</a>
+        <a href="/about">About</a>
+        <a href="#">Legal Notice</a>
     </div>
 
     <script>
         function switchToVC() {
             const pw = document.getElementById('username-password-section');
             const vc = document.getElementById('vc-qr-section');
-            pw.style.opacity = '0';
-            pw.style.transform = 'translateY(-10px)';
+            pw.style.opacity = '0'; pw.style.transform = 'translateY(-10px)';
             setTimeout(() => {
                 pw.style.display = 'none';
-                vc.style.display = 'block';
-                vc.offsetHeight;
-                vc.style.opacity = '1';
-                vc.style.transform = 'translateY(0)';
+                vc.style.display = 'block'; vc.offsetHeight;
+                vc.style.opacity = '1'; vc.style.transform = 'translateY(0)';
                 initVCLoginSocket();
             }, 300);
         }
-
         function switchToPassword() {
             const pw = document.getElementById('username-password-section');
             const vc = document.getElementById('vc-qr-section');
-            vc.style.opacity = '0';
-            vc.style.transform = 'translateY(-10px)';
+            vc.style.opacity = '0'; vc.style.transform = 'translateY(-10px)';
             setTimeout(() => {
                 vc.style.display = 'none';
-                pw.style.display = 'block';
-                pw.offsetHeight;
-                pw.style.opacity = '1';
-                pw.style.transform = 'translateY(0)';
+                pw.style.display = 'block'; pw.offsetHeight;
+                pw.style.opacity = '1'; pw.style.transform = 'translateY(0)';
             }, 300);
         }
-
         function initVCLoginSocket() {
-            if (typeof io === 'undefined') { return; }
+            if (typeof io === 'undefined') return;
             const socket = io(window.location.origin, {
                 transports: ['polling', 'websocket'],
-                reconnection: true,
-                reconnectionAttempts: 5,
-                reconnectionDelay: 1000
+                reconnection: true, reconnectionAttempts: 5, reconnectionDelay: 1000
             });
             socket.on('vc_login_success', function(data) {
                 const vc = document.getElementById('vc-qr-section');
@@ -437,18 +380,16 @@
                     const msg = document.createElement('div');
                     msg.className = 'flash-msg flash-success';
                     msg.style.marginTop = '1rem';
-                    msg.innerHTML = '<i class="fas fa-check-circle" style="margin-right:0.5rem;"></i>Login erfolgreich! Weiterleitung…';
+                    msg.innerHTML = '<i class="fas fa-check-circle" style="margin-right:0.5rem;"></i>Login successful — redirecting…';
                     vc.querySelector('.qr-box').appendChild(msg);
                 }
                 setTimeout(() => { window.location.href = data.redirect_url || '/'; }, 1000);
             });
             socket.on('verification_result', function(data) {
-                if (data.status === 'success' && data.login) {
+                if (data.status === 'success' && data.login)
                     setTimeout(() => { window.location.href = data.redirect_url || '/'; }, 1000);
-                }
             });
         }
     </script>
-
 </body>
 </html>
